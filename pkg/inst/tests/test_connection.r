@@ -11,4 +11,3 @@ test_that("creating websocket conection works", {
   expect_that(is.null(conn@backend$server_socket), is_true())
   expect_that(isClosed(conn), is_true())
 })
-

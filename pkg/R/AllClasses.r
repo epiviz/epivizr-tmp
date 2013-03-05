@@ -1,3 +1,4 @@
+
 #' Connection with websockets backend
 #' 
 #' @export
@@ -14,7 +15,7 @@ setClass("EpivizDataConnection",
 #' \describe{
 #'  \item{\code{devices}:}{A list of \link{epivizDevice} objects defining currently loaded}
 #'  \item{\code{activeID}:}{ID of currently active device}
-#'  \item{\code{data}:}{An object of class \link{EpivizDataConnection}}
+#'  \item{\code{conn}:}{An object of class \link{EpivizDataConnection}}
 #' }
 #' 
 #' @name EpivizDeviceMgr-class
@@ -25,8 +26,8 @@ setClass("EpivizDeviceMgr", contains="environment",
          validity=function(object) {
            if (!exists("devices", object)) return(FALSE)
            if (length(object$devices) != object$nDevices) return(FALSE)
-           if (!exists("devices", data)) return(FALSE)
-           if (!is_a(object$devices, "EpivizDataConnection")) return(FALSE)
+           if (!exists("conn", object)) return(FALSE)
+           if (!is_a(object$conn, "EpivizDataConnection")) return(FALSE)
            if (!exists("activeID", object)) return(FALSE)
            if (object$activeID > length(object$nDevices)) return(FALSE)
            return(TRUE)

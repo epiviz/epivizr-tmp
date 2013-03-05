@@ -12,7 +12,7 @@ setMethod("initialize", "EpivizDataConnection",
 
 #' close a data connection to cegs browser
 #' 
-#' @param obj object of class \link{CegsWSDataConnection}
+#' @param obj object of class \link{EpivizDataConnection}
 setMethod("epivizClose", "EpivizDataConnection",
           function(obj) {
             websockets::websocket_close(obj@backend)
@@ -20,7 +20,7 @@ setMethod("epivizClose", "EpivizDataConnection",
 
 #' check if data connection is closed
 #' 
-#' @param obj Object of class \link{CegsWSDataConnection}
+#' @param obj Object of class \link{EpivizDataConnection}
 #' 
 #' @return True if data connection is closed
 setMethod("isClosed", "EpivizDataConnection",
