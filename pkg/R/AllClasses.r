@@ -13,6 +13,7 @@
 #' 
 #' @section Methods:
 #' \describe{
+#'  \item{\code{isClosed}:}{True if websocket is closed for this manager}
 #'  \item{\code{stop}:}{Stop communiation and close websocket server}
 #'  \item{\code{addDevice}:}{Add a \link{epivizDevice} object to the list of devices}
 #'  \item{\code{delDevice}:}{Remove device from list}
@@ -30,7 +31,8 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
                         fields=list(devices="list",
                                     activeID="character",
                                     server="environment"),
-                        methods=list(stop=function() {},
+                        methods=list(isClosed=function() {},
+                                     stop=function() {},
                                      addDevice=function() {},
                                      delDevice=function() {},
                                      setActive=function() {},
