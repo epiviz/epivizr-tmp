@@ -28,8 +28,10 @@ EpivizDevice <- setRefClass("EpivizDevice",
     minValue="numeric",
     maxValue="numeric"),
   methods=list(
-    getData=function() {
-      
+    getData=function(chr, start, end) {
+      query=GRanges(seqnames=chr, ranges=IRanges(start=start,end=end),
+                    seqinfo=seqinfo(gr))
+      subsetByOverlaps(gr, query)
     }
   )
 )

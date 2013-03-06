@@ -20,6 +20,7 @@
 #'  \item{\code{delDevice}:}{Remove device from list}
 #'  \item{\code{setActive}:}{Set device as active (for navigation on browser)}
 #'  \item{\code{listDevices}:}{List current devices}
+#'  \item{\code{getData}:}{Get data from devices}
 #'  \item{\code{refresh}:}{Refresh epiviz browser}
 #'  \item{\code{navigate}:}{Navigate to given genomic region in browser}
 #' }
@@ -92,6 +93,20 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
                 name=nms,
                 length=lens,
                 stringsAsFactors=FALSE,row.names=NULL)
+   },
+   getData=function(devId, chr, start, end) {
+     if (!is.null(devId)) {
+       if (is.null(devices[[devId]]))
+         stop("device Id not found")
+       
+       dev=devices[[devId]]
+       out=list(dev$obj$getData(chr,start,end))
+       names(out)=devId
+     } else {
+       out=lapply(devices, function(dev) dev$obj$getData(chr=chr,start=start,end=end))
+       names(out)=names(devices)
+     }
+     out   
    },
    refresh=function() {
      'refresh browser'
