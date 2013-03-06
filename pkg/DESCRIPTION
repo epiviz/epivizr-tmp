@@ -6,10 +6,12 @@ License: GPL-3
 Title: R Interface to epiviz visualization tool
 Description: Websocket communication to http://epiviz.cbcb.umd.edu
 Depends:
-  websockets,
-  GenomicRanges
+    websockets,
+    GenomicRanges
 Suggests:
     testthat,
     roxygen2
 Collate:
-    'pkg-package.r'
+    'EpivizDevice.r'
+    'EpivizDeviceMgr.r'
+    'epivizr-package.r'
