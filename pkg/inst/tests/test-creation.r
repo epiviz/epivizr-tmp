@@ -24,3 +24,16 @@ test_that("create device works", {
   expect_equal(dev$minValue, -6)
   expect_equal(dev$maxValue, 6)
 })
+
+test_that("addDevice works", {
+  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
+  dev <- epivizr::newDevice(gr)
+  mgr <- startEpiviz()
+  devId <- mgr$addDevice(dev, "dev1")
+  
+  expect_equal(length(mgr$devices), 1)
+  expect_false(is.null(mgr$devices[[devId]]))
+  expect_equal(mgr$devices[[devId]]$name, "dev1")
+  expect_equal(mgr$devices[[devId]]$obj$gr, gr)
+  mgr$stop()
+})

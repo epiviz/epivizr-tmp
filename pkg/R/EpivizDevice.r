@@ -28,7 +28,9 @@ EpivizDevice <- setRefClass("EpivizDevice",
     minValue="numeric",
     maxValue="numeric"),
   methods=list(
-    getData=function() {}
+    getData=function() {
+      
+    }
   )
 )
 

@@ -1,14 +1,3 @@
-create_dummy_server=function(port=7681L) {
-  env=new.env()
-  env$socket_server=port
-  return(env)
-}
-
-close_dummy_server=function(server) {  
-  server$socket_server=NULL
-  invisible(server)
-}
-
 #' epiviz interactive track manager
 #' 
 #' This class is used to add and delete interactive devices in the epiviz browser. It inherits
@@ -18,6 +7,7 @@ close_dummy_server=function(server) {
 #' @section Fields:
 #' \describe{
 #'  \item{\code{devices}:}{A list of \link{epivizDevice} objects defining currently loaded}
+#'  \item{\code{idCounter}:}{id generator}
 #'  \item{\code{activeID}:}{ID of currently active device}
 #'  \item{\code{server}:}{An environment implementing a websockets server}
 #' }
@@ -41,18 +31,34 @@ close_dummy_server=function(server) {
 EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr", 
   fields=list(
     devices="list",
+    idCounter="integer",
     activeID="character",
     server="environment"),
   methods=list(
    isClosed=function() {
+     'check if connection is closed'
     !exists("socket_server", server) || is.null(server$socket_server)
    },
    stop=function() {
+     'stop epiviz connection'
      close_dummy_server(server)
      invisible(server)
    },
-   addDevice=function() {
-                                   
+   addDevice=function(device, devName) {
+     'add device to epiviz browser'
+     if (!is(device, "EpivizDevice"))
+       stop("device must be of class EpivizDevice")
+     if (.self$isClosed())
+       stop("manager connection is closed")
+     if (devName %in% names(.self$devices))
+       stop("device name already in use")
+     
+     idCounter <<- idCounter + 1L
+     devId <- sprintf("epivizDev_%d", .self$idCounter)
+     .makeRequest_addDevice(devId, .self$server, device, devName)
+     devRecord=list(name=devName, obj=device)
+     devices[[devId]] <<- devRecord
+     return(devId)
    },
    delDevice=function() {
                                  
@@ -87,7 +93,8 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' @export
 startEpiviz <- function(port=7681L) {
   mgr <- EpivizDeviceMgr$new(
-    server=create_dummy_server(port=port)
+    server=create_dummy_server(port=port),
+    idCounter=0L
   )
   mgr
 }
