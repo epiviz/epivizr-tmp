@@ -49,3 +49,24 @@ test_that("delDevice works", {
   expect_true(is.null(mgr$devices[[devId]]))
   mgr$stop()
 })
+
+test_that("listDevice works", {
+  gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
+  gr2 <- GRanges(seqnames="chr2", ranges=IRanges(start=2:20, width=1))
+  
+  mgr <- startEpiviz()
+  
+  dev1 <- epivizr::newDevice(gr1)
+  dev2 <- epivizr::newDevice(gr2)
+  
+  devId1 <- mgr$addDevice(dev1, "dev1")
+  devId2 <- mgr$addDevice(dev2, "dev2")
+  
+  devs <- mgr$listDevices()
+  expected_df <- data.frame(id=c(devId1,devId2),
+                            name=c("dev1","dev2"),
+                            length=c(length(gr1),length(gr2)),
+                            stringsAsFactors=FALSE)
+  expect_equal(devs, expected_df)
+  mgr$stop()
+})

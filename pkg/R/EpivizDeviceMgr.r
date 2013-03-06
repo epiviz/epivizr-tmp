@@ -71,7 +71,10 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      
    },
    listDevices=function() {
-     
+     ids=names(devices)
+     nms=sapply(devices, "[[", "name")
+     lens=sapply(devices, function(x) length(x$obj$gr))
+     data.frame(id=ids,name=nms,length=lens,stringsAsFactors=FALSE,row.names=NULL)
    },
    refresh=function() {
      
