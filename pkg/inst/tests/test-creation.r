@@ -37,3 +37,15 @@ test_that("addDevice works", {
   expect_equal(mgr$devices[[devId]]$obj$gr, gr)
   mgr$stop()
 })
+
+test_that("delDevice works", {
+  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
+  dev <- epivizr::newDevice(gr)
+  mgr <- startEpiviz()
+  devId <- mgr$addDevice(dev, "dev1")
+  mgr$delDevice(devId)
+  
+  expect_equal(length(mgr$devices), 0)
+  expect_true(is.null(mgr$devices[[devId]]))
+  mgr$stop()
+})

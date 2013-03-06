@@ -60,8 +60,12 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      devices[[devId]] <<- devRecord
      return(devId)
    },
-   delDevice=function() {
-                                 
+   delDevice=function(devId) {
+     'delete device from epiviz browser'
+     if (is.null(devices[[devId]]))
+       stop("device Id not found")
+     devices[[devId]] <<- NULL
+     invisible(NULL)
    },
    setActive=function () {
      
