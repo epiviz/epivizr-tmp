@@ -8,7 +8,7 @@
 #' \describe{
 #'  \item{\code{devices}:}{A list of \link{epivizDevice} objects defining currently loaded}
 #'  \item{\code{idCounter}:}{id generator}
-#'  \item{\code{activeID}:}{ID of currently active device}
+#'  \item{\code{activeId}:}{ID of currently active device}
 #'  \item{\code{server}:}{An environment implementing a websockets server}
 #' }
 #' 
@@ -32,7 +32,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
   fields=list(
     devices="list",
     idCounter="integer",
-    activeID="character",
+    activeId="character",
     server="environment"),
   methods=list(
    isClosed=function() {
@@ -58,6 +58,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      .makeRequest_addDevice(devId, .self$server, device, devName)
      devRecord=list(name=devName, obj=device)
      devices[[devId]] <<- devRecord
+     activeId <<- devId
      return(devId)
    },
    delDevice=function(devId) {
@@ -65,16 +66,30 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      if (is.null(devices[[devId]]))
        stop("device Id not found")
      devices[[devId]] <<- NULL
+     if (length(devices)==0) {
+       activeId <<- ""
+     } else {
+       ids=names(devices)
+       activeId <<- ids[length(ids)]
+     }
      invisible(NULL)
    },
-   setActive=function () {
+   setActive=function (devId) {
+     if(!(devId %in% names(devices)))
+       stop("device Id not found")
      
+     activeId <<- devId
    },
    listDevices=function() {
      ids=names(devices)
      nms=sapply(devices, "[[", "name")
      lens=sapply(devices, function(x) length(x$obj$gr))
-     data.frame(id=ids,name=nms,length=lens,stringsAsFactors=FALSE,row.names=NULL)
+     active=ifelse(ids==activeId, "*","")
+     data.frame(id=ids,
+                active=active,
+                name=nms,
+                length=lens,
+                stringsAsFactors=FALSE,row.names=NULL)
    },
    refresh=function() {
      
@@ -101,7 +116,8 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 startEpiviz <- function(port=7681L) {
   mgr <- EpivizDeviceMgr$new(
     server=create_dummy_server(port=port),
-    idCounter=0L
+    idCounter=0L,
+    activeId=""
   )
   mgr
 }
