@@ -75,12 +75,14 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      invisible(NULL)
    },
    setActive=function (devId) {
+     'set given device as active in browser'
      if(!(devId %in% names(devices)))
        stop("device Id not found")
      
      activeId <<- devId
    },
    listDevices=function() {
+     'list devices in browser'
      ids=names(devices)
      nms=sapply(devices, "[[", "name")
      lens=sapply(devices, function(x) length(x$obj$gr))
@@ -92,10 +94,14 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
                 stringsAsFactors=FALSE,row.names=NULL)
    },
    refresh=function() {
-     
+     'refresh browser'
+     .makeRequest_refresh(server)
+     invisible(NULL)
    },
-   navigate=function() {
-     
+   navigate=function(chr, start, end) {
+     'navigate to given position'
+     .makeRequest_navigate(server, chr=chr, start=start, end=end)
+     invisible(NULL)
    }
   )
 )
