@@ -45,7 +45,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     server="environment"),
   methods=list(
    isClosed=function() {
-    !exists("server_socket", server) || is.null(server$server_socket)               
+    !exists("socket_server", server) || is.null(server$socket_server)
    },
    stop=function() {
      close_dummy_server(server)

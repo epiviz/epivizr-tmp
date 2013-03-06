@@ -24,10 +24,24 @@ EpivizDevice <- setRefClass("EpivizDevice",
   fields=list(
     gr="GenomicRanges",
     type="character",
-    mdCols="character",
+    mdCols="ANY",
     minValue="numeric",
     maxValue="numeric"),
   methods=list(
     getData=function() {}
   )
 )
+
+newDevice <- function(gr,
+                      type=c("region","line","gene"),
+                      mdCols=NULL,
+                      minValue=-6,
+                      maxValue=6)
+{
+  type=match.arg(type)
+  EpivizDevice$new(gr=gr,
+                   type=type,
+                   mdCols=mdCols,
+                   minValue=minValue,
+                   maxValue=maxValue)
+}
