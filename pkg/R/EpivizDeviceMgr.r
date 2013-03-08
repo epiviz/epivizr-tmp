@@ -38,11 +38,11 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
   methods=list(
    isClosed=function() {
      'check if connection is closed'
-    !exists("socket_server", server) || is.null(server$socket_server)
+    !exists("server_socket", server) || is.null(server$server_socket)
    },
    stop=function() {
      'stop epiviz connection'
-     close_dummy_server(server)
+     websocket_close(server)
      invisible(server)
    },
    addDevice=function(device, devName) {
@@ -117,6 +117,15 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      'navigate to given position'
      .makeRequest_navigate(server, chr=chr, start=start, end=end)
      invisible(NULL)
+   },
+   data_received=function(DATA, WS, HEADER) {
+     print(rawToChar(DATA))
+   },
+   con_established=function(DATA, WS, HEADER) {
+     message("connection established") 
+   },
+   con_closed=function(DATA, WS, HEADER) {
+     message("One connection closed")
    }
   )
 )
@@ -136,10 +145,13 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' @export
 startEpiviz <- function(port=7681L) {
   mgr <- EpivizDeviceMgr$new(
-    server=create_dummy_server(port=port),
+    server=websockets::create_server(port=port),
     idCounter=0L,
     activeId=""
   )
+  websockets::setCallback("receive", mgr$data_received, mgr$server)
+  websockets::setCallback("established", mgr$con_established, mgr$server)
+  websockets::setCallback("closed", mgr$con_closed, mgr$server)
   mgr
 }
 

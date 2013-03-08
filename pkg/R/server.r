@@ -1,11 +1,11 @@
 create_dummy_server=function(port=7681L) {
   env=new.env()
-  env$socket_server=port
+  env$server_socket=port
   return(env)
 }
 
 close_dummy_server=function(server) {  
-  server$socket_server=NULL
+  server$server_socket=NULL
   invisible(server)
 }
 
