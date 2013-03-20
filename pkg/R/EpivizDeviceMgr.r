@@ -119,14 +119,15 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      invisible(NULL)
    },
    data_received=function(DATA, WS, HEADER) {
+     message("mgr: data received")
      print(rawToChar(DATA))
    },
    con_established=function(WS) {
-     message("connection established")
+     message("mgr: connection established")
      websockets::websocket_write("Hello There!", WS)
    },
    con_closed=function(WS) {
-     message("One connection closed")
+     message("mgr: one connection closed")
    }
   )
 )
@@ -135,17 +136,24 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' 
 #' Create an epiviz device manager which can be used to add and delete tracks in browser
 #' 
-#' @param port the port for the websocket server
+#' @param port (integer) the port for the websocket server
+#' @param localURL (character) use this url for the epiviz server instead of the standard remote URL
+#' @param chr (character) chromosome to browse to on startup
+#' @param start (integer) start position to browse to on startup
+#' @param end (integer) end position to browse to on startup
+#' @param debug (logical) start the epiviz browser in debug mode
 #' 
-#' @return an object of class \link{EpivizDeviceMgr-class}.
+#' @return an object of class \linkS4class{EpivizDeviceMgr}.
 #' 
 #' @examples
 #' mgr <- startEpiviz()
 #' mgr$stop()
 #' 
 #' @export
-startEpiviz <- function(port=7681L) {
+startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, debug=FALSE) {
+  message("Opening websocket...")
   mgr <- EpivizDeviceMgr$new(
+    #TODO: tryCatch statement trying different ports
     server=websockets::create_server(port=port),
     idCounter=0L,
     activeId=""
@@ -154,8 +162,25 @@ startEpiviz <- function(port=7681L) {
   websockets::setCallback("established", mgr$con_established, mgr$server)
   websockets::setCallback("closed", mgr$con_closed, mgr$server)
   
-  # url=
-  # browseURL()
-  mgr
+  #TODO: add tryCatch statement?
+  daemonize(mgr$server)
+  
+  if (missing(localURL) || is.null(localURL)) {
+    url="http://epiviz.cbcb.umd.edu"
+  } else {
+    url=localURL
+  }
+  
+  controllerHost=sprintf("ws://localhost:%d", port)
+  url=sprintf("%s/index.php?chr=%s&start=%d&end=%d&controllerHost=%s&debug=%s&",
+              url,
+              chr,
+              as.integer(start),
+              as.integer(end),
+              controllerHost,
+              ifelse(debug,"true","false"))
+  message("Opening browser...")
+  browseURL(url)
+  return(mgr)
 }
 

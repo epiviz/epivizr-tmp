@@ -1,13 +1,14 @@
 context("object creation")
+localURL="http://localhost/~hcorrada/epiviz"
 
 test_that("stop shuts down the socket connection", {
-  mgr=startEpiviz()
+  mgr=startEpiviz(localURL=localURL,debug=TRUE)
   mgr$stop()
   expect_true(mgr$isClosed())
 })
 
 test_that("startEpiviz creates a proper object", {
-  mgr <- startEpiviz()
+  mgr <- startEpiviz(localURL=localURL,debug=TRUE)
   expect_is(mgr, "EpivizDeviceMgr")
   expect_is(mgr$devices, "list")
   expect_equal(length(mgr$devices), 0)

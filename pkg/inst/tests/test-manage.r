@@ -1,9 +1,10 @@
 context("device management")
+localURL="http://localhost/~hcorrada/epiviz"
 
 test_that("addDevice works", {
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
   dev <- epivizr::newDevice(gr)
-  mgr <- startEpiviz()
+  mgr <- startEpiviz(localURL=localURL,debug=TRUE)
   devId <- mgr$addDevice(dev, "dev1")
   
   expect_equal(length(mgr$devices), 1)
@@ -17,7 +18,7 @@ test_that("addDevice works", {
 test_that("delDevice works", {
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
   dev <- epivizr::newDevice(gr)
-  mgr <- startEpiviz()
+  mgr <- startEpiviz(localURL=localURL,debug=TRUE)
   devId <- mgr$addDevice(dev, "dev1")
   mgr$delDevice(devId)
   
@@ -31,7 +32,7 @@ test_that("listDevice works", {
   gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
   gr2 <- GRanges(seqnames="chr2", ranges=IRanges(start=2:20, width=1))
   
-  mgr <- startEpiviz()
+  mgr <- startEpiviz(localURL=localURL,debug=TRUE)
   
   dev1 <- epivizr::newDevice(gr1)
   dev2 <- epivizr::newDevice(gr2)
@@ -53,7 +54,7 @@ test_that("setActive works", {
   gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
   gr2 <- GRanges(seqnames="chr2", ranges=IRanges(start=2:20, width=1))
   
-  mgr <- startEpiviz()
+  mgr <- startEpiviz(localURL=localURL,debug=TRUE)
   
   dev1 <- epivizr::newDevice(gr1)
   dev2 <- epivizr::newDevice(gr2)
