@@ -121,10 +121,11 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    data_received=function(DATA, WS, HEADER) {
      print(rawToChar(DATA))
    },
-   con_established=function(DATA, WS, HEADER) {
-     message("connection established") 
+   con_established=function(WS) {
+     message("connection established")
+     websockets::websocket_write("Hello There!", WS)
    },
-   con_closed=function(DATA, WS, HEADER) {
+   con_closed=function(WS) {
      message("One connection closed")
    }
   )
@@ -152,6 +153,9 @@ startEpiviz <- function(port=7681L) {
   websockets::setCallback("receive", mgr$data_received, mgr$server)
   websockets::setCallback("established", mgr$con_established, mgr$server)
   websockets::setCallback("closed", mgr$con_closed, mgr$server)
+  
+  # url=
+  # browseURL()
   mgr
 }
 

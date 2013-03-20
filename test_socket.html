@@ -8,7 +8,7 @@
 <script>
     // socket = new WebSocket("ws://" + window.location.host + ":7682", "chat");
     //socket = new WebSocket("ws://localhost:7312", "chat");
-    socket = new WebSocket("ws://localhost:7312");
+    socket = new WebSocket("ws://localhost:7681");
     try {
         socket.onmessage = function got_packet(msg) {
             document.getElementById("output").textContent = msg.data;
