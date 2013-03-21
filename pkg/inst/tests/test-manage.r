@@ -86,3 +86,25 @@ test_that("setActive works", {
     expect_equal(devs, expected_df)
   },finally=mgr$stop())
 })
+
+test_that("getMeasurements works", {
+  gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=100))
+  gr2 <- GRanges(seqnames="chr2", ranges=IRanges(start=2:20, width=100))
+  gr3 <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), score=rnorm(length(seq(1,100,by=25))))
+  
+  mgr <- .startMGR()
+  tryCatch({
+    dev1 <- epivizr::newDevice(gr1)
+    dev2 <- epivizr::newDevice(gr2)
+    dev3 <- epivizr::newDevice(gr3, type="bp")
+    
+    devId1 <- mgr$addDevice(dev1, "dev1")
+    devId2 <- mgr$addDevice(dev2, "dev2")
+    devId3 <- mgr$addDevice(dev3, "dev3")
+    
+    res <- mgr$getMeasurements()
+    out <- list(bpMeasurements="dev3", blockMeasurements=c("dev1","dev2"))
+   
+    expect_equal(res,out)
+  }, finally=mgr$stop())
+})

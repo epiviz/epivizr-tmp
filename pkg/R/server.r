@@ -1,16 +1,26 @@
-create_dummy_server=function(port=7681L) {
-  env=new.env()
-  env$server_socket=port
-  return(env)
+.generate_handler=function(mgr) {
+  function(DATA, WS, HEADER) {
+    message("mgr: data received")
+    print(rawToChar(DATA))
+    
+    msg = RJSONIO::fromJSON(rawToChar(DATA))
+    if (msg$type == "request") {
+      data = switch(msg$action,
+                    getMeasurements=mgr$getMeasurements())
+      
+      response=RJSONIO::toJSON(list(type="response", id=msg$id, data=data))
+      websockets::websocket_write(response, WS)
+    }
+  }
 }
 
-close_dummy_server=function(server) {  
-  server$server_socket=NULL
-  invisible(server)
+.con_established=function(WS) {
+  message("mgr: connection established")
+  websockets::websocket_write("Hello There!", WS)
 }
 
-dummy_websocket_write=function(DATA, WS) {
-  
+.con_closed=function(WS) {
+  message("mgr: one connection closed")
 }
 
 .makeRequest_addDevice <- function(devId, server, device, devName) {

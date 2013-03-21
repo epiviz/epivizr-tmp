@@ -123,6 +123,19 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      }
      return(out)
    },
+   getMeasurements=function() {
+     out=list()
+     for (i in seq_along(.typeMap)) {
+       curType=names(.typeMap)[i]
+       if (length(devices[[curType]])>0) {
+         nm=paste0(curType,"Measurements")
+         deviceNames=sapply(devices[[curType]], "[[", "name")
+         names(deviceNames)=NULL
+         out[[nm]]=deviceNames
+       }
+     }
+     return(out)
+   },
    getData=function(devId, chr, start, end) {
      if (!is.null(devId)) {
        slot=which(sapply(lapply(devices,names), function(x) devId %in% x))
@@ -159,16 +172,8 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      .makeRequest_navigate(server, chr=chr, start=start, end=end)
      invisible(NULL)
    },
-   data_received=function(DATA, WS, HEADER) {
-     message("mgr: data received")
-     print(rawToChar(DATA))
-   },
-   con_established=function(WS) {
-     message("mgr: connection established")
-     websockets::websocket_write("Hello There!", WS)
-   },
-   con_closed=function(WS) {
-     message("mgr: one connection closed")
+   data_handler=function() {
+     .generate_handler(.self)
    }
   )
 )
@@ -204,21 +209,21 @@ startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, 
     devices=structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
   )
   tryCatch({
-    websockets::setCallback("receive", mgr$data_received, mgr$server)
-    websockets::setCallback("established", mgr$con_established, mgr$server)
-    websockets::setCallback("closed", mgr$con_closed, mgr$server)
+    websockets::setCallback("receive", mgr$data_handler(), mgr$server)
+    websockets::setCallback("established", .con_established, mgr$server)
+    websockets::setCallback("closed", .con_closed, mgr$server)
   
     #TODO: add tryCatch statement?
     daemonize(mgr$server)
   
     if (missing(localURL) || is.null(localURL)) {
-      url="http://epiviz.cbcb.umd.edu"
+      url="http://epiviz.cbcb.umd.edu/index.php"
     } else {
       url=localURL
     }
   
     controllerHost=sprintf("ws://localhost:%d", port)
-    url=sprintf("%s/index.php?chr=%s&start=%d&end=%d&controllerHost=%s&debug=%s&",
+    url=sprintf("%s?chr=%s&start=%d&end=%d&controllerHost=%s&debug=%s&",
                 url,
                 chr,
                 as.integer(start),
