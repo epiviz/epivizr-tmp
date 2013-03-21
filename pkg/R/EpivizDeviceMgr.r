@@ -52,7 +52,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
        stop("device must be of class EpivizDevice")
      if (.self$isClosed())
        stop("manager connection is closed")
-     curNames = c(names(.self$geneDevices), names(.self$bpDevices), names(.self$blockDevices))
+     curNames = c(names(devices$gene), names(devices$bp), names(devices$block))
      if (devName %in% curNames)
        stop("device name already in use")
      
@@ -77,35 +77,58 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    },
    delDevice=function(devId) {
      'delete device from epiviz browser'
-     if (is.null(devices[[devId]]))
+     if (is.null(devices[[activeType]][[devId]]))
        stop("device Id not found")
-     devices[[devId]] <<- NULL
-     if (length(devices)==0) {
+     devices[[activeType]][[devId]] <<- NULL
+     if (length(devices[[activeType]])==0) {
        activeId <<- ""
+       activeType <<- ""
      } else {
-       ids=names(devices)
+       ids=names(devices[[activeType]])
        activeId <<- ids[length(ids)]
      }
      invisible(NULL)
    },
    setActive=function (devId) {
      'set given device as active in browser'
-     if(!(devId %in% names(devices)))
-       stop("device Id not found")
-     
-     activeId <<- devId
+     if (devId %in% names(devices$block)) {
+       activeId <<- devId
+       activeType <<- "block"
+     } else if (devId %in% names(devices$bp)) {
+       activeId <<- devId
+       activeType <<- "bp"
+     } else if (devId %in% names(devices$gene)) {
+       activeId <<- devId
+       activeType <<- "gene"
+     } else {
+       stop("device Id not found")  
+     }
+     invisible(NULL)
    },
    listDevices=function() {
      'list devices in browser'
-     ids=names(devices)
-     nms=sapply(devices, "[[", "name")
-     lens=sapply(devices, function(x) length(x$obj$gr))
-     active=ifelse(ids==activeId, "*","")
-     data.frame(id=ids,
-                active=active,
-                name=nms,
-                length=lens,
-                stringsAsFactors=FALSE,row.names=NULL)
+     .doOneList <- function(devs) {
+        ids=names(devs)
+        nms=sapply(devs, "[[", "name")
+        lens=sapply(devs, function(x) length(x$obj$gr))
+        active=ifelse(ids==activeId, "*","")
+        data.frame(id=ids,
+                    active=active,
+                    name=nms,
+                    length=lens,
+                    stringsAsFactors=FALSE,row.names=NULL)  
+     }
+     out <- list()
+     if (length(devices$block)>0) {
+       out$block <- .doOneList(devices$block)
+     }
+     if (length(devices$bp)>0) {
+       out$bp <- .doOneList(devices$bp)
+     }
+     if (length(devices$gene)>0) {
+       out$gene <- .doOneList(devices$gene)
+     }
+     return(out)
    },
    getData=function(devId, chr, start, end) {
      if (!is.null(devId)) {

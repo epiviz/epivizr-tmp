@@ -14,9 +14,13 @@ dummy_websocket_write=function(DATA, WS) {
 }
 
 .makeRequest_addDevice <- function(devId, server, device, devName) {
+  type=switch(class(device),
+              EpivizBlockDevice="block",
+              EpivizBpDevice="bp",
+              EpivizGeneDevice="gene")
   request=list(action="addDevice",
                data=list(name=devName,
-                         type=device$type,
+                         type=type,
                          id=devId))
   dummy_websocket_write(request, server$client_sockets[[1]])
 }
