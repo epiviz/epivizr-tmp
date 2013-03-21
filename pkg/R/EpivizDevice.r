@@ -23,7 +23,6 @@
 EpivizDevice <- setRefClass("EpivizDevice",
   fields=list(
     gr="GenomicRanges",
-    type="character",
     mdCols="ANY",
     minValue="numeric",
     maxValue="numeric"),
@@ -36,16 +35,40 @@ EpivizDevice <- setRefClass("EpivizDevice",
   )
 )
 
-newDevice <- function(gr,
-                      type=c("region","line","gene"),
-                      mdCols=NULL,
-                      minValue=-6,
-                      maxValue=6)
+EpivizBlockDevice <- setRefClass("EpivizBlockDevice",
+  fields=list(dummy="character"),
+  contains="EpivizDevice"
+)
+
+EpivizBpDevice <- setRefClass("EpivizBpDevice",
+  fields=list(
+    mdCols="ANY",
+    minValue="numeric",
+    maxValue="numeric"
+  ),
+  contains="EpivizDevice"                            
+)
+
+EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
+  fields=list(
+    mdCols="ANY",
+    minValue="numeric",
+    maxValue="numeric"
+  ),
+  contains="EpivizDevice"                              
+)
+
+.newBlockDevice <- function(gr)
+{
+  return(EpivizBlockDevice$new(gr=gr))
+}
+
+newDevice <- function(gr, type=c("region","line","gene"),...)                      
 {
   type=match.arg(type)
-  EpivizDevice$new(gr=gr,
-                   type=type,
-                   mdCols=mdCols,
-                   minValue=minValue,
-                   maxValue=maxValue)
+  constructFun=switch(type,
+                      region=.newBlockDevice,
+                      line=.newBpDevice,
+                      gene=.newGeneDevice)
+  return(constructFun(gr, ...))
 }

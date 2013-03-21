@@ -34,6 +34,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     devices="list",
     idCounter="integer",
     activeId="character",
+    activeType="character",
     server="environment"),
   methods=list(
    isClosed=function() {
@@ -51,14 +52,26 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
        stop("device must be of class EpivizDevice")
      if (.self$isClosed())
        stop("manager connection is closed")
-     if (devName %in% names(.self$devices))
+     curNames = c(names(.self$geneDevices), names(.self$bpDevices), names(.self$blockDevices))
+     if (devName %in% curNames)
        stop("device name already in use")
      
      idCounter <<- idCounter + 1L
      devId <- sprintf("epivizDev_%d", .self$idCounter)
      .makeRequest_addDevice(devId, .self$server, device, devName)
      devRecord=list(name=devName, obj=device)
-     devices[[devId]] <<- devRecord
+     if (is(device,"EpivizGeneDevice")) {
+       devices$gene[[devId]] <<- devRecord
+       activeType <<- "gene"
+     } else if (is(device,"EpivizBpDevice")) {
+       devices$bp[[devId]] <<- devRecord
+       activeType <<- "bp"
+     } else if (is(device, "EpivizBlockDevice")) {
+       devices$block[[devId]] <<- devRecord
+       activeType <<- "block"
+     } else {
+       stop("Unkown device class")
+     }
      activeId <<- devId
      return(devId)
    },
@@ -156,7 +169,9 @@ startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, 
     #TODO: tryCatch statement trying different ports
     server=websockets::create_server(port=port),
     idCounter=0L,
-    activeId=""
+    activeId="",
+    activeType="",
+    devices=list(gene=list(),bp=list(),block=list())
   )
   websockets::setCallback("receive", mgr$data_received, mgr$server)
   websockets::setCallback("established", mgr$con_established, mgr$server)
