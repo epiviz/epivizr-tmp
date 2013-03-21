@@ -22,10 +22,8 @@
 #' @export
 EpivizDevice <- setRefClass("EpivizDevice",
   fields=list(
-    gr="GenomicRanges",
-    mdCols="ANY",
-    minValue="numeric",
-    maxValue="numeric"),
+    gr="GenomicRanges"
+  ),
   methods=list(
     getData=function(chr, start, end) {
       query=GRanges(seqnames=chr, ranges=IRanges(start=start,end=end),
@@ -42,18 +40,14 @@ EpivizBlockDevice <- setRefClass("EpivizBlockDevice",
 
 EpivizBpDevice <- setRefClass("EpivizBpDevice",
   fields=list(
-    mdCols="ANY",
-    minValue="numeric",
-    maxValue="numeric"
+    mdCols="ANY"
   ),
   contains="EpivizDevice"                            
 )
 
 EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   fields=list(
-    mdCols="ANY",
-    minValue="numeric",
-    maxValue="numeric"
+    mdCols="ANY"
   ),
   contains="EpivizDevice"                              
 )
@@ -63,12 +57,28 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   return(EpivizBlockDevice$new(gr=gr))
 }
 
-newDevice <- function(gr, type=c("region","line","gene"),...)                      
+.newBpDevice <- function(gr, mdCols=names(mcols(gr))) {
+  if (!all(mdCols %in% names(mcols(gr))))
+    stop("mdCols not found in GRanges object")
+  
+  return(EpivizBpDevice$new(gr=gr,mdCols=mdCols))
+}
+
+.newGeneDevice <- function(gr, mdCols=names(mcols(gr))) {
+  if (!all(mdCols %in% names(mcols(gr))))
+    stop("mdCols not found in GRanges object")
+  
+  return(EpivizGeneDevice$new(gr=gr,mdCols=mdCols))
+}
+
+.typeMap <- list(gene=list(constructor=.newGeneDevice,class="EpivizGeneDevice"),
+              bp=list(constructor=.newBpDevice,class="EpivizBpDevice"),
+              block=list(constructor=.newBlockDevice,class="EpivizBlockDevice"))
+
+newDevice <- function(gr, type="block",...)                      
 {
-  type=match.arg(type)
-  constructFun=switch(type,
-                      region=.newBlockDevice,
-                      line=.newBpDevice,
-                      gene=.newGeneDevice)
-  return(constructFun(gr, ...))
+  if (!type %in% names(.typeMap))
+    stop("Unknown device type")
+  
+  return(.typeMap[[type]]$constructor(gr,...))
 }

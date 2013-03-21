@@ -1,10 +1,9 @@
 context("device management")
-localURL="http://localhost/~hcorrada/epiviz"
 
 test_that("addDevice works for blocks", {
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
   dev <- epivizr::newDevice(gr)
-  mgr <- startEpiviz(localURL=localURL,debug=TRUE)
+  mgr <- .startMGR()
   
   tryCatch({
     devId <- mgr$addDevice(dev, "dev1")
@@ -21,8 +20,9 @@ test_that("addDevice works for blocks", {
 test_that("delDevice works", {
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
   dev <- epivizr::newDevice(gr)
+  mgr <- .startMGR()
+  
   tryCatch({
-    mgr <- startEpiviz(localURL=localURL,debug=TRUE)
     devId <- mgr$addDevice(dev, "dev1")
     mgr$delDevice(devId)
   
@@ -33,25 +33,33 @@ test_that("delDevice works", {
   },finally=mgr$stop())
 })
 
-test_that("listDevice works", {
-  gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
-  gr2 <- GRanges(seqnames="chr2", ranges=IRanges(start=2:20, width=1))
+test_that("listDevices works", {
+  gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=100))
+  gr2 <- GRanges(seqnames="chr2", ranges=IRanges(start=2:20, width=100))
+  gr3 <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), score=rnorm(length(seq(1,100,by=25))))
   
+  mgr <- .startMGR()
   tryCatch({
-    mgr <- startEpiviz(localURL=localURL,debug=TRUE)
-  
     dev1 <- epivizr::newDevice(gr1)
     dev2 <- epivizr::newDevice(gr2)
-  
+    dev3 <- epivizr::newDevice(gr3, type="bp")
+    
     devId1 <- mgr$addDevice(dev1, "dev1")
     devId2 <- mgr$addDevice(dev2, "dev2")
-  
+    devId3 <- mgr$addDevice(dev3, "dev3")
+    
     devs <- mgr$listDevices()
-    expected_df <- list(block=data.frame(id=c(devId1,devId2),
-                            active=c("","*"),
-                            name=c("dev1","dev2"),
-                            length=c(length(gr1),length(gr2)),
-                            stringsAsFactors=FALSE))
+    expected_df <- list(bp=data.frame(id=devId3,
+                                      active="*",
+                                      name="dev3",
+                                      length=length(gr3),
+                                      stringsAsFactors=FALSE),
+                        block=data.frame(id=c(devId1,devId2),
+                              active=c("",""),
+                              name=c("dev1","dev2"),
+                              length=c(length(gr1),length(gr2)),
+                              stringsAsFactors=FALSE)
+                        )
     expect_equal(devs, expected_df)
   }, finally=mgr$stop())
 })
@@ -60,9 +68,8 @@ test_that("setActive works", {
   gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
   gr2 <- GRanges(seqnames="chr2", ranges=IRanges(start=2:20, width=1))
   
+  mgr <- .startMGR()
   tryCatch({
-    mgr <- startEpiviz(localURL=localURL,debug=TRUE)
-  
     dev1 <- epivizr::newDevice(gr1)
     dev2 <- epivizr::newDevice(gr2)
   

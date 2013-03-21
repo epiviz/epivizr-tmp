@@ -32,6 +32,7 @@
 EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr", 
   fields=list(
     devices="list",
+    typeMap="list",
     idCounter="integer",
     activeId="character",
     activeType="character",
@@ -52,7 +53,8 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
        stop("device must be of class EpivizDevice")
      if (.self$isClosed())
        stop("manager connection is closed")
-     curNames = c(names(devices$gene), names(devices$bp), names(devices$block))
+   
+     curNames = unlist(lapply(devices,names))
      if (devName %in% curNames)
        stop("device name already in use")
      
@@ -60,49 +62,44 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      devId <- sprintf("epivizDev_%d", .self$idCounter)
      .makeRequest_addDevice(devId, .self$server, device, devName)
      devRecord=list(name=devName, obj=device)
-     if (is(device,"EpivizGeneDevice")) {
-       devices$gene[[devId]] <<- devRecord
-       activeType <<- "gene"
-     } else if (is(device,"EpivizBpDevice")) {
-       devices$bp[[devId]] <<- devRecord
-       activeType <<- "bp"
-     } else if (is(device, "EpivizBlockDevice")) {
-       devices$block[[devId]] <<- devRecord
-       activeType <<- "block"
-     } else {
-       stop("Unkown device class")
+     
+     slot=match(class(device), sapply(typeMap, "[[", "class"))
+     if (is.na(slot)) {
+       stop("Unkown device type class")
      }
+     
+     devices[[slot]][[devId]] <<- devRecord
+     activeType <<- names(typeMap)[slot]
      activeId <<- devId
      return(devId)
    },
    delDevice=function(devId) {
      'delete device from epiviz browser'
-     if (is.null(devices[[activeType]][[devId]]))
+     slot=which(sapply(devices, function(x) devId %in% names(x)))
+     if (length(slot)<1)
        stop("device Id not found")
-     devices[[activeType]][[devId]] <<- NULL
-     if (length(devices[[activeType]])==0) {
-       activeId <<- ""
-       activeType <<- ""
-     } else {
-       ids=names(devices[[activeType]])
-       activeId <<- ids[length(ids)]
-     }
+     
+     devType=names(typeMap)[slot]
+     devices[[devType]][[devId]] <<- NULL
+     
+     if (activeId == devId) {
+       if (length(devices[[devType]])==0) {
+          activeId <<- ""
+          activeType <<- ""
+       } else {
+         ids=names(devices[[devType]])
+         activeId <<- ids[length(ids)]  
+       }
+     }  
      invisible(NULL)
    },
    setActive=function (devId) {
      'set given device as active in browser'
-     if (devId %in% names(devices$block)) {
-       activeId <<- devId
-       activeType <<- "block"
-     } else if (devId %in% names(devices$bp)) {
-       activeId <<- devId
-       activeType <<- "bp"
-     } else if (devId %in% names(devices$gene)) {
-       activeId <<- devId
-       activeType <<- "gene"
-     } else {
-       stop("device Id not found")  
-     }
+     slot=which(sapply(lapply(devices,names), function(x) devId %in% x))
+     if (length(slot)<1)
+       stop("device Id not found")
+     activeType <<- names(typeMap)[slot]
+     activeId <<- devId
      invisible(NULL)
    },
    listDevices=function() {
@@ -119,49 +116,38 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
                     stringsAsFactors=FALSE,row.names=NULL)  
      }
      out <- list()
-     if (length(devices$block)>0) {
-       out$block <- .doOneList(devices$block)
-     }
-     if (length(devices$bp)>0) {
-       out$bp <- .doOneList(devices$bp)
-     }
-     if (length(devices$gene)>0) {
-       out$gene <- .doOneList(devices$gene)
+     for (i in seq_along(typeMap)) {
+       curType=names(typeMap)[i]
+       if (length(devices[[curType]])>0)
+         out[[curType]] <- .doOneList(devices[[curType]])
      }
      return(out)
    },
    getData=function(devId, chr, start, end) {
      if (!is.null(devId)) {
-       dev=devices$block[[devId]]
-       if (is.null(dev)) {
-         dev=devices$gene[[devId]]
-       } 
-       if (is.null(dev)) {
-         dev=devices$bp[[devId]]
-       } 
-       if (is.null(dev)) {
+       slot=which(sapply(lapply(devices,names), function(x) devId %in% x))
+       if (length(slot)<1)
          stop("device Id not found")
-       }
+       
+       devType=names(typeMap)[slot]
+       dev=devices[[devType]][[devId]]
        
        out=list(dev$obj$getData(chr,start,end))
        names(out)=devId
+       out=list(out)
+       names(out)=devType
      } else {
        .getFromOneDevice  <- function(dev) dev$obj$getData(chr=chr,start=start,end=end)
        out=list()
-       if (length(devices$block)>0) {
-         out$block=lapply(devices$block, .getFromOneDevice)
-         names(out$block)=names(devices$block)
-       }
-       if (length(devices$gene)>0) {
-         out$gene=lapply(devices$gene, .getFromOneDevice)
-         names(out$gene)=names(devices$gene)
-       }
-       if (length(devices$bp)>0) {
-        out$bp=lapply(devices$bp, .getFromOneDevice)
-        names(out$bp)=names(devices$bp)
+       for (i in seq_along(typeMap)) {
+         devType=names(typeMap)[i]
+         if (length(devices[[devType]])>0) {
+           out[[devType]]=lapply(devices[[devType]], .getFromOneDevice)
+           names(out[[devType]])=names(devices[[devType]])
+         }
        }
      }
-     out   
+     return(out)
    },
    refresh=function() {
      'refresh browser'
@@ -205,39 +191,48 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' mgr$stop()
 #' 
 #' @export
-startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, debug=FALSE) {
+startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, debug=FALSE, openBrowser=TRUE) {
   message("Opening websocket...")
+  devs=
   mgr <- EpivizDeviceMgr$new(
     #TODO: tryCatch statement trying different ports
     server=websockets::create_server(port=port),
     idCounter=0L,
     activeId="",
     activeType="",
-    devices=list(gene=list(),bp=list(),block=list())
+    typeMap=.typeMap,
+    devices=structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
   )
-  websockets::setCallback("receive", mgr$data_received, mgr$server)
-  websockets::setCallback("established", mgr$con_established, mgr$server)
-  websockets::setCallback("closed", mgr$con_closed, mgr$server)
+  tryCatch({
+    websockets::setCallback("receive", mgr$data_received, mgr$server)
+    websockets::setCallback("established", mgr$con_established, mgr$server)
+    websockets::setCallback("closed", mgr$con_closed, mgr$server)
   
-  #TODO: add tryCatch statement?
-  daemonize(mgr$server)
+    #TODO: add tryCatch statement?
+    daemonize(mgr$server)
   
-  if (missing(localURL) || is.null(localURL)) {
-    url="http://epiviz.cbcb.umd.edu"
-  } else {
-    url=localURL
-  }
+    if (missing(localURL) || is.null(localURL)) {
+      url="http://epiviz.cbcb.umd.edu"
+    } else {
+      url=localURL
+    }
   
-  controllerHost=sprintf("ws://localhost:%d", port)
-  url=sprintf("%s/index.php?chr=%s&start=%d&end=%d&controllerHost=%s&debug=%s&",
-              url,
-              chr,
-              as.integer(start),
-              as.integer(end),
-              controllerHost,
-              ifelse(debug,"true","false"))
-  message("Opening browser...")
-  browseURL(url)
+    controllerHost=sprintf("ws://localhost:%d", port)
+    url=sprintf("%s/index.php?chr=%s&start=%d&end=%d&controllerHost=%s&debug=%s&",
+                url,
+                chr,
+                as.integer(start),
+                as.integer(end),
+                controllerHost,
+                ifelse(debug,"true","false"))
+    
+    if (openBrowser) {
+      message("Opening browser...")
+      browseURL(url)
+    }
+  }, error=function(e) {
+    mgr$close()
+  })
   return(mgr)
 }
 

@@ -1,14 +1,13 @@
 context("object creation")
-localURL="http://localhost/~hcorrada/epiviz"
 
 test_that("stop shuts down the socket connection", {
-  mgr=startEpiviz(localURL=localURL,debug=TRUE)
+  mgr=.startMGR()
   mgr$stop()
   expect_true(mgr$isClosed())
 })
 
 test_that("startEpiviz creates a proper object", {
-  mgr <- startEpiviz(localURL=localURL,debug=TRUE)
+  mgr <- .startMGR()
   expect_is(mgr, "EpivizDeviceMgr")
   
   expect_is(mgr$devices, "list")
@@ -31,11 +30,29 @@ test_that("startEpiviz creates a proper object", {
   mgr$stop()
 })
 
-test_that("create device works", {
-  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
+test_that("create device works for block", {
+  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=100))
   dev <- epivizr::newDevice(gr)
   expect_is(dev,"EpivizDevice")
   expect_is(dev, "EpivizBlockDevice")
+  expect_is(dev$gr, "GenomicRanges")
+  expect_equal(dev$gr, gr)
+})
+
+test_that("create device works for bp data", {
+  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1),score=rnorm(10))
+  dev <- epivizr::newDevice(gr, type="bp", mdCols="score")
+  expect_is(dev,"EpivizDevice")
+  expect_is(dev, "EpivizBpDevice")
+  expect_is(dev$gr, "GenomicRanges")
+  expect_equal(dev$gr, gr)
+})
+
+test_that("create device works for bp data", {
+  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=50),score=rnorm(10))
+  dev <- epivizr::newDevice(gr, type="gene", mdCols="score")
+  expect_is(dev,"EpivizDevice")
+  expect_is(dev, "EpivizGeneDevice")
   expect_is(dev$gr, "GenomicRanges")
   expect_equal(dev$gr, gr)
 })
