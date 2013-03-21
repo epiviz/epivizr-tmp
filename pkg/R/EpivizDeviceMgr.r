@@ -132,15 +132,34 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    },
    getData=function(devId, chr, start, end) {
      if (!is.null(devId)) {
-       if (is.null(devices[[devId]]))
+       dev=devices$block[[devId]]
+       if (is.null(dev)) {
+         dev=devices$gene[[devId]]
+       } 
+       if (is.null(dev)) {
+         dev=devices$bp[[devId]]
+       } 
+       if (is.null(dev)) {
          stop("device Id not found")
+       }
        
-       dev=devices[[devId]]
        out=list(dev$obj$getData(chr,start,end))
        names(out)=devId
      } else {
-       out=lapply(devices, function(dev) dev$obj$getData(chr=chr,start=start,end=end))
-       names(out)=names(devices)
+       .getFromOneDevice  <- function(dev) dev$obj$getData(chr=chr,start=start,end=end)
+       out=list()
+       if (length(devices$block)>0) {
+         out$block=lapply(devices$block, .getFromOneDevice)
+         names(out$block)=names(devices$block)
+       }
+       if (length(devices$gene)>0) {
+         out$gene=lapply(devices$gene, .getFromOneDevice)
+         names(out$gene)=names(devices$gene)
+       }
+       if (length(devices$bp)>0) {
+        out$bp=lapply(devices$bp, .getFromOneDevice)
+        names(out$bp)=names(devices$bp)
+       }
      }
      out   
    },
