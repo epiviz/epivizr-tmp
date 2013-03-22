@@ -35,8 +35,9 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     typeMap="list",
     idCounter="integer",
     activeId="character",
-    activeType="character",
-    server="environment"),
+    chartIdMap="list",
+    server="environment",
+    callbackArray="IndexedArray"),
   methods=list(
    isClosed=function() {
      'check if connection is closed'
@@ -47,58 +48,79 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      websocket_close(server)
      invisible(server)
    },
-   addDevice=function(device, devName) {
+   addDevice=function(gr, devName, sendRequest=TRUE, ...) {
      'add device to epiviz browser'
-     if (!is(device, "EpivizDevice"))
-       stop("device must be of class EpivizDevice")
+     if (!is(gr, "GenomicRanges"))
+       stop("gr must be of class 'GenomicRanges'")
      if (.self$isClosed())
        stop("manager connection is closed")
-   
-     curNames = unlist(lapply(devices,names))
-     if (devName %in% curNames)
-       stop("device name already in use")
      
-     idCounter <<- idCounter + 1L
-     devId <- sprintf("epivizDev_%d", .self$idCounter)
-     .makeRequest_addDevice(devId, .self$server, device, devName)
-     devRecord=list(name=devName, obj=device)
-     
+     device = newDevice(gr, ...)
      slot=match(class(device), sapply(typeMap, "[[", "class"))
      if (is.na(slot)) {
        stop("Unkown device type class")
      }
      
+     type=names(typeMap)[slot]
+     idCounter <<- idCounter + 1L
+     devId <- sprintf("epivizDev_%s_%d", type, .self$idCounter)
+     if (type == "block") {
+       measurements=devId
+     } else {
+       measurements=paste0(devId,"$",device$mdCols)
+     }
+     devRecord=list(measurements=measurements, name=devName, obj=device)
      devices[[slot]][[devId]] <<- devRecord
-     activeType <<- names(typeMap)[slot]
      activeId <<- devId
+     
+     if (sendRequest) {
+       callback=function(data) {
+         trkId = data$id
+         chartIdMap[[devId]] <<- trkId
+         message("Device ", devName, " added to browser and connected")
+       }
+       requestId=callbackArray$append(callback)
+      .makeRequest_addDevice(devId, .self$server, device, devName, requestId)
+     } 
      return(devId)
    },
-   delDevice=function(devId) {
+   finishAddDevice=function(devId, devName) {
+     function(data) {
+       
+     }
+   },  
+   rmDevice=function(devId) {
      'delete device from epiviz browser'
      slot=which(sapply(devices, function(x) devId %in% names(x)))
      if (length(slot)<1)
        stop("device Id not found")
      
      devType=names(typeMap)[slot]
+     devName=devices[[devType]][[devId]]$name
      devices[[devType]][[devId]] <<- NULL
      
      if (activeId == devId) {
-       if (length(devices[[devType]])==0) {
-          activeId <<- ""
-          activeType <<- ""
-       } else {
-         ids=names(devices[[devType]])
-         activeId <<- ids[length(ids)]  
-       }
-     }  
+       message("removed active device, use setActive to make another device the active device")
+       activeId <<- ""
+     }
+     
+     if(!is.null(chartIdMap[[devId]])) {
+       chartId=chartIdMap[[devId]]
+       chartIdMap[[devId]] <<- NULL
+       .makeRequest_rmDevice(chartIdMap[[devId]], mgr$finishRmDevice(devName))
+     }
      invisible(NULL)
+   },
+   finishRmDevice=function(devName) {
+     function() {
+       message("device", devName, "removed and disconnected")
+     }
    },
    setActive=function (devId) {
      'set given device as active in browser'
      slot=which(sapply(lapply(devices,names), function(x) devId %in% x))
      if (length(slot)<1)
        stop("device Id not found")
-     activeType <<- names(typeMap)[slot]
      activeId <<- devId
      invisible(NULL)
    },
@@ -109,10 +131,12 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
         nms=sapply(devs, "[[", "name")
         lens=sapply(devs, function(x) length(x$obj$gr))
         active=ifelse(ids==activeId, "*","")
+        connected=ifelse(ids %in% names(chartIdMap), "*", "")
         data.frame(id=ids,
                     active=active,
                     name=nms,
                     length=lens,
+                    connected=connected,
                     stringsAsFactors=FALSE,row.names=NULL)  
      }
      out <- list()
@@ -126,20 +150,22 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    getMeasurements=function() {
      out=list()
      for (i in seq_along(.typeMap)) {
-       curType=names(.typeMap)[i]
-       if (length(devices[[curType]])>0) {
-         nm=paste0(curType,"Measurements")
-         if (curType=="block") {
-           measurements=names(devices$block)
-         } else {
-          measurements=character()
+      curType=names(.typeMap)[i]
+      nm=paste0(curType,"Measurements")
+      measurements=list()
+       
+      if (length(devices[[curType]])>0) {
+        if (curType=="block") {
+           measurements=lapply(devices$block, "[[", "name")
+           names(measurements)=names(devices$block)
+        } else {
           for (i in seq_along(devices[[curType]])) {
-            curMs=paste0(names(devices[[curType]])[i], "$", devices[[curType]][[i]]$obj$mdCols)
-            measurements=c(measurements,curMs)
+            curMs=paste0(devices[[curType]][[i]]$name, "$", devices[[curType]][[i]]$obj$mdCols)
+            measurements[devices[[curType]][[i]]$measurements]=curMs
           }
-         }
-         out[[nm]]=measurements
-       }
+        }
+      }
+      out[[nm]]=measurements 
      }
      return(out)
    },
@@ -160,7 +186,8 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
          names(curOut)=ids
          
          ids=ids[ids %in% names(devices$block)]
-         curOut[ids] = lapply(devices$block[ids], .getFromOneDevice)
+         if (length(ids)>0)
+            curOut[ids] = lapply(devices$block[ids], .getFromOneDevice)
          out[[dataName]]$data=curOut
        } else {
          ids=measurements[[dataType]]
@@ -170,27 +197,28 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
          for (j in seq_along(ids)) {
            out[[dataName]]$data[[i]]=list(bp=integer(),value=numeric())
          }
-           
-         splitIds=strsplit(ids, split="\\$")
-         splitIds=data.frame(device=sapply(splitIds,"[",1), col=sapply(splitIds,"[",2),stringsAsFactors=FALSE)
-         devIds=unique(splitIds$device)
-         devIds=devIds[devIds %in% names(devices[[devType]])]
+         if (length(ids)>0) {
+            splitIds=strsplit(ids, split="\\$")
+            splitIds=data.frame(device=sapply(splitIds,"[",1), col=sapply(splitIds,"[",2),stringsAsFactors=FALSE)
+            devIds=unique(splitIds$device)
+            devIds=devIds[devIds %in% names(devices[[devType]])]
          
-         for (j in seq_along(devIds)) {
-           curDevId=devIds[j]
-           dev=devices[[devType]][[curDevId]]
+            for (j in seq_along(devIds)) {
+              curDevId=devIds[j]
+              dev=devices[[devType]][[curDevId]]
            
-           ind=which(splitIds$device==curDevId)
-           curCols=splitIds$col[ind]
-           tmp = which(curCols %in% dev$obj$mdCols)
+              ind=which(splitIds$device==curDevId)
+              curCols=splitIds$col[ind]
+              tmp = which(curCols %in% dev$obj$mdCols)
            
-           ind=ind[tmp]
-           curCols=curCols[tmp]
+              ind=ind[tmp]
+              curCols=curCols[tmp]
            
-           tmp=.getFromOneDevice(dev, cols=curCols)
-           out[[dataName]]$min[ind]=tmp$min
-           out[[dataName]]$max[ind]=tmp$max
-           out[[dataName]]$data[ind]=tmp$data
+              tmp=.getFromOneDevice(dev, cols=curCols)
+              out[[dataName]]$min[ind]=tmp$min
+              out[[dataName]]$max[ind]=tmp$max
+              out[[dataName]]$data[ind]=tmp$data
+            }
          }
        }
        
@@ -240,7 +268,7 @@ startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, 
     server=websockets::create_server(port=port),
     idCounter=0L,
     activeId="",
-    activeType="",
+    chartIdMap=list(),
     typeMap=.typeMap,
     devices=structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
   )

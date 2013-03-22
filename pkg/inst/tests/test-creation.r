@@ -24,7 +24,7 @@ test_that("startEpiviz creates a proper object", {
   
   expect_is(mgr$server, "environment")
   expect_equal(mgr$activeId, "")
-  expect_equal(mgr$activeType, "")
+  expect_equal(mgr$chartIdMap, list())
   
   expect_false(mgr$isClosed())
   mgr$stop()
@@ -46,13 +46,15 @@ test_that("create device works for bp data", {
   expect_is(dev, "EpivizBpDevice")
   expect_is(dev$gr, "GenomicRanges")
   expect_equal(dev$gr, gr)
+  expect_equal(dev$mdCols, "score")
 })
 
-test_that("create device works for bp data", {
+test_that("create device works for gene data", {
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=50),score=rnorm(10))
   dev <- epivizr::newDevice(gr, type="gene", mdCols="score")
   expect_is(dev,"EpivizDevice")
   expect_is(dev, "EpivizGeneDevice")
   expect_is(dev$gr, "GenomicRanges")
   expect_equal(dev$gr, gr)
+  expect_equal(dev$mdCols, "score")
 })

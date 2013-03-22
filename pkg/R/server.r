@@ -1,3 +1,12 @@
+.callbackArray=IndexedArray$new()
+
+
+.requestQueue=Queue$new()
+.sendRequestsInQueue=function(WS) {
+  while (!is.null(request <- .requestQueue$pop()))
+    websockets::websocket_write(request, WS)
+}
+
 .generate_handler=function(mgr) {
   function(DATA, WS, HEADER) {
     message("mgr: data received")
@@ -14,6 +23,11 @@
       }
       response=rjson::toJSON(out)
       websockets::websocket_write(response, WS)
+    } else if (msg$type == "response") {
+      callback = mgr$callbackArray$get(msg$id)
+      if (!is.null(callback)) {
+        callback(msg$data)
+      }
     }
   }
 }
@@ -21,22 +35,38 @@
 .con_established=function(WS) {
   message("mgr: connection established")
   websockets::websocket_write("Hello There!", WS)
+  .sendRequestsInQueue(WS)
 }
 
 .con_closed=function(WS) {
   message("mgr: one connection closed")
 }
 
-.makeRequest_addDevice <- function(devId, server, device, devName) {
+.makeRequest_addDevice <- function(devId, server, device, devName, requestId) {
   type=switch(class(device),
               EpivizBlockDevice="block",
               EpivizBpDevice="bp",
               EpivizGeneDevice="gene")
-  request=list(action="addDevice",
-               data=list(name=devName,
-                         type=type,
-                         id=devId))
-  #dummy_websocket_write(request, server$client_sockets[[1]])
+  
+  if (type=="block") {
+    measurements=structure(list(devName),names=devId)
+  } else {
+    cols=device$mdCols
+    measurements=structure(paste0(devName,"$",cols), names=paste0(devId,"$",cols))
+  }
+  request=list(type="request",
+               id=requestId,
+               action="addDevice",
+               data=list(measurements=measurements,
+                         type=type))
+  
+  request=rjson::toJSON(request)
+  
+  if (length(server$client_sockets)<1) {
+    .requestQueue$push(request)
+  } else {
+    websocket_write(request, server$client_sockets[[1]])
+  }
   invisible(NULL)
 }
 

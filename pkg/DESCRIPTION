@@ -15,3 +15,4 @@ Collate:
     'EpivizDevice.r'
     'EpivizDeviceMgr.r'
     'epivizr-package.r'
+    'server.r'
