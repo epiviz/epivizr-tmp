@@ -25,10 +25,17 @@ EpivizDevice <- setRefClass("EpivizDevice",
     gr="GenomicRanges"
   ),
   methods=list(
-    getData=function(chr, start, end) {
+    subsetGR=function(chr, start, end) {
+      if (!chr %in% seqlevels(gr))
+        return(GRanges())
+      
       query=GRanges(seqnames=chr, ranges=IRanges(start=start,end=end),
                     seqinfo=seqinfo(gr))
       subsetByOverlaps(gr, query)
+    },
+    getData=function(chr, start, end) {
+      ogr=.self$subsetGR(chr,start,end)
+      return(list(start=start(ogr),end=end(ogr)))
     }
   )
 )
@@ -42,14 +49,47 @@ EpivizBpDevice <- setRefClass("EpivizBpDevice",
   fields=list(
     mdCols="ANY"
   ),
-  contains="EpivizDevice"                            
+  contains="EpivizDevice",
+  methods=list(
+    getData=function(chr, start, end, cols) {
+      nCols=length(cols)
+      out=list(min=rep(-6,nCols),
+               max=rep(6,nCols),
+               data=vector("list",nCols))
+      for (i in seq_along(cols)) {
+        out$data[[i]]=list(bp=integer(), value=numeric())
+      }
+      
+      ogr=.self$subsetGR(chr,start,end)
+      if (length(ogr)<1) {
+        return(out)  
+      }
+      
+      bp=start(ogr)
+      
+      for (i in seq_along(cols)) {
+        vals=mcols(ogr)[[cols[i]]]
+        rng=range(pretty(range(vals)))
+        out$min[i]=rng[1]
+        out$max[i]=rng[2]
+        out$data[[i]]=list(bp=bp,value=vals)
+      }
+      return(out)
+    }  
+  )
 )
 
 EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   fields=list(
     mdCols="ANY"
   ),
-  contains="EpivizDevice"                              
+  contains="EpivizDevice",
+  methods=list(
+    getData=function(chr, start, end) {
+      ogr=.self$subsetGR(chr, start, end)
+      out=list(start=start(ogr), end=end(ogr))
+    }  
+  )              
 )
 
 .newBlockDevice <- function(gr)

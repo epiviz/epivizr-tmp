@@ -103,8 +103,9 @@ test_that("getMeasurements works", {
     devId3 <- mgr$addDevice(dev3, "dev3")
     
     res <- mgr$getMeasurements()
-    out <- list(bpMeasurements="dev3", blockMeasurements=c("dev1","dev2"))
+    out <- list(bpMeasurements=paste0(devId3,"$score"), blockMeasurements=c(devId1,devId2))
    
+    #print(res);print(out)
     expect_equal(res,out)
   }, finally=mgr$stop())
 })

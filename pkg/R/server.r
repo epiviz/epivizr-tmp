@@ -3,12 +3,16 @@
     message("mgr: data received")
     print(rawToChar(DATA))
     
-    msg = RJSONIO::fromJSON(rawToChar(DATA))
+    msg = rjson::fromJSON(rawToChar(DATA))
     if (msg$type == "request") {
-      data = switch(msg$action,
-                    getMeasurements=mgr$getMeasurements())
+      out=list(type="response",id=msg$id)
       
-      response=RJSONIO::toJSON(list(type="response", id=msg$id, data=data))
+      if (msg$action=="getMeasurements") {
+        out$data=mgr$getMeasurements()
+      } else if(msg$action=="getAllData") {
+        out$data=mgr$getData(msg$measurements,msg$chr,msg$start,msg$end)
+      }
+      response=rjson::toJSON(out)
       websockets::websocket_write(response, WS)
     }
   }
@@ -32,12 +36,14 @@
                data=list(name=devName,
                          type=type,
                          id=devId))
-  dummy_websocket_write(request, server$client_sockets[[1]])
+  #dummy_websocket_write(request, server$client_sockets[[1]])
+  invisible(NULL)
 }
 
 .makeRequest_refresh <- function(server) {
   request=list(action="refresh")
-  dummy_websocket_write(request, server$client_sockets[[1]])
+  #dummy_websocket_write(request, server$client_sockets[[1]])
+  invisible(NULL)
 }
 
 .makeRequest_navigate <- function(server, chr, start, end) {

@@ -129,36 +129,72 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
        curType=names(.typeMap)[i]
        if (length(devices[[curType]])>0) {
          nm=paste0(curType,"Measurements")
-         deviceNames=sapply(devices[[curType]], "[[", "name")
-         names(deviceNames)=NULL
-         out[[nm]]=deviceNames
+         if (curType=="block") {
+           measurements=names(devices$block)
+         } else {
+          measurements=character()
+          for (i in seq_along(devices[[curType]])) {
+            curMs=paste0(names(devices[[curType]])[i], "$", devices[[curType]][[i]]$obj$mdCols)
+            measurements=c(measurements,curMs)
+          }
+         }
+         out[[nm]]=measurements
        }
      }
      return(out)
    },
-   getData=function(devId, chr, start, end) {
-     if (!is.null(devId)) {
-       slot=which(sapply(lapply(devices,names), function(x) devId %in% x))
-       if (length(slot)<1)
-         stop("device Id not found")
+   getData=function(measurements, chr, start, end) {
+     .getFromOneDevice  <- function(dev, ...) dev$obj$getData(chr=chr,start=start,end=end, ...)
+     out <- list(chr=chr,start=start,end=end)
+     
+     for (i in seq_along(measurements)) {
+       dataType=names(measurements)[i]
+       dataName=gsub("Measurements","Data", dataType)
+       devType = gsub("Measurements","", dataType)
        
-       devType=names(typeMap)[slot]
-       dev=devices[[devType]][[devId]]
+       out[[dataName]]=list(start=start,end=end,chr=chr)
        
-       out=list(dev$obj$getData(chr,start,end))
-       names(out)=devId
-       out=list(out)
-       names(out)=devType
-     } else {
-       .getFromOneDevice  <- function(dev) dev$obj$getData(chr=chr,start=start,end=end)
-       out=list()
-       for (i in seq_along(typeMap)) {
-         devType=names(typeMap)[i]
-         if (length(devices[[devType]])>0) {
-           out[[devType]]=lapply(devices[[devType]], .getFromOneDevice)
-           names(out[[devType]])=names(devices[[devType]])
+       if (dataType=="blockMeasurements") {
+         ids=measurements$blockMeasurements
+         curOut=lapply(seq_along(ids), function(i) list(start=integer(),end=integer()))
+         names(curOut)=ids
+         
+         ids=ids[ids %in% names(devices$block)]
+         curOut[ids] = lapply(devices$block[ids], .getFromOneDevice)
+         out[[dataName]]$data=curOut
+       } else {
+         ids=measurements[[dataType]]
+         out[[dataName]]$min=structure(rep(-6,length(ids)),names=ids)
+         out[[dataName]]$max=structure(rep(6,length(ids)), names=ids)
+         out[[dataName]]$data=structure(vector("list",length(ids)), names=ids)
+         for (j in seq_along(ids)) {
+           out[[dataName]]$data[[i]]=list(bp=integer(),value=numeric())
+         }
+           
+         splitIds=strsplit(ids, split="\\$")
+         splitIds=data.frame(device=sapply(splitIds,"[",1), col=sapply(splitIds,"[",2),stringsAsFactors=FALSE)
+         devIds=unique(splitIds$device)
+         devIds=devIds[devIds %in% names(devices[[devType]])]
+         
+         for (j in seq_along(devIds)) {
+           curDevId=devIds[j]
+           dev=devices[[devType]][[curDevId]]
+           
+           ind=which(splitIds$device==curDevId)
+           curCols=splitIds$col[ind]
+           tmp = which(curCols %in% dev$obj$mdCols)
+           
+           ind=ind[tmp]
+           curCols=curCols[tmp]
+           
+           tmp=.getFromOneDevice(dev, cols=curCols)
+           out[[dataName]]$min[ind]=tmp$min
+           out[[dataName]]$max[ind]=tmp$max
+           out[[dataName]]$data[ind]=tmp$data
          }
        }
+       
+       
      }
      return(out)
    },
