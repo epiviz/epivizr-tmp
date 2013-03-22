@@ -52,7 +52,7 @@ test_that("addDevice works for bp", {
 })
 
 test_that("rmDevice works", {
-  sendRequest=TRUE
+  sendRequest=FALSE
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), score1=rnorm(length(seq(1,100,by=25))),score2=rnorm(length(seq(1,100,by=25))))
   
   mgr <- .startMGR()
@@ -83,22 +83,22 @@ test_that("listDevices works", {
   
   mgr <- .startMGR()
   tryCatch({
-    devId1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest)
-    devId2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest)
-    devId3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp")
+    devId1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest); if (sendRequest) scan();
+    devId2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest); if (sendRequest) scan();
+    devId3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp"); if (sendRequest) scan();
     
     devs <- mgr$listDevices()
     expected_df <- list(bp=data.frame(id=devId3,
                                       active="*",
                                       name="dev3",
                                       length=length(gr3),
-                                      connected="",
+                                      connected=ifelse(sendRequest,"*",""),
                                       stringsAsFactors=FALSE),
                         block=data.frame(id=c(devId1,devId2),
                               active=c("",""),
                               name=c("dev1","dev2"),
                               length=c(length(gr1),length(gr2)),
-                              connected=c("",""),
+                              connected=ifelse(sendRequest,c("*","*"),c("","")),
                               stringsAsFactors=FALSE)
                         )
     expect_equal(devs, expected_df)
@@ -112,8 +112,8 @@ test_that("setActive works", {
   
   mgr <- .startMGR()
   tryCatch({
-    devId1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest)
-    devId2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest)
+    devId1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest); if (sendRequest) scan();
+    devId2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest); if (sendRequest) scan();
   
     mgr$setActive(devId1)
     devs <- mgr$listDevices()
@@ -121,7 +121,7 @@ test_that("setActive works", {
                             active=c("*",""),
                             name=c("dev1","dev2"),
                             length=c(length(gr1),length(gr2)),
-                            connected=c("",""),
+                            connected=ifelse(sendRequest,c("*","*"),c("","")),
                             stringsAsFactors=FALSE))
     expect_equal(devs, expected_df)
   },finally=mgr$stop())
