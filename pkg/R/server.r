@@ -42,13 +42,7 @@
   message("mgr: one connection closed")
 }
 
-.makeRequest_addDevice <- function(server, requestId, devType, measurements) {
-  request=list(type="request",
-               id=requestId,
-               action="addDevice",
-               data=list(measurements=measurements,
-                         type=devType))
-  
+.sendRequest <- function(server, request) {
   request=rjson::toJSON(request)
   
   if (length(server$client_sockets)<1) {
@@ -59,6 +53,24 @@
   invisible(NULL)
 }
 
+.makeRequest_addDevice <- function(server, requestId, devType, measurements) {
+  request=list(type="request",
+               id=requestId,
+               action="addDevice",
+               data=list(measurements=measurements,
+                         type=devType))
+  .sendRequest(server, request)
+}
+
+.makeRequest_rmDevice <- function(server, requestId, chartId, measurements, devType) {
+  request=list(type="request",
+               id=requestId,
+               action="rmDevice",
+               data=list(id=chartId,
+                         measurements=measurements,
+                         type=devType))
+  .sendRequest(server, request)
+}
 .makeRequest_refresh <- function(server) {
   request=list(action="refresh")
   #dummy_websocket_write(request, server$client_sockets[[1]])

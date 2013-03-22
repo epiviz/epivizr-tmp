@@ -99,6 +99,8 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      
      devType=names(typeMap)[slot]
      devName=devices[[devType]][[devId]]$name
+     measurements=devices[[devType]][[devId]]$measurements
+     
      devices[[devType]][[devId]] <<- NULL
      
      if (activeId == devId) {
@@ -109,14 +111,13 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      if(!is.null(chartIdMap[[devId]])) {
        chartId=chartIdMap[[devId]]
        chartIdMap[[devId]] <<- NULL
-       .makeRequest_rmDevice(chartIdMap[[devId]], mgr$finishRmDevice(devName))
+       callback=function(data) {
+         message("device ", devName, " removed and disconnected")  
+       }
+       requestId=callbackArray$append(callback)
+       .makeRequest_rmDevice(.self$server, requestId, chartId, measurements, devType)
      }
      invisible(NULL)
-   },
-   finishRmDevice=function(devName) {
-     function() {
-       message("device", devName, "removed and disconnected")
-     }
    },
    setActive=function (devId) {
      'set given device as active in browser'

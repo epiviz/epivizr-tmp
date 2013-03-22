@@ -1,7 +1,7 @@
 context("device management")
 
 test_that("addDevice works for blocks", {
-  sendRequest=TRUE
+  sendRequest=FALSE
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
   mgr <- .startMGR()
   
@@ -26,8 +26,8 @@ test_that("addDevice works for blocks", {
 })
 
 test_that("addDevice works for bp", {
-  sendRequest=TRUE
-  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), score=rnorm(length(seq(1,100,by=25))))
+  sendRequest=FALSE
+  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), score1=rnorm(length(seq(1,100,by=25))),score2=rnorm(length(seq(1,100,by=25))))
   mgr <- .startMGR()
   
   tryCatch({
@@ -40,9 +40,9 @@ test_that("addDevice works for bp", {
     expect_equal(length(mgr$devices$bp), 1)
     expect_false(is.null(mgr$devices$bp[[devId]]))
     expect_equal(mgr$devices$bp[[devId]]$name, "dev1")
-    expect_equal(mgr$devices$bp[[devId]]$measurements, paste0(devId,"$","score"))
+    expect_equal(mgr$devices$bp[[devId]]$measurements, paste0(devId,"$","score",1:2))
     expect_equal(mgr$devices$bp[[devId]]$obj$gr, gr)
-    expect_equal(mgr$devices$bp[[devId]]$obj$mdCols, "score")
+    expect_equal(mgr$devices$bp[[devId]]$obj$mdCols, paste0("score",1:2))
     expect_equal(mgr$activeId, devId)
     
     if (sendRequest) {
@@ -52,13 +52,22 @@ test_that("addDevice works for bp", {
 })
 
 test_that("rmDevice works", {
-  sendRequest=FALSE
-  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
+  sendRequest=TRUE
+  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), score1=rnorm(length(seq(1,100,by=25))),score2=rnorm(length(seq(1,100,by=25))))
+  
   mgr <- .startMGR()
   
   tryCatch({
-    devId <- mgr$addDevice(gr, "dev1", sendRequest=sendRequest)
+    devId <- mgr$addDevice(gr, "dev1", sendRequest=sendRequest, type="bp")
+    if (sendRequest) {
+      message("Press enter to continue")
+      scan()
+    }
     mgr$rmDevice(devId)
+    if (sendRequest) {
+      message("Press enter to continue")
+      scan()
+    }
   
     expect_equal(length(mgr$devices$block), 0)
     expect_true(is.null(mgr$devices$block[[devId]]))
