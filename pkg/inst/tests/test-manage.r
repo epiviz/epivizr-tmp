@@ -26,15 +26,17 @@ test_that("addDevice works for blocks", {
 })
 
 test_that("addDevice works for bp", {
-  sendRequest=FALSE
+  sendRequest=TRUE
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), score=rnorm(length(seq(1,100,by=25))))
   mgr <- .startMGR()
   
   tryCatch({
     devId <- mgr$addDevice(gr, "dev1", sendRequest=sendRequest, type="bp")
     
-    if (sendRequest)
-      input()
+    if (sendRequest) {
+      message("Press enter to continue")
+      scan()
+    }
     expect_equal(length(mgr$devices$bp), 1)
     expect_false(is.null(mgr$devices$bp[[devId]]))
     expect_equal(mgr$devices$bp[[devId]]$name, "dev1")
@@ -42,6 +44,10 @@ test_that("addDevice works for bp", {
     expect_equal(mgr$devices$bp[[devId]]$obj$gr, gr)
     expect_equal(mgr$devices$bp[[devId]]$obj$mdCols, "score")
     expect_equal(mgr$activeId, devId)
+    
+    if (sendRequest) {
+      expect_false(is.null(mgr$chartIdMap[[devId]]))
+    }
   }, finally=mgr$stop())
 })
 

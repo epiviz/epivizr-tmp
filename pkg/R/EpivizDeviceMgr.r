@@ -65,11 +65,13 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      idCounter <<- idCounter + 1L
      devId <- sprintf("epivizDev_%s_%d", type, .self$idCounter)
      if (type == "block") {
-       measurements=devId
+       msIds=devId
+       measurements=structure(list(devName),names=msIds)
      } else {
-       measurements=paste0(devId,"$",device$mdCols)
+       msIds=paste0(devId,"$",device$mdCols)
+       measurements=structure(as.list(paste0(devName,"$",device$mdCols)),names=msIds)
      }
-     devRecord=list(measurements=measurements, name=devName, obj=device)
+     devRecord=list(measurements=msIds, name=devName, obj=device)
      devices[[slot]][[devId]] <<- devRecord
      activeId <<- devId
      
@@ -80,7 +82,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
          message("Device ", devName, " added to browser and connected")
        }
        requestId=callbackArray$append(callback)
-      .makeRequest_addDevice(devId, .self$server, device, devName, requestId)
+      .makeRequest_addDevice(.self$server, requestId, type, measurements)
      } 
      return(devId)
    },

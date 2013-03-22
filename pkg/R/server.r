@@ -42,23 +42,12 @@
   message("mgr: one connection closed")
 }
 
-.makeRequest_addDevice <- function(devId, server, device, devName, requestId) {
-  type=switch(class(device),
-              EpivizBlockDevice="block",
-              EpivizBpDevice="bp",
-              EpivizGeneDevice="gene")
-  
-  if (type=="block") {
-    measurements=structure(list(devName),names=devId)
-  } else {
-    cols=device$mdCols
-    measurements=structure(paste0(devName,"$",cols), names=paste0(devId,"$",cols))
-  }
+.makeRequest_addDevice <- function(server, requestId, devType, measurements) {
   request=list(type="request",
                id=requestId,
                action="addDevice",
                data=list(measurements=measurements,
-                         type=type))
+                         type=devType))
   
   request=rjson::toJSON(request)
   
