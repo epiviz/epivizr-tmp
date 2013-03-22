@@ -45,6 +45,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    },
    stop=function() {
      'stop epiviz connection'
+     .emptyRequestQueue()
      websocket_close(server)
      invisible(server)
    },
@@ -188,35 +189,31 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
          curOut=lapply(seq_along(ids), function(i) list(start=integer(),end=integer()))
          names(curOut)=ids
          
-         ids=ids[ids %in% names(devices$block)]
+         ids=ids[ids %in% sapply(devices$block, "[[", "measurements")]
          if (length(ids)>0)
             curOut[ids] = lapply(devices$block[ids], .getFromOneDevice)
          out[[dataName]]$data=curOut
        } else {
          ids=measurements[[dataType]]
+         
          out[[dataName]]$min=structure(rep(-6,length(ids)),names=ids)
          out[[dataName]]$max=structure(rep(6,length(ids)), names=ids)
          out[[dataName]]$data=structure(vector("list",length(ids)), names=ids)
          for (j in seq_along(ids)) {
-           out[[dataName]]$data[[i]]=list(bp=integer(),value=numeric())
+           out[[dataName]]$data[[j]]=list(bp=integer(),value=numeric())
          }
          if (length(ids)>0) {
-            splitIds=strsplit(ids, split="\\$")
-            splitIds=data.frame(device=sapply(splitIds,"[",1), col=sapply(splitIds,"[",2),stringsAsFactors=FALSE)
-            devIds=unique(splitIds$device)
-            devIds=devIds[devIds %in% names(devices[[devType]])]
-         
-            for (j in seq_along(devIds)) {
-              curDevId=devIds[j]
+           theMeasurements=lapply(devices[[devType]],"[[","measurements")
+           devIndexes=sapply(ids, function(id) which(sapply(theMeasurements, function(x) id %in% x)))
+           devIds=split(seq_along(ids),names(devices[[devType]])[devIndexes])
+           
+           for (j in seq_along(devIds)) {
+              curDevId=names(devIds)[j]
               dev=devices[[devType]][[curDevId]]
            
-              ind=which(splitIds$device==curDevId)
-              curCols=splitIds$col[ind]
-              tmp = which(curCols %in% dev$obj$mdCols)
-           
-              ind=ind[tmp]
-              curCols=curCols[tmp]
-           
+              ind=devIds[[j]]
+              curCols=dev$obj$mdCols[match(ids[ind],dev$measurements)]
+              
               tmp=.getFromOneDevice(dev, cols=curCols)
               out[[dataName]]$min[ind]=tmp$min
               out[[dataName]]$max[ind]=tmp$max
@@ -224,8 +221,6 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
             }
          }
        }
-       
-       
      }
      return(out)
    },

@@ -6,6 +6,9 @@
   while (!is.null(request <- .requestQueue$pop()))
     websockets::websocket_write(request, WS)
 }
+.emptyRequestQueue=function() {
+  while (!is.null(.requestQueue$pop()))
+}
 
 .generate_handler=function(mgr) {
   function(DATA, WS, HEADER) {
