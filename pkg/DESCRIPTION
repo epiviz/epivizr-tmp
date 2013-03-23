@@ -12,6 +12,7 @@ Suggests:
     testthat,
     roxygen2
 Collate:
+    'utils.r'
     'EpivizDevice.r'
     'EpivizDeviceMgr.r'
     'epivizr-package.r'

@@ -1,12 +1,12 @@
 library(devtools)
-load_all("pkg")
+load_all("pkg",reset=TRUE)
 
 library(GenomicRanges)
 load("thytest.rda")
 
 localURL="http://localhost/~hcorrada/epiviz/index.php"
 mgr=startEpiviz(localURL=localURL,debug=TRUE,openBrowser=TRUE)
-thygrId=mgr$addDevice(epivizr::newDevice(thygr), "thyroid_blocks")
+thygrId=mgr$addDevice(thygr, "thyroid_blocks")
 
 
 
