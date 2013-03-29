@@ -1,11 +1,13 @@
 .callbackArray=IndexedArray$new()
 
-
 .requestQueue=Queue$new()
+
 .sendRequestsInQueue=function(WS) {
-  while (!is.null(request <- .requestQueue$pop()))
+  while (!is.null(request <- .requestQueue$pop())) {
     websockets::websocket_write(request, WS)
+  }
 }
+
 .emptyRequestQueue=function() {
   while (!is.null(.requestQueue$pop())) {
     
@@ -33,14 +35,20 @@
       if (!is.null(callback)) {
         callback(msg$data)
       }
+      if (!.isDaemonized && .waitingForResponse) {
+        .waitingForResponse <<- FALSE
+      }
     }
   }
 }
 
-.con_established=function(WS) {
-  message("mgr: connection established")
-  websockets::websocket_write("Hello There!", WS)
-  .sendRequestsInQueue(WS)
+.generate_establish_handler=function(mgr) {
+function(WS) {
+    message("mgr: connection established")
+    websockets::websocket_write("Hello There!", WS)
+    mgr$is_connected <- TRUE
+    .sendRequestsInQueue(WS)
+  }
 }
 
 .con_closed=function(WS) {
@@ -54,6 +62,13 @@
     .requestQueue$push(request)
   } else {
     websocket_write(request, server$client_sockets[[1]])
+    
+    if (!.isDaemonized) {
+      .waitingForResponse <<- TRUE
+      while (.waitingForResponse) {
+        service(server)
+      }
+    }
   }
   invisible(NULL)
 }
@@ -85,4 +100,5 @@
 .makeRequest_navigate <- function(server, chr, start, end) {
   request=list(action="navigate",
                data=list(chr=chr,start=start,end=end))
+  invisible(NULL)
 }

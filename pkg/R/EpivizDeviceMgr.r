@@ -37,11 +37,30 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     activeId="character",
     chartIdMap="list",
     server="environment",
+    is_connected="logical",
+    socket_port="integer",
     callbackArray="IndexedArray"),
   methods=list(
    isClosed=function() {
      'check if connection is closed'
     !exists("server_socket", server) || is.null(server$server_socket)
+   },
+   openBrowser=function(url) {
+     browseURL(url)
+     
+     if (!.isDaemonized) {
+       while (!is_connected) {
+        service(server) 
+       }
+     }
+   },
+   listen=function() {
+     #TODO: add tryCatch statement?
+#      if (.Platform$OS == "unix") {
+#         daemonize(server)
+#      } else {
+     while(TRUE) service(server)   
+#      }
    },
    stop=function() {
      'stop epiviz connection'
@@ -53,9 +72,9 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      'add device to epiviz browser'
      if (!is(gr, "GenomicRanges"))
        stop("gr must be of class 'GenomicRanges'")
-     if (.self$isClosed())
-       stop("manager connection is closed")
-     
+#      if (.self$isClosed())
+#        stop("manager connection is closed")
+#      
      device = newDevice(gr, ...)
      slot=match(class(device), sapply(typeMap, "[[", "class"))
      if (is.na(slot)) {
@@ -236,6 +255,9 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    },
    data_handler=function() {
      .generate_handler(.self)
+   },
+   establish_callback=function() {
+     .generate_establish_handler(.self)
    }
   )
 )
@@ -264,6 +286,7 @@ startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, 
   mgr <- EpivizDeviceMgr$new(
     #TODO: tryCatch statement trying different ports
     server=websockets::create_server(port=port),
+    is_connected=FALSE,
     idCounter=0L,
     activeId="",
     chartIdMap=list(),
@@ -272,33 +295,39 @@ startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, 
   )
   tryCatch({
     websockets::setCallback("receive", mgr$data_handler(), mgr$server)
-    websockets::setCallback("established", .con_established, mgr$server)
+    websockets::setCallback("established", mgr$establish_callback(), mgr$server)
     websockets::setCallback("closed", .con_closed, mgr$server)
   
-    #TODO: add tryCatch statement?
-    daemonize(mgr$server)
-  
-    if (missing(localURL) || is.null(localURL)) {
-      url="http://epiviz.cbcb.umd.edu/index.php"
+    if (.Platform$OS=="unix") {
+      daemonize(mgr$server)
+      .isDaemonized <<- TRUE
     } else {
-      url=localURL
+      .isDaemonized <<- FALSE
     }
-  
-    controllerHost=sprintf("ws://localhost:%d", port)
-    url=sprintf("%s?chr=%s&start=%d&end=%d&controllerHost=%s&debug=%s&",
-                url,
-                chr,
-                as.integer(start),
-                as.integer(end),
-                controllerHost,
-                ifelse(debug,"true","false"))
     
     if (openBrowser) {
+      if (missing(localURL) || is.null(localURL)) {
+        url="http://epiviz.cbcb.umd.edu/index.php"
+      } else {
+        url=localURL
+      }
+      
+      controllerHost=sprintf("ws://localhost:%d", port)
+      url=sprintf("%s?chr=%s&start=%d&end=%d&controllerHost=%s&debug=%s&",
+                  url,
+                  chr,
+                  as.integer(start),
+                  as.integer(end),
+                  controllerHost,
+                  ifelse(debug,"true","false"))
+      
+      
       message("Opening browser...")
-      browseURL(url)
+      mgr$openBrowser(url)
     }
   }, error=function(e) {
-    mgr$close()
+    print(e)
+    mgr$stop()
   })
   return(mgr)
 }

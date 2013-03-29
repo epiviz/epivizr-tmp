@@ -1,11 +1,12 @@
 context("device management")
 
 test_that("addDevice works for blocks", {
-  sendRequest=FALSE
+  sendRequest=TRUE
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
   mgr <- .startMGR()
   
   tryCatch({
+    mgr$listen()
     devId <- mgr$addDevice(gr, "dev1", sendRequest=sendRequest)
   
     if (sendRequest) {
