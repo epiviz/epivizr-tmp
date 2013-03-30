@@ -45,7 +45,8 @@
 .generate_establish_handler=function(mgr) {
 function(WS) {
     message("mgr: connection established")
-    websockets::websocket_write("Hello There!", WS)
+    # Causing error on JS side, when parsing response as JSon: Unexpected Token H
+    # websockets::websocket_write("Hello There!", WS)
     mgr$is_connected <- TRUE
     .sendRequestsInQueue(WS)
   }
