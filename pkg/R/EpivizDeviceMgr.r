@@ -36,37 +36,34 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     idCounter="integer",
     activeId="character",
     chartIdMap="list",
-    server="environment",
-    is_connected="logical",
-    socket_port="integer",
+    server="EpivizServer",
     callbackArray="IndexedArray"),
   methods=list(
+   initialize=function(port=7312L, ...) {
+     idCounter <<- 0L,
+     activeId <<- "",
+     chartIdMap <<- list(),
+     typeMap <<- .typeMap,
+     devices <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
+     server <<- epivir::createServer(port=7312L, .self)
+   },
+   finalize=function() {
+     stop()
+   },
    isClosed=function() {
      'check if connection is closed'
-    !exists("server_socket", server) || is.null(server$server_socket)
+     server$isClosed()
    },
    openBrowser=function(url) {
      browseURL(url)
-     
-     if (!.isDaemonized) {
-       while (!is_connected) {
-        service(server) 
-       }
-     }
+     server$connect()
    },
    listen=function() {
-     #TODO: add tryCatch statement?
-#      if (.Platform$OS == "unix") {
-#         daemonize(server)
-#      } else {
-     while(TRUE) service(server)   
-#      }
+     server$listen()
    },
    stop=function() {
      'stop epiviz connection'
-     .emptyRequestQueue()
-     websocket_close(server)
-     invisible(server)
+     server$stop()
    },
    addDevice=function(gr, devName, sendRequest=TRUE, ...) {
      'add device to epiviz browser'
@@ -102,14 +99,9 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
          message("Device ", devName, " added to browser and connected")
        }
        requestId=callbackArray$append(callback)
-      .makeRequest_addDevice(.self$server, requestId, type, measurements)
+       server$addDevice(requestId, type, measurements)
      } 
      return(devId)
-   },
-   finishAddDevice=function(devId, devName) {
-     function(data) {
-       
-     }
    },  
    rmDevice=function(devId) {
      'delete device from epiviz browser'
@@ -135,7 +127,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
          message("device ", devName, " removed and disconnected")  
        }
        requestId=callbackArray$append(callback)
-       .makeRequest_rmDevice(.self$server, requestId, chartId, measurements, devType)
+       server$rmDevice(requestId, chartId, measurements, devType)
      }
      invisible(NULL)
    },
@@ -245,20 +237,12 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    },
    refresh=function() {
      'refresh browser'
-     .makeRequest_refresh(server)
-     invisible(NULL)
+     server$refresh()
    },
    navigate=function(chr, start, end) {
      'navigate to given position'
-     .makeRequest_navigate(server, chr=chr, start=start, end=end)
-     invisible(NULL)
+     server$navigate(chr=chr,start=start,end=end)
    },
-   data_handler=function() {
-     .generate_handler(.self)
-   },
-   establish_callback=function() {
-     .generate_establish_handler(.self)
-   }
   )
 )
 
@@ -282,29 +266,8 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' @export
 startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, debug=FALSE, openBrowser=TRUE) {
   message("Opening websocket...")
-  devs=
-  mgr <- EpivizDeviceMgr$new(
-    #TODO: tryCatch statement trying different ports
-    server=websockets::create_server(port=port),
-    is_connected=FALSE,
-    idCounter=0L,
-    activeId="",
-    chartIdMap=list(),
-    typeMap=.typeMap,
-    devices=structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
-  )
+  mgr <- EpivizDeviceMgr$new(port=port)
   tryCatch({
-    websockets::setCallback("receive", mgr$data_handler(), mgr$server)
-    websockets::setCallback("established", mgr$establish_callback(), mgr$server)
-    websockets::setCallback("closed", .con_closed, mgr$server)
-  
-    if (.Platform$OS=="unix") {
-      daemonize(mgr$server)
-      .isDaemonized <<- TRUE
-    } else {
-      .isDaemonized <<- FALSE
-    }
-    
     if (openBrowser) {
       if (missing(localURL) || is.null(localURL)) {
         url="http://epiviz.cbcb.umd.edu/index.php"
@@ -326,8 +289,8 @@ startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, 
       mgr$openBrowser(url)
     }
   }, error=function(e) {
-    print(e)
     mgr$stop()
+    stop("Error starting Epiviz: ", e)
   })
   return(mgr)
 }
