@@ -7,7 +7,8 @@ Title: R Interface to epiviz visualization tool
 Description: Websocket communication to http://epiviz.cbcb.umd.edu
 Depends:
     websockets,
-    GenomicRanges
+    GenomicRanges,
+    GenomicIntervalTree
 Suggests:
     testthat,
     roxygen2

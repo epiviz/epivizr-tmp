@@ -22,7 +22,7 @@
 #' @export
 EpivizDevice <- setRefClass("EpivizDevice",
   fields=list(
-    gr="GenomicRanges"
+    gr="GIntervalTree"
   ),
   methods=list(
     subsetGR=function(chr, start, end) {
@@ -94,21 +94,21 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
 
 .newBlockDevice <- function(gr)
 {
-  return(EpivizBlockDevice$new(gr=gr))
+  return(EpivizBlockDevice$new(gr=GIntervalTree(gr)))
 }
 
 .newBpDevice <- function(gr, mdCols=names(mcols(gr))) {
   if (!all(mdCols %in% names(mcols(gr))))
     stop("mdCols not found in GRanges object")
   
-  return(EpivizBpDevice$new(gr=gr,mdCols=mdCols))
+  return(EpivizBpDevice$new(gr=GIntervalTree(gr),mdCols=mdCols))
 }
 
 .newGeneDevice <- function(gr, mdCols=names(mcols(gr))) {
   if (!all(mdCols %in% names(mcols(gr))))
     stop("mdCols not found in GRanges object")
   
-  return(EpivizGeneDevice$new(gr=gr,mdCols=mdCols))
+  return(EpivizGeneDevice$new(gr=GIntervalTree(gr),mdCols=mdCols))
 }
 
 .typeMap <- list(gene=list(constructor=.newGeneDevice,class="EpivizGeneDevice"),

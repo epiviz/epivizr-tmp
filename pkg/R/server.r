@@ -1,5 +1,3 @@
-.callbackArray=IndexedArray$new()
-
 .requestQueue=Queue$new()
 
 .sendRequestsInQueue=function(WS) {
