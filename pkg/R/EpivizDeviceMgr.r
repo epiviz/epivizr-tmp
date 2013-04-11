@@ -40,10 +40,10 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     callbackArray="IndexedArray"),
   methods=list(
    initialize=function(port=7312L, ...) {
-     idCounter <<- 0L,
-     activeId <<- "",
-     chartIdMap <<- list(),
-     typeMap <<- .typeMap,
+     idCounter <<- 0L
+     activeId <<- ""
+     chartIdMap <<- list()
+     typeMap <<- .typeMap
      devices <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
      server <<- epivir::createServer(port=7312L, .self)
    },
@@ -242,7 +242,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    navigate=function(chr, start, end) {
      'navigate to given position'
      server$navigate(chr=chr,start=start,end=end)
-   },
+   }
   )
 )
 
