@@ -1,46 +1,49 @@
 EpivizServer <- setRefClass("EpivizServer",
   contains="VIRTUAL",
   fields=list(
+    port="integer",
     websocket="environment",
     requestQueue="Queue"
   ),
   methods=list(
-    initizalize=function(port=7312L, mgr=NULL, ...) {
-      if (!is(mgr, "EpivizDeviceMgr")) {
-        stop("Error in initialize EpivizServer, mgr should be of class EpivizDeviceMgr")
-      }
-      
-      websocket <<- websockets::create_server(port=port)
-      websockets::setCallback("receive", wrapDataCallback(mgr), websocket)
-      websockets::setCallback("established", connectionEstablishedCallback, websocket)
-      websockets::setCallback("closed", connectionClosedCallback, websocket)
-      
-      requestQueue <<- Queue$new()
+    openSocket=function() {
+      tryCatch({
+        websocket <<- websockets::create_server(port)
+        websockets::setCallback("established", .self$connectionEstablishedCallback, websocket)
+        websockets::setCallback("closed", .self$connectionClosedCallback, websocket)
+      }, error=function(e) {
+        print("Error opening socket for epiviz server: ", e)
+      })
+      invisible(NULL)       
     },
-    wrapDataCallback=function(mgr) {
-        function(DATA, WS, HEADER) {
-          message("server: data received")
-          print(rawToChar(DATA))
+    finalize=function() {
+      stop()
+    },
+    bindManager=function(mgr) {
+      .callbackFun=function(DATA, WS, HEADER) {
+        message("server: data received")
+        print(rawToChar(DATA))
         
-          msg = rjson::fromJSON(rawToChar(DATA))
-          if (msg$type == "request") {
-            out=list(type="response",id=msg$id)
+        msg = rjson::fromJSON(rawToChar(DATA))
+        if (msg$type == "request") {
+          out=list(type="response",id=msg$id)
           
-            if (msg$action=="getMeasurements") {
-              out$data=mgr$getMeasurements()
-            } else if(msg$action=="getAllData") {
-              out$data=mgr$getData(msg$measurements,msg$chr,msg$start,msg$end)
-            }
-            response=rjson::toJSON(out)
-            websockets::websocket_write(response, WS)
-          } else if (msg$type == "response") {
-            callback = mgr$callbackArray$get(msg$id)
-            if (!is.null(callback)) {
-              callback(msg$data)
-            }
-            .self$unblock()
+          if (msg$action=="getMeasurements") {
+            out$data=mgr$getMeasurements()
+          } else if(msg$action=="getAllData") {
+            out$data=mgr$getData(msg$measurements,msg$chr,msg$start,msg$end)
           }
+          response=rjson::toJSON(out)
+          websockets::websocket_write(response, WS)
+        } else if (msg$type == "response") {
+          callback = mgr$callbackArray$get(msg$id)
+          if (!is.null(callback)) {
+            callback(msg$data)
+          }
+          .self$unblock()
         }
+      }
+      websockets::setCallback("receive", .callbackFun, websocket)
     },
     connectionEstablishedCallback=function(WS) {
       message("mgr: connection established")
@@ -53,8 +56,10 @@ EpivizServer <- setRefClass("EpivizServer",
       !exists("server_socket", websocket) || is.null(websocket$server_socket)
     },
     stop=function() {
-      emptyRequestQueue()
-      websockets::websocket_close(websocket)
+      if (!isClosed()) {
+        emptyRequestQueue()
+        websockets::websocket_close(websocket)
+      }
       invisible(NULL)
     },
     connect=function() {
@@ -69,7 +74,7 @@ EpivizServer <- setRefClass("EpivizServer",
     unblock=function() {
       invisible(NULL)
     },
-    sendRequest <- function(request) {
+    sendRequest=function(request) {
       request=rjson::toJSON(request)
       
       if (length(websocket$client_sockets)<1) {
@@ -117,10 +122,13 @@ EpivizServer <- setRefClass("EpivizServer",
   )                           
 )
 
-createServer <- function(mgr, port=7312L) {
+createServer <- function(port=7312L) {
+  server <- NULL
   if (.Platform$OS == "unix") {
-    return(EpivizNonBlockingServer$new(port, mgr))
+    server <- EpivizNonBlockingServer$new(port=port)
   } else {
-    return(EpivizBlockingServer$new(port, mgr))
+    server <- EpivizBlockingServer$new(port=port)
   }
+  server$openSocket()
+  return(server)
 }

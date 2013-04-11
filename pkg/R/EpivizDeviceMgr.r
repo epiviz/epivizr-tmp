@@ -39,13 +39,16 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     server="EpivizServer",
     callbackArray="IndexedArray"),
   methods=list(
-   initialize=function(port=7312L, ...) {
+   initialize=function(...) {
      idCounter <<- 0L
      activeId <<- ""
      chartIdMap <<- list()
      typeMap <<- .typeMap
      devices <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
-     server <<- epivir::createServer(port=7312L, .self)
+     callSuper(...)
+   },
+   bindToServer=function() {
+     server$bindManager(.self)
    },
    finalize=function() {
      stop()
@@ -266,7 +269,16 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' @export
 startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, debug=FALSE, openBrowser=TRUE) {
   message("Opening websocket...")
-  mgr <- EpivizDeviceMgr$new(port=port)
+  server <- epivizr::createServer(port=port)
+  
+  tryCatch({
+    mgr <- EpivizDeviceMgr$new(server=server)
+    mgr$bindToServer()
+  }, error=function(e) {
+    server$stop()
+    stop("Error starting Epiviz: ", e)
+  })
+  
   tryCatch({
     if (openBrowser) {
       if (missing(localURL) || is.null(localURL)) {

@@ -5,11 +5,11 @@ EpivizBlockingServer <- setRefClass("EpivizBlockingServer",
     waitingForResponse="logical"
   ),
   methods=list(
-    initialize=function(port=7312L, mgr=NULL) {
-      callSuper(port, mgr, ...)
+    initialize=function(...) {
       isConnected <<- FALSE
       waitingForResponse <<- FALSE
-    }
+      callSuper(...)
+    },
     connectionEstablishedCallback=function(WS) {
       callSuper(WS)
       isConnected <<- TRUE

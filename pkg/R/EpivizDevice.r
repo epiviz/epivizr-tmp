@@ -22,9 +22,13 @@
 #' @export
 EpivizDevice <- setRefClass("EpivizDevice",
   fields=list(
-    gr="GIntervalTree"
+    gr="GRanges",
+    tree="PartitionedIntervalTree"
   ),
   methods=list(
+    makeTree=function() {
+      tree <<- PartitionedIntervalTree(ranges(gr), seqnames(gr))
+    },
     subsetGR=function(chr, start, end) {
       if (!chr %in% seqlevels(gr))
         return(GRanges())
@@ -94,21 +98,21 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
 
 .newBlockDevice <- function(gr)
 {
-  return(EpivizBlockDevice$new(gr=GIntervalTree(gr)))
+  return(EpivizBlockDevice$new(gr=gr))
 }
 
 .newBpDevice <- function(gr, mdCols=names(mcols(gr))) {
   if (!all(mdCols %in% names(mcols(gr))))
     stop("mdCols not found in GRanges object")
   
-  return(EpivizBpDevice$new(gr=GIntervalTree(gr),mdCols=mdCols))
+  return(EpivizBpDevice$new(gr=gr,mdCols=mdCols))
 }
 
 .newGeneDevice <- function(gr, mdCols=names(mcols(gr))) {
   if (!all(mdCols %in% names(mcols(gr))))
     stop("mdCols not found in GRanges object")
   
-  return(EpivizGeneDevice$new(gr=GIntervalTree(gr),mdCols=mdCols))
+  return(EpivizGeneDevice$new(gr=gr,mdCols=mdCols))
 }
 
 .typeMap <- list(gene=list(constructor=.newGeneDevice,class="EpivizGeneDevice"),
@@ -119,6 +123,7 @@ newDevice <- function(gr, type="block",...)
 {
   if (!type %in% names(.typeMap))
     stop("Unknown device type")
-  
-  return(.typeMap[[type]]$constructor(gr,...))
+  obj <- .typeMap[[type]]$constructor(gr)
+  obj$makeTree()
+  return(obj)
 }
