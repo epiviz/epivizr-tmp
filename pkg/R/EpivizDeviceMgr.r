@@ -267,9 +267,9 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' mgr$stop()
 #' 
 #' @export
-startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, debug=FALSE, openBrowser=TRUE) {
+startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, debug=FALSE, openBrowser=TRUE, nonBlocking=.Platform$OS == "unix") {
   message("Opening websocket...")
-  server <- epivizr::createServer(port=port)
+  server <- epivizr::createServer(port=port,nonBlocking=nonBlocking)
   
   tryCatch({
     mgr <- EpivizDeviceMgr$new(server=server)

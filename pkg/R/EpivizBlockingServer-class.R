@@ -11,8 +11,8 @@ EpivizBlockingServer <- setRefClass("EpivizBlockingServer",
       callSuper(...)
     },
     connectionEstablishedCallback=function(WS) {
-      callSuper(WS)
       isConnected <<- TRUE
+      callSuper(WS)
     },
     connect=function() {
         while (!isConnected) {
@@ -27,7 +27,7 @@ EpivizBlockingServer <- setRefClass("EpivizBlockingServer",
     block=function() {
       waitingForResponse <<- TRUE
       while (waitingForResponse) {
-        service(server)
+        service(websocket)
       }
     },
     unblock=function() {

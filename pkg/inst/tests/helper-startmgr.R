@@ -1,2 +1,2 @@
 localURL="http://localhost/~hcorrada/epiviz/test_socket.php"
-.startMGR=function() startEpiviz(localURL=localURL,debug=TRUE,openBrowser=FALSE)
+.startMGR=function(nonBlocking=TRUE) startEpiviz(localURL=localURL,debug=TRUE,openBrowser=TRUE,nonBlocking=nonBlocking)

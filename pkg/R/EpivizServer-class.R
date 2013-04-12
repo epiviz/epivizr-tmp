@@ -21,8 +21,8 @@ EpivizServer <- setRefClass("EpivizServer",
     },
     bindManager=function(mgr) {
       .callbackFun=function(DATA, WS, HEADER) {
-        message("server: data received")
-        print(rawToChar(DATA))
+        #message("server: data received")
+        #print(rawToChar(DATA))
         
         msg = rjson::fromJSON(rawToChar(DATA))
         if (msg$type == "request") {
@@ -85,7 +85,7 @@ EpivizServer <- setRefClass("EpivizServer",
       }
       invisible(NULL)
     },
-    addDevice=function(requestId, type, measurements) {
+    addDevice=function(requestId, devType, measurements) {
       request=list(type="request",
                    id=requestId,
                    action="addDevice",
@@ -122,9 +122,9 @@ EpivizServer <- setRefClass("EpivizServer",
   )                           
 )
 
-createServer <- function(port=7312L) {
+createServer <- function(port=7312L, nonBlocking = .Platform$OS == "unix") {
   server <- NULL
-  if (.Platform$OS == "unix") {
+  if (nonBlocking) {
     server <- EpivizNonBlockingServer$new(port=port)
   } else {
     server <- EpivizBlockingServer$new(port=port)
