@@ -1,8 +1,10 @@
 context("object creation")
 
-test_that("stop shuts down the socket connection", {
+test_that("stop shuts down the server connection", {
   mgr=.startMGR()
-  mgr$stop()
+  expect_true(mgr$isClosed())
+  
+  mgr$stopServer()
   expect_true(mgr$isClosed())
 })
 
@@ -26,8 +28,8 @@ test_that("startEpiviz creates a proper object", {
   expect_equal(mgr$activeId, "")
   expect_equal(mgr$chartIdMap, list())
   
-  expect_false(mgr$isClosed())
-  mgr$stop()
+  expect_true(mgr$isClosed())
+  mgr$stopServer()
 })
 
 test_that("create device works for block", {

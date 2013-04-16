@@ -47,7 +47,10 @@ EpivizServer <- setRefClass("EpivizServer",
     },
     stopServer=function() {
       interrupted <<- TRUE
-      httpuv::stopServer(server)
+      
+      if (!isClosed()) {
+        httpuv::stopServer(server)
+      }
       server <<- NULL
       socketConnected <<- FALSE
       interrupted <<- TRUE
@@ -68,7 +71,7 @@ EpivizServer <- setRefClass("EpivizServer",
       }
       invisible()
     },
-    stopListen=function() {
+    stopService=function() {
       interrupted <<- TRUE
       invisible()
     },
@@ -96,7 +99,7 @@ EpivizServer <- setRefClass("EpivizServer",
           if (!is.null(callback)) {
             callback(msg$data)
           }
-          stopListen()
+          stopService()
         }
       }
       invisible()

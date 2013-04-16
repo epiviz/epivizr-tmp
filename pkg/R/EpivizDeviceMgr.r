@@ -51,7 +51,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      server$bindManager(.self)
    },
    finalize=function() {
-     stop()
+     stopServer()
    },
    isClosed=function() {
      'check if connection is closed'
@@ -59,14 +59,20 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    },
    openBrowser=function(url) {
      browseURL(url)
-     server$connect()
+     server$startServer()
    },
-   listen=function() {
-     server$listen()
+   service=function() {
+     server$service()
    },
-   stop=function() {
+   stopService=function() {
+     server$stopService()
+   },
+   startServer=function() {
+     server$startServer()
+   },
+   stopServer=function() {
      'stop epiviz connection'
-     server$stop()
+     server$stopServer()
    },
    addDevice=function(gr, devName, sendRequest=TRUE, ...) {
      'add device to epiviz browser'
@@ -267,15 +273,15 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' mgr$stop()
 #' 
 #' @export
-startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, debug=FALSE, openBrowser=TRUE, nonBlocking=.Platform$OS == "unix") {
+startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, debug=FALSE, openBrowser=TRUE) {
   message("Opening websocket...")
-  server <- epivizr::createServer(port=port,nonBlocking=nonBlocking)
+  server <- epivizr::createServer(port=port)
   
   tryCatch({
     mgr <- EpivizDeviceMgr$new(server=server)
     mgr$bindToServer()
   }, error=function(e) {
-    server$stop()
+    server$stopServer()
     stop("Error starting Epiviz: ", e)
   })
   
@@ -301,7 +307,7 @@ startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, 
       mgr$openBrowser(url)
     }
   }, error=function(e) {
-    mgr$stop()
+    mgr$stopServer()
     stop("Error starting Epiviz: ", e)
   })
   return(mgr)

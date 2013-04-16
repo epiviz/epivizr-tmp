@@ -15,8 +15,6 @@ Suggests:
 Collate:
     'utils.r'
     'EpivizServer-class.R'
-    'EpivizBlockingServer-class.R'
-    'EpivizNonBlockingServer-class.R'
     'EpivizDevice.r'
     'EpivizDeviceMgr.r'
     'epivizr-package.r'
