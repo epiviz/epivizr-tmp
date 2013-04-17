@@ -27,6 +27,7 @@ EpivizServer <- setRefClass("EpivizServer",
             socketConnected <<- FALSE
             invisible()
           })
+          sendRequestsInQueue()
           invisible()
         }
       )
@@ -77,12 +78,12 @@ EpivizServer <- setRefClass("EpivizServer",
     },
     bindManager=function(mgr) {
       msgCallback <<- function(binary, msg) {
-        #message("server: data received")
+        cat("server: data received")
         #print(rawToChar(DATA))
         if (binary) {
           msg <- rawToChar(msg)
         }
-      
+        print(msg)
         msg = rjson::fromJSON(msg)
         if (msg$type == "request") {
           out=list(type="response",id=msg$id)
@@ -107,11 +108,11 @@ EpivizServer <- setRefClass("EpivizServer",
     sendRequest=function(request) {
       request=rjson::toJSON(request)
       
-      if (length(websocket$client_sockets)<1) {
+      if (!socketConnected) {
         requestQueue$push(request)
       } else {
         websocket$send(request)
-        .self$block()
+        service()
       }
       invisible()
     },

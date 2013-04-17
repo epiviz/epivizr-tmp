@@ -1,15 +1,16 @@
 context("object creation")
 
+openBrowser=TRUE
 test_that("stop shuts down the server connection", {
-  mgr=.startMGR()
-  expect_true(mgr$isClosed())
+  mgr=.startMGR(openBrowser=openBrowser)
+  expect_equal(mgr$isClosed(), !openBrowser)
   
   mgr$stopServer()
   expect_true(mgr$isClosed())
 })
 
 test_that("startEpiviz creates a proper object", {
-  mgr <- .startMGR()
+  mgr <- .startMGR(openBrowser)
   expect_is(mgr, "EpivizDeviceMgr")
   
   expect_is(mgr$devices, "list")
@@ -28,7 +29,7 @@ test_that("startEpiviz creates a proper object", {
   expect_equal(mgr$activeId, "")
   expect_equal(mgr$chartIdMap, list())
   
-  expect_true(mgr$isClosed())
+  expect_equal(mgr$isClosed(), !openBrowser)
   mgr$stopServer()
 })
 
