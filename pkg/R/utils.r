@@ -1,9 +1,14 @@
 IndexedArray <- setRefClass("IndexedArray",
                             fields=list(nextId="integer", items="list"),
                             methods=list(
-                              initialize=function() {
+                              initialize=function(...) {
                                 nextId <<- 1L
                                 items <<- vector("list")
+                                callSuper(...)
+                              },
+                              finalize=function() {
+                                empty()
+                                invisible()
                               },
                               append=function(item) {
                                 id=nextId
@@ -17,14 +22,24 @@ IndexedArray <- setRefClass("IndexedArray",
                                 out=items[[id]]
                                 items[[id]] <<- NULL
                                 return(out)
+                              },
+                              empty=function() {
+                                items <<- vector("list")
+                                nextId <<- 1L
+                                invisible()
                               })
 )
 
 Queue <- setRefClass("Queue",
                      fields=list(items="list"),
                      methods=list(
-                       initialize=function() {
+                       initialize=function(...) {
                          items <<- vector("list")
+                         callSuper(...)
+                       },
+                       finalize=function() {
+                         empty()
+                         invisible()
                        },
                        push=function(item) {
                          n=length(items)
@@ -38,5 +53,9 @@ Queue <- setRefClass("Queue",
                          out=items[[1]]
                          items[[1]] <<- NULL
                          return(out)
+                       },
+                       empty=function() {
+                         items <<- vector("list")
+                         invisible()
                        })
 )

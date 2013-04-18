@@ -31,6 +31,7 @@
 #' @export
 EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr", 
   fields=list(
+    url="character",
     devices="list",
     typeMap="list",
     idCounter="integer",
@@ -51,7 +52,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      server$bindManager(.self)
    },
    finalize=function() {
-     stop()
+     stopServer()
    },
    isClosed=function() {
      'check if connection is closed'
@@ -59,14 +60,21 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    },
    openBrowser=function(url) {
      browseURL(url)
-     server$connect()
+     server$startServer()
+     service()
    },
-   listen=function() {
-     server$listen()
+   service=function() {
+     server$service()
    },
-   stop=function() {
+   stopService=function() {
+     server$stopService()
+   },
+   startServer=function() {
+     server$startServer()
+   },
+   stopServer=function() {
      'stop epiviz connection'
-     server$stop()
+     server$stopServer()
    },
    addDevice=function(gr, devName, sendRequest=TRUE, ...) {
      'add device to epiviz browser'
@@ -267,43 +275,44 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' mgr$stop()
 #' 
 #' @export
-startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, debug=FALSE, openBrowser=TRUE, nonBlocking=.Platform$OS == "unix") {
+startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, 
+                        debug=FALSE, proxy=TRUE, openBrowser=TRUE) {
   message("Opening websocket...")
-  server <- epivizr::createServer(port=port,nonBlocking=nonBlocking)
+  server <- epivizr::createServer(port=port)
+  
+  if (missing(localURL) || is.null(localURL)) {
+    url="http://epiviz.cbcb.umd.edu/index.php"
+  } else {
+    url=localURL
+  }
+  
+  controllerHost=sprintf("ws://localhost:%d", port)
+  url=sprintf("%s?chr=%s&start=%d&end=%d&controllerHost=%s&debug=%s&proxy=%s&",
+              url,
+              chr,
+              as.integer(start),
+              as.integer(end),
+              controllerHost,
+              ifelse(debug,"true","false"),
+              ifelse(proxy,"true","false"))
   
   tryCatch({
-    mgr <- EpivizDeviceMgr$new(server=server)
+    mgr <- EpivizDeviceMgr$new(server=server, url=url)
     mgr$bindToServer()
   }, error=function(e) {
-    server$stop()
+    server$stopServer()
     stop("Error starting Epiviz: ", e)
   })
   
+  if (openBrowser) {
   tryCatch({
-    if (openBrowser) {
-      if (missing(localURL) || is.null(localURL)) {
-        url="http://epiviz.cbcb.umd.edu/index.php"
-      } else {
-        url=localURL
-      }
-      
-      controllerHost=sprintf("ws://localhost:%d", port)
-      url=sprintf("%s?chr=%s&start=%d&end=%d&controllerHost=%s&debug=%s&",
-                  url,
-                  chr,
-                  as.integer(start),
-                  as.integer(end),
-                  controllerHost,
-                  ifelse(debug,"true","false"))
-      
-      
       message("Opening browser...")
       mgr$openBrowser(url)
-    }
-  }, error=function(e) {
-    mgr$stop()
-    stop("Error starting Epiviz: ", e)
-  })
+    }, error=function(e) {
+              mgr$stopServer()
+              stop("Error starting Epiviz: ", e)
+    }, interrupt=function(e) {NULL})
+  }
   return(mgr)
 }
 

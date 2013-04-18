@@ -1,5 +1,7 @@
 context("data fetch")
 
+sendRequest=TRUE
+
 test_that("device data fetch works", {
   gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1),
                  seqinfo=Seqinfo(seqnames="chr1",genome="hcb"))
@@ -11,7 +13,7 @@ test_that("device data fetch works", {
 })
 
 test_that("mgr fetch works", {
-  sendRequest=FALSE
+  sendRequest=sendRequest
   gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=100),
                  seqinfo=Seqinfo(seqnames=c("chr1","chr2"),genome="hcb"))
   gr2 <- GRanges(seqnames="chr2", ranges=IRanges(start=2:20, width=100),
@@ -20,12 +22,16 @@ test_that("mgr fetch works", {
                  seqinfo=Seqinfo(seqnames=c("chr1","chr2"),genome="hcb"))
   
   tryCatch({
-    mgr <- .startMGR()
+    mgr <- .startMGR(openBrowser=sendRequest, chr="chr1", start=2, end=6)
   
     devId1 <- mgr$addDevice(gr1, "dev1",sendRequest=sendRequest)
     devId2 <- mgr$addDevice(gr2, "dev2",sendRequest=sendRequest)
     devId3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp")
   
+    if (sendRequest) { 
+      tryCatch(mgr$service(),interrupt=function(e) NULL)
+    }
+    
     measurements=list(bpMeasurements=paste0(devId3,"$score",1:2),blockMeasurements=c(devId1,devId2))
     res <- mgr$getData(measurements, chr="chr1", start=2, end=6)
     
@@ -42,7 +48,7 @@ test_that("mgr fetch works", {
     
     #print(res);print(out)
     expect_equal(res,out)
-  }, finally=mgr$stop())
+  }, finally=mgr$stopServer())
 })
 
 test_that("mgr fetch no data works", {
@@ -54,12 +60,16 @@ test_that("mgr fetch no data works", {
                  seqinfo=Seqinfo(seqnames=c("chr1","chr2"),genome="hcb"))
   
   tryCatch({
-    mgr <- .startMGR()
+    sendRequest=sendRequest
+    mgr <- .startMGR(openBrowser=sendRequest)
     
     devId1 <- mgr$addDevice(gr1, "dev1")
     devId2 <- mgr$addDevice(gr2, "dev2")
     devId3 <- mgr$addDevice(gr3, "dev3", type="bp")
     
+    if (sendRequest) {
+      tryCatch(mgr$service(), interrupt=function(e) NULL)
+    }
     measurements=list(bpMeasurements=paste0(devId3,"$score"),blockMeasurements=c(devId1,devId2))
     res <- mgr$getData(measurements, chr="chr11", start=2, end=6)
     
@@ -76,5 +86,5 @@ test_that("mgr fetch no data works", {
     
     #print(res);print(out)
     expect_equal(res,out)
-  }, finally=mgr$stop())
+  }, finally=mgr$stopServer())
 })
