@@ -35,7 +35,7 @@ EpivizDevice <- setRefClass("EpivizDevice",
       
       query=GRanges(seqnames=chr, ranges=IRanges(start=start,end=end),
                     seqinfo=seqinfo(gr))
-      subsetByOverlaps(gr, query)
+      sort(subsetByOverlaps(gr, query))
     },
     getData=function(chr, start, end) {
       ogr=.self$subsetGR(chr,start,end)

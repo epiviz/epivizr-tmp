@@ -4,7 +4,7 @@ load_all("pkg",reset=TRUE)
 load("thytest.rda")
 
 localURL="http://localhost/~hcorrada/epiviz/index.php"
-mgr=startEpiviz(localURL=NULL,debug=FALSE,openBrowser=TRUE,proxy=TRUE)
+mgr=startEpiviz(localURL=NULL,debug=TRUE,openBrowser=TRUE,proxy=TRUE)
 
 #need to interrupt before continuing on
 thygrId=mgr$addDevice(thygr, "thyroid_blocks")
