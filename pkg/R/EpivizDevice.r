@@ -27,6 +27,7 @@ EpivizDevice <- setRefClass("EpivizDevice",
   ),
   methods=list(
     makeTree=function() {
+      gr <<- sort(gr)
       tree <<- PartitionedIntervalTree(ranges(gr), seqnames(gr))
     },
     subsetGR=function(chr, start, end) {
@@ -35,7 +36,8 @@ EpivizDevice <- setRefClass("EpivizDevice",
       
       query=GRanges(seqnames=chr, ranges=IRanges(start=start,end=end),
                     seqinfo=seqinfo(gr))
-      sort(subsetByOverlaps(gr, query))
+      hits=subjectHits(findOverlaps(query, gr, select="all"))
+      gr[unique(hits)]
     },
     getData=function(chr, start, end) {
       ogr=.self$subsetGR(chr,start,end)
