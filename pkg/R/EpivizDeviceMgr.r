@@ -1,12 +1,11 @@
 #' epiviz interactive track manager
 #' 
-#' This class is used to add and delete interactive devices in the epiviz browser. It inherits
-#' from the \link{environment} class, so \link{get} and \link{set} methods exist (but not recommended 
-#' for use). Setters and getters are defined for the pertinent slots. 
+#' This class is used to add and delete interactive devices in the epiviz browser. 
+#' Setters and getters are defined for the pertinent slots. 
 #' 
 #' @section Fields:
 #' \describe{
-#'  \item{\code{devices}:}{A list of \link{epivizDevice} objects defining currently loaded}
+#'  \item{\code{devices}:}{A list of \linkS4class{EpivizDevice} objects defining currently loaded}
 #'  \item{\code{idCounter}:}{id generator}
 #'  \item{\code{activeId}:}{ID of currently active device}
 #'  \item{\code{server}:}{An environment implementing a websockets server}
@@ -16,7 +15,7 @@
 #' \describe{
 #'  \item{\code{isClosed}:}{True if websocket is closed for this manager}
 #'  \item{\code{stop}:}{Stop communiation and close websocket server}
-#'  \item{\code{addDevice}:}{Add a \link{epivizDevice} object to the list of devices}
+#'  \item{\code{addDevice}:}{Add a \linkS4class{EpivizDevice} object to the list of devices}
 #'  \item{\code{delDevice}:}{Remove device from list}
 #'  \item{\code{setActive}:}{Set device as active (for navigation on browser)}
 #'  \item{\code{listDevices}:}{List current devices}
@@ -25,10 +24,14 @@
 #'  \item{\code{navigate}:}{Navigate to given genomic region in browser}
 #' }
 #' 
+#' @param ... arguments passed to constructor
+#' 
+#' @aliases EpivizDeviceMgr
+#' 
 #' @name EpivizDeviceMgr-class
 #' @rdname EpivizDeviceMgr-class
 #' 
-#' @export
+#' @exportClass EpivizDeviceMgr
 EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr", 
   fields=list(
     url="character",
@@ -287,13 +290,16 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' @param start (integer) start position to browse to on startup
 #' @param end (integer) end position to browse to on startup
 #' @param debug (logical) start the epiviz browser in debug mode
+#' @param proxy (logical) start the epiviz browser in proxy mode
+#' @param openBrowser (logical) browse to the epiviz URL
 #' 
 #' @return an object of class \linkS4class{EpivizDeviceMgr}.
 #' 
 #' @examples
+#' \dontrun{
 #' mgr <- startEpiviz()
 #' mgr$stopServer()
-#' 
+#' }
 #' @export
 startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, 
                         debug=FALSE, proxy=TRUE, openBrowser=TRUE) {

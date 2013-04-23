@@ -5,7 +5,7 @@
 #' @section Fields:
 #' \describe{
 #'  \item{\code{gr}:}{The the \link{GRanges-class} object bound to this track}
-#'  \item{\code{tree}:}{A \link{GIntervalTree-class}} object used for querying}
+#'  \item{\code{tree}:}{A \link{GIntervalTree-class} object used for querying}
 #'  \item{\code{id}:}{The id for this device assigned by the epiviz manager object}
 #' }
 #' 
@@ -14,10 +14,13 @@
 #'  \item{\code{getData}:}{Subset data from the GRanges object within given region}
 #' }
 #' 
+#' @param ... arguments passed to constructor
+#' 
+#' @aliases EpivizDevice 
 #' @name EpivizDevice-class
 #' @rdname EpivizDevice-class
 #' 
-#' @export
+#' @exportClass EpivizDevice
 EpivizDevice <- setRefClass("EpivizDevice",
   fields=list(
     gr="GRanges",
@@ -138,13 +141,6 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
               bp=list(constructor=.newBpDevice,class="EpivizBpDevice"),
               block=list(constructor=.newBlockDevice,class="EpivizBlockDevice"))
 
-#' Create a new EpivizDevice object
-#' 
-#' This is called by the \link{addDevice} method in manager objects. This function should not be called directly.
-#' @param gr A \link{GRanges} object to display
-#' @param id The id of the device assigned by the manager
-#' @param type The type of device to create
-#' @param ... Arguments passed to the constructor function
 newDevice <- function(gr, id, type="block",...)                      
 {
   if (!type %in% names(.typeMap))

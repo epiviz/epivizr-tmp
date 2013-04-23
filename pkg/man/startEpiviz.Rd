@@ -4,7 +4,7 @@
 \usage{
   startEpiviz(port = 7312L, localURL = NULL, chr = "chr11",
     start = 99800000, end = 103383180, debug = FALSE,
-    openBrowser = TRUE)
+    proxy = TRUE, openBrowser = TRUE)
 }
 \arguments{
   \item{port}{(integer) the port for the websocket server}
@@ -23,6 +23,11 @@
 
   \item{debug}{(logical) start the epiviz browser in debug
   mode}
+
+  \item{proxy}{(logical) start the epiviz browser in proxy
+  mode}
+
+  \item{openBrowser}{(logical) browse to the epiviz URL}
 }
 \value{
   an object of class \linkS4class{EpivizDeviceMgr}.
@@ -32,7 +37,9 @@
   and delete tracks in browser
 }
 \examples{
+\dontrun{
 mgr <- startEpiviz()
-mgr$stop()
+mgr$stopServer()
+}
 }
 
