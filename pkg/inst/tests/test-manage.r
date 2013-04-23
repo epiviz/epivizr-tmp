@@ -8,18 +8,35 @@ test_that("addDevice works for blocks", {
   mgr <- .startMGR(openBrowser=sendRequest)
   
   tryCatch({
-    devId <- mgr$addDevice(gr, "dev1", sendRequest=sendRequest)
-  
+    dev <- mgr$addDevice(gr, "dev1", sendRequest=sendRequest)
+    devId <- dev$id
+    
     expect_equal(length(mgr$devices$block), 1)
     expect_false(is.null(mgr$devices$block[[devId]]))
     expect_equal(mgr$devices$block[[devId]]$name, "dev1")
     expect_equal(mgr$devices$block[[devId]]$measurements, devId)
-    expect_equal(as(mgr$devices$block[[devId]]$obj$gr, "GRanges"), gr)
+    expect_equal(as(mgr$devices$block[[devId]]$obj$tree, "IRanges"), ranges(gr))
     expect_equal(mgr$activeId, devId)
     
     if (sendRequest) {
       expect_false(is.null(mgr$chartIdMap[[devId]]))
     }
+  }, finally=mgr$stopServer())
+})
+
+test_that("update works", {
+  sendRequest=sendRequest
+  gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1))
+  gr2 <- GRanges(seqnames="chr12", ranges=IRanges(start=1:1000,width=10))
+  mgr <- .startMGR(openBrowser=sendRequest)
+  
+  tryCatch({
+    dev <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest)
+    devId <- dev$id
+    mgr$updateDevice(dev, gr2)
+    
+    expect_equal(mgr$devices$block[[devId]]$obj$gr, gr2)
+    expect_equal(as(mgr$devices$block[[devId]]$obj$tree, "IRanges"), ranges(gr2))    
   }, finally=mgr$stopServer())
 })
 
@@ -29,13 +46,14 @@ test_that("addDevice works for bp", {
   mgr <- .startMGR(openBrowser=sendRequest)
   
   tryCatch({
-    devId <- mgr$addDevice(gr, "dev1", sendRequest=sendRequest, type="bp")
+    dev <- mgr$addDevice(gr, "dev1", sendRequest=sendRequest, type="bp")
+    devId <- dev$id
     
     expect_equal(length(mgr$devices$bp), 1)
     expect_false(is.null(mgr$devices$bp[[devId]]))
     expect_equal(mgr$devices$bp[[devId]]$name, "dev1")
     expect_equal(mgr$devices$bp[[devId]]$measurements, paste0(devId,"$","score",1:2))
-    expect_equal(as(mgr$devices$bp[[devId]]$obj$gr, "GRanges"), gr)
+    expect_equal(as(mgr$devices$bp[[devId]]$obj$tree, "IRanges"), ranges(gr))
     expect_equal(mgr$devices$bp[[devId]]$obj$mdCols, paste0("score",1:2))
     expect_equal(mgr$activeId, devId)
     
@@ -52,7 +70,8 @@ test_that("rmDevice works", {
   mgr <- .startMGR(openBrowser=sendRequest)
   
   tryCatch({
-    devId <- mgr$addDevice(gr, "dev1", sendRequest=sendRequest, type="bp")
+    dev <- mgr$addDevice(gr, "dev1", sendRequest=sendRequest, type="bp")
+    devId <- dev$id
     mgr$rmDevice(devId)
     
     expect_equal(length(mgr$devices$block), 0)
@@ -69,9 +88,9 @@ test_that("listDevices works", {
   
   mgr <- .startMGR(openBrowser=sendRequest)
   tryCatch({
-    devId1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest); 
-    devId2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest); 
-    devId3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp"); 
+    dev1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest); devId1=dev1$id
+    dev2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest); devId2=dev2$id
+    dev3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp"); devId3=dev3$id
     
     
     devs <- mgr$listDevices()
@@ -99,8 +118,8 @@ test_that("setActive works", {
   
   mgr <- .startMGR(openBrowser=sendRequest)
   tryCatch({
-    devId1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest); 
-    devId2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest); 
+    dev1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest); devId1=dev1$id
+    dev2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest); devId2=dev2$id
   
     mgr$setActive(devId1)
     
@@ -123,9 +142,9 @@ test_that("getMeasurements works", {
   
   mgr <- .startMGR(openBrowser=sendRequest)
   tryCatch({
-    devId1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest)
-    devId2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest)
-    devId3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp")
+    dev1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest); devId1=dev1$id
+    dev2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest); devId2=dev2$id
+    dev3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp"); devId3=dev3$id
     
     res <- mgr$getMeasurements()
     out <- list(geneMeasurements=list(),

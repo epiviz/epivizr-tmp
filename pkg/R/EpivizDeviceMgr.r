@@ -76,22 +76,21 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      'stop epiviz connection'
      server$stopServer()
    },
-   addDevice=function(gr, devName, sendRequest=TRUE, ...) {
+   addDevice=function(gr, devName, type="block", sendRequest=TRUE, ...) {
      'add device to epiviz browser'
      if (!is(gr, "GenomicRanges"))
        stop("gr must be of class 'GenomicRanges'")
 #      if (.self$isClosed())
 #        stop("manager connection is closed")
-#      
-     device = newDevice(gr, ...)
-     slot=match(class(device), sapply(typeMap, "[[", "class"))
-     if (is.na(slot)) {
+#   
+     if (!(type %in% names(typeMap))) {
        stop("Unkown device type class")
      }
-     
-     type=names(typeMap)[slot]
+         
      idCounter <<- idCounter + 1L
-     devId <- sprintf("epivizDev_%s_%d", type, .self$idCounter)
+     devId <- sprintf("epivizDev_%s_%d", type, idCounter)
+     device = newDevice(gr=gr, id=devId, type=type, ...)
+     
      if (type == "block") {
        msIds=devId
        measurements=structure(list(devName),names=msIds)
@@ -100,7 +99,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
        measurements=structure(as.list(paste0(devName,"$",device$mdCols)),names=msIds)
      }
      devRecord=list(measurements=msIds, name=devName, obj=device)
-     devices[[slot]][[devId]] <<- devRecord
+     devices[[type]][[devId]] <<- devRecord
      activeId <<- devId
      
      if (sendRequest) {
@@ -112,7 +111,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
        requestId=callbackArray$append(callback)
        server$addDevice(requestId, type, measurements)
      } 
-     return(devId)
+     return(device)
    },  
    rmDevice=function(devId) {
      'delete device from epiviz browser'
@@ -141,6 +140,27 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
        server$rmDevice(requestId, chartId, measurements, devType)
      }
      invisible(NULL)
+   },
+   updateDevice=function(device, gr) {
+     devId <- device$id
+     slot <- which(sapply(devices, function(x) devId %in% names(x)))
+     if (length(slot)<1)
+       stop("device not recognized by manager")
+
+     device$update(gr)
+     
+     devType <- names(typeMap)[slot]
+     devName <- devices[[devType]][[devId]]$name
+     
+     chartId <- chartIdMap[[devId]]
+     if (!is.null(chartId)) {
+       callback=function(data) {
+         message("cache for device ", devName, " cleared")
+       }
+       requestId=callbackArray$append(callback)
+       server$clearCache(requestId, chartId) 
+     }
+     invisible()
    },
    setActive=function (devId) {
      'set given device as active in browser'
@@ -272,7 +292,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' 
 #' @examples
 #' mgr <- startEpiviz()
-#' mgr$stop()
+#' mgr$stopServer()
 #' 
 #' @export
 startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, 

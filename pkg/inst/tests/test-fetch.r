@@ -1,11 +1,11 @@
 context("data fetch")
 
-sendRequest=FALSE
+sendRequest=TRUE
 
 test_that("device data fetch works", {
   gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1),
                  seqinfo=Seqinfo(seqnames="chr1",genome="hcb"))
-  dev1 <- epivizr::newDevice(gr1)
+  dev1 <- epivizr::newDevice(gr1,id="testid")
   
   res <- dev1$getData(chr="chr1", start=2, end=6)
   out <- list(start=2:6,end=2:6)
@@ -24,9 +24,9 @@ test_that("mgr fetch works", {
   tryCatch({
     mgr <- .startMGR(openBrowser=sendRequest, chr="chr1", start=2, end=6)
   
-    devId1 <- mgr$addDevice(gr1, "dev1",sendRequest=sendRequest)
-    devId2 <- mgr$addDevice(gr2, "dev2",sendRequest=sendRequest)
-    devId3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp")
+    dev1 <- mgr$addDevice(gr1, "dev1",sendRequest=sendRequest); devId1=dev1$id
+    dev2 <- mgr$addDevice(gr2, "dev2",sendRequest=sendRequest); devId2=dev2$id
+    dev3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp"); devId3=dev3$id
   
     if (sendRequest) { 
       tryCatch(mgr$service(),interrupt=function(e) NULL)
@@ -63,9 +63,9 @@ test_that("mgr fetch no data works", {
     sendRequest=sendRequest
     mgr <- .startMGR(openBrowser=sendRequest)
     
-    devId1 <- mgr$addDevice(gr1, "dev1")
-    devId2 <- mgr$addDevice(gr2, "dev2")
-    devId3 <- mgr$addDevice(gr3, "dev3", type="bp")
+    dev1 <- mgr$addDevice(gr1, "dev1"); devId1=dev1$id
+    dev2 <- mgr$addDevice(gr2, "dev2"); devId2=dev2$id
+    dev3 <- mgr$addDevice(gr3, "dev3", type="bp"); devId3=dev3$id
     
     if (sendRequest) {
       tryCatch(mgr$service(), interrupt=function(e) NULL)

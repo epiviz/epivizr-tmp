@@ -5,10 +5,8 @@
 #' @section Fields:
 #' \describe{
 #'  \item{\code{gr}:}{The the \link{GRanges-class} object bound to this track}
-#'  \item{\code{type}:}{Display type, currently "regions", "line" or "gene"}
-#'  \item{\code{mdCols}:}{vector of elementMetaData column names to use as measurements in plots}
-#'  \item{\code{minValue}:}{minimum value for y axis}
-#'  \item{\code{maxValue}:}{maximum value for y axis}
+#'  \item{\code{tree}:}{A \link{GIntervalTree-class}} object used for querying}
+#'  \item{\code{id}:}{The id for this device assigned by the epiviz manager object}
 #' }
 #' 
 #' @section Methods:
@@ -23,7 +21,8 @@
 EpivizDevice <- setRefClass("EpivizDevice",
   fields=list(
     gr="GRanges",
-    tree="PartitionedIntervalTree"
+    tree="PartitionedIntervalTree",
+    id="character"
   ),
   methods=list(
     makeTree=function() {
@@ -42,6 +41,14 @@ EpivizDevice <- setRefClass("EpivizDevice",
     getData=function(chr, start, end) {
       ogr=.self$subsetGR(chr,start,end)
       return(list(start=start(ogr),end=end(ogr)))
+    },
+    update=function(gr) {
+      gr <<- gr
+      makeTree()
+      invisible()
+    },
+    id=function() {
+      return(id)
     }
   )
 )
@@ -81,7 +88,17 @@ EpivizBpDevice <- setRefClass("EpivizBpDevice",
         out$data[[i]]=list(bp=bp,value=vals)
       }
       return(out)
-    }  
+    },
+    update=function(gr=gr,mdCols=NULL) {
+      callSuper(gr=gr)
+      if (!is.null(mdCols)) {
+        if (!all(mdCols %in% mcols(gr))) {
+          stop("invalid mdCols specified")
+        }
+        mdCols <<- mdCols
+      }
+      invisible()
+    }
   )
 )
 
@@ -98,34 +115,41 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   )              
 )
 
-.newBlockDevice <- function(gr)
+.newBlockDevice <- function(gr, id)
 {
-  return(EpivizBlockDevice$new(gr=gr))
+  return(EpivizBlockDevice$new(gr=gr, id=id))
 }
 
-.newBpDevice <- function(gr, mdCols=names(mcols(gr))) {
+.newBpDevice <- function(gr, id, mdCols=names(mcols(gr))) {
   if (!all(mdCols %in% names(mcols(gr))))
     stop("mdCols not found in GRanges object")
   
-  return(EpivizBpDevice$new(gr=gr,mdCols=mdCols))
+  return(EpivizBpDevice$new(gr=gr,id=id,mdCols=mdCols))
 }
 
-.newGeneDevice <- function(gr, mdCols=names(mcols(gr))) {
+.newGeneDevice <- function(gr, id, mdCols=names(mcols(gr))) {
   if (!all(mdCols %in% names(mcols(gr))))
     stop("mdCols not found in GRanges object")
   
-  return(EpivizGeneDevice$new(gr=gr,mdCols=mdCols))
+  return(EpivizGeneDevice$new(gr=gr, id=id, mdCols=mdCols))
 }
 
 .typeMap <- list(gene=list(constructor=.newGeneDevice,class="EpivizGeneDevice"),
               bp=list(constructor=.newBpDevice,class="EpivizBpDevice"),
               block=list(constructor=.newBlockDevice,class="EpivizBlockDevice"))
 
-newDevice <- function(gr, type="block",...)                      
+#' Create a new EpivizDevice object
+#' 
+#' This is called by the \link{addDevice} method in manager objects. This function should not be called directly.
+#' @param gr A \link{GRanges} object to display
+#' @param id The id of the device assigned by the manager
+#' @param type The type of device to create
+#' @param ... Arguments passed to the constructor function
+newDevice <- function(gr, id, type="block",...)                      
 {
   if (!type %in% names(.typeMap))
     stop("Unknown device type")
-  obj <- .typeMap[[type]]$constructor(gr)
+  obj <- .typeMap[[type]]$constructor(gr, id, ...)
   obj$makeTree()
   return(obj)
 }

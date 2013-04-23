@@ -133,6 +133,13 @@ EpivizServer <- setRefClass("EpivizServer",
                              type=devType))
       sendRequest(request)
     },
+    clearCache=function(requestId, chartId) {
+      request=list(type="request",
+                   id=requestId,
+                   action="clearDeviceCache",
+                   data=list(id=chartId))
+      sendRequest(request)
+    },
     refresh=function() {
       request=list(action="refresh")
       # TODO: finish implementation
