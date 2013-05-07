@@ -1,6 +1,4 @@
-library(devtools)
-load_all("pkg",reset=TRUE)
-
+library(epivizr)
 load("thytest.rda")
 
 localURL="http://localhost/~hcorrada/epiviz/index.php"

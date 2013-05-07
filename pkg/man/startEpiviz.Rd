@@ -37,9 +37,8 @@
   and delete tracks in browser
 }
 \examples{
-\dontrun{
-mgr <- startEpiviz()
+mgr <- startEpiviz(openBrowser=FALSE)
+mgr$startServer()
 mgr$stopServer()
-}
 }
 

@@ -296,15 +296,16 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' @return an object of class \linkS4class{EpivizDeviceMgr}.
 #' 
 #' @examples
-#' \dontrun{
-#' mgr <- startEpiviz()
+#' 
+#' mgr <- startEpiviz(openBrowser=FALSE)
+#' mgr$startServer()
 #' mgr$stopServer()
-#' }
+#' 
 #' @export
 startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, 
                         debug=FALSE, proxy=TRUE, openBrowser=TRUE) {
   message("Opening websocket...")
-  server <- epivizr::createServer(port=port)
+  server <- epivizr:::createServer(port=port)
   
   if (missing(localURL) || is.null(localURL)) {
     url="http://epiviz.cbcb.umd.edu/index.php"
