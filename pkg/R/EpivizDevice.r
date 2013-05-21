@@ -85,10 +85,19 @@ EpivizBpDevice <- setRefClass("EpivizBpDevice",
       
       for (i in seq_along(cols)) {
         vals=mcols(ogr)[[cols[i]]]
+        if (all(is.na(vals))) {
+          next
+        }
+        naIndex=is.na(vals)
+        if (any(naIndex)) {
+          out$data[[i]]=list(bp=bp[!naIndex],value=vals[!naIndex])
+          vals=vals[!naIndex]
+        } else {
+          out$data[[i]]=list(bp=bp,value=vals)
+        }
         rng=range(pretty(range(vals)))
         out$min[i]=rng[1]
         out$max[i]=rng[2]
-        out$data[[i]]=list(bp=bp,value=vals)
       }
       return(out)
     },

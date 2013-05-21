@@ -61,12 +61,16 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      'check if connection is closed'
      server$isClosed()
    },
-   openBrowser=function(url) {
+   openBrowser=function(url=NULL) {
+     if (missing(url) || is.null(url))
+       url <- .self$url
+     
      browseURL(url)
      server$startServer()
      service()
    },
    service=function() {
+     message("Serving Epiviz, escape to continue interactive session...")
      server$service()
    },
    stopService=function() {
@@ -116,8 +120,9 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      } 
      return(device)
    },  
-   rmDevice=function(devId) {
+   rmDevice=function(device) {
      'delete device from epiviz browser'
+     devId <- device$id
      slot=which(sapply(devices, function(x) devId %in% names(x)))
      if (length(slot)<1)
        stop("device Id not found")

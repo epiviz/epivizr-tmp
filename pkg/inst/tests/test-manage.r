@@ -72,7 +72,7 @@ test_that("rmDevice works", {
   tryCatch({
     dev <- mgr$addDevice(gr, "dev1", sendRequest=sendRequest, type="bp")
     devId <- dev$id
-    mgr$rmDevice(devId)
+    mgr$rmDevice(dev)
     
     expect_equal(length(mgr$devices$block), 0)
     expect_true(is.null(mgr$devices$block[[devId]]))
