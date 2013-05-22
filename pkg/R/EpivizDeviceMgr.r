@@ -62,10 +62,11 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      server$isClosed()
    },
    openBrowser=function(url=NULL) {
-     if (missing(url) || is.null(url))
-       url <- .self$url
-     
-     browseURL(url)
+     if (missing(url) || is.null(url)) {
+       browseURL(url)
+     } else {
+       browseURL(.self$url)
+     }
      server$startServer()
      service()
    },

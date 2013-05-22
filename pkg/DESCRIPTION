@@ -8,7 +8,6 @@ Description: Websocket communication to http://epiviz.cbcb.umd.edu
 Depends:
     httpuv,
     GenomicRanges,
-    GenomicIntervalTree,
     rjson
 Suggests:
     testthat,

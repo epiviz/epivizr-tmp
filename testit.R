@@ -4,7 +4,7 @@ data(tcga_colon_example)
 show(colon_blocks)
 show(colon_curves)
 
-mgr=startEpiviz(localURL="http://localhost/~hcorrada/epiviz",debug=TRUE,proxy=TRUE)
+mgr=startEpiviz()
 
 #need to interrupt before continuing on
 blocks_dev <- mgr$addDevice(colon_blocks, "450k colon_blocks")

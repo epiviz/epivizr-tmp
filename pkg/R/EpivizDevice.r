@@ -24,21 +24,18 @@
 EpivizDevice <- setRefClass("EpivizDevice",
   fields=list(
     gr="GRanges",
-    tree="PartitionedIntervalTree",
+    tree="IntervalForest",
     id="character"
   ),
   methods=list(
     makeTree=function() {
-      gr <<- sort(gr)
-      tree <<- PartitionedIntervalTree(ranges(gr), seqnames(gr))
+      tree <<- IntervalForest(ranges(gr), seqnames(gr))
     },
     subsetGR=function(chr, start, end) {
       if (!chr %in% seqlevels(gr))
         return(GRanges())
       
-      query=GRanges(seqnames=chr, ranges=IRanges(start=start,end=end),
-                    seqinfo=seqinfo(gr))
-      hits=subjectHits(findOverlaps(query, gr, select="all"))
+      hits <- subjectHits(findOverlaps(IRanges(start=start,end=end), tree, partition=Rle(factor(chr))))
       gr[unique(hits)]
     },
     getData=function(chr, start, end) {
