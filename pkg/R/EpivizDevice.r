@@ -126,6 +126,9 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
 
 .newBlockDevice <- function(gr, id)
 {
+  if (!is(gr, "GenomicRanges")) {
+    stop("'gr' must be a 'GenomicRanges' object")
+  }
   return(EpivizBlockDevice$new(gr=gr, id=id))
 }
 
@@ -136,22 +139,55 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   return(EpivizBpDevice$new(gr=gr,id=id,mdCols=mdCols))
 }
 
-.newGeneDevice <- function(gr, id, mdCols=names(mcols(gr))) {
-  if (!all(mdCols %in% names(mcols(gr))))
-    stop("mdCols not found in GRanges object")
-  
-  return(EpivizGeneDevice$new(gr=gr, id=id, mdCols=mdCols))
+.newGeneDevice <- function(obj, id, x, y, ...) {
+  if (!is(obj, "ExpressionSet")) {
+    stop("'obj' must be of class 'ExpressionSet'")
+  } 
+  if (annotation(obj) != 'hgu133plus2') {
+    stop("only 'hgu133plus2' affy chips supported for now")
+  }
+
+  # verify x and y are valid names
+  if (any(!(c(x,y) %in% sampleNames(obj)))) {
+    stop("'x' or 'y' not found in 'sampleNames'")
+  }
+
+  # make GRanges object with approprite info
+  probeids = featureNames(obj)
+  annoName = paste0(annotation(obj), ".db")
+  if (!require(annoName, character.only=TRUE)) {
+    stop("package '", annoName, "' is required")
+  }
+
+  res = suppressWarnings(select(get(annoName), keys=probeids, cols=c("SYMBOL", "CHR", "CHRLOC", "CHRLOCEND"), keytype="PROBEID"))
+  dups = duplicated(res$PROBEID)
+  res = res[!dups,]
+
+  isna = is.na(res$CHR) | is.na(res$CHRLOC) | is.na(res$CHRLOCEND)
+  res = res[!isna,]
+
+  gr = GRanges(seqnames=paste0("chr",res$CHR),
+               strand=ifelse(res$CHRLOC>0, "+","-"),
+               ranges=IRanges(start=abs(res$CHRLOC), end=abs(res$CHRLOCEND)))
+
+  mcols(gr)[,x] = exprs(obj)[!isna,x]
+  mcols(gr)[,y] = exprs(obj)[!isna,y]
+
+  mcols(gr)[,"SYMBOL"] = res$SYMBOL
+  mcols(gr)[,"PROBEID"] = res$PROBEID
+
+  return(EpivizGeneDevice$new(gr=gr, id=id, mdCols=c(x,y)))
 }
 
 .typeMap <- list(gene=list(constructor=.newGeneDevice,class="EpivizGeneDevice"),
               bp=list(constructor=.newBpDevice,class="EpivizBpDevice"),
               block=list(constructor=.newBlockDevice,class="EpivizBlockDevice"))
 
-newDevice <- function(gr, id, type="block",...)                      
+newDevice <- function(obj, id, type="block",...)                      
 {
   if (!type %in% names(.typeMap))
     stop("Unknown device type")
-  obj <- .typeMap[[type]]$constructor(gr, id, ...)
+  obj <- .typeMap[[type]]$constructor(obj, id, ...)
   obj$makeTree()
   return(obj)
 }

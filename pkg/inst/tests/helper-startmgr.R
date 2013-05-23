@@ -1,8 +1,8 @@
-#localURL="http://localhost/~hcorrada/epiviz/test_socket.php"
+localURL="http://localhost/~hcorrada/epiviz/test_socket.php"
 #localURL="http://epiviz.cbcb.umd.edu/test_socket.php"
-localURL=NULL
+#localURL=NULL
 debug=TRUE
-proxy=FALSE
+proxy=TRUE
 .startMGR=function(openBrowser=FALSE,...) {
   if (openBrowser) {
     tryCatch(startEpiviz(localURL=localURL, debug=debug, proxy=proxy, openBrowser=TRUE, ...), interrupt=function(e) invisible())
@@ -10,3 +10,5 @@ proxy=FALSE
     startEpiviz(localURL=localURL,debug=debug,openBrowser=FALSE, ...)
   }
 }
+
+sendRequest = FALSE

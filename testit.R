@@ -1,4 +1,4 @@
-library(epivizr)
+require(epivizr)
 data(tcga_colon_example)
 
 show(colon_blocks)
@@ -31,6 +31,10 @@ mgr$listDevices()
 
 # remove device
 mgr$rmDevice(diff_dev)
+
+# load expression data
+require(antiProfilesData)
+data(apColonData)
 
 mgr$listDevices()
 

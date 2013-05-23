@@ -1,6 +1,6 @@
 context("device management")
 
-sendRequest=TRUE
+sendRequest=sendRequest
 
 test_that("addDevice works for blocks", {
   sendRequest=sendRequest
