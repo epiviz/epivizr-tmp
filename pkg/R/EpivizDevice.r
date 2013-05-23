@@ -124,19 +124,23 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   )              
 )
 
-.newBlockDevice <- function(gr, id)
+.newBlockDevice <- function(obj, id)
 {
-  if (!is(gr, "GenomicRanges")) {
-    stop("'gr' must be a 'GenomicRanges' object")
+  if (!is(obj, "GenomicRanges")) {
+    stop("'obj' must be a 'GenomicRanges' object")
   }
-  return(EpivizBlockDevice$new(gr=gr, id=id))
+  return(EpivizBlockDevice$new(gr=obj, id=id))
 }
 
-.newBpDevice <- function(gr, id, mdCols=names(mcols(gr))) {
-  if (!all(mdCols %in% names(mcols(gr))))
+.newBpDevice <- function(obj, id, mdCols=names(mcols(obj))) {
+  if (!is(obj, "GenomicRanges")) {
+    stop("'obj' must be a 'GenomicRanges' object")
+  }
+
+  if (!all(mdCols %in% names(mcols(obj))))
     stop("mdCols not found in GRanges object")
   
-  return(EpivizBpDevice$new(gr=gr,id=id,mdCols=mdCols))
+  return(EpivizBpDevice$new(gr=obj,id=id,mdCols=mdCols))
 }
 
 .newGeneDevice <- function(obj, id, x, y, ...) {

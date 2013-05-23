@@ -84,10 +84,10 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      'stop epiviz connection'
      server$stopServer()
    },
-   addDevice=function(gr, devName, type="block", sendRequest=TRUE, ...) {
+   addDevice=function(obj, devName, type="block", sendRequest=TRUE, ...) {
      'add device to epiviz browser'
-     if (!is(gr, "GenomicRanges"))
-       stop("gr must be of class 'GenomicRanges'")
+     # if (!is(gr, "GenomicRanges"))
+     #   stop("gr must be of class 'GenomicRanges'")
 #      if (.self$isClosed())
 #        stop("manager connection is closed")
 #   
@@ -97,7 +97,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
          
      idCounter <<- idCounter + 1L
      devId <- sprintf("epivizDev_%s_%d", type, idCounter)
-     device = newDevice(gr=gr, id=devId, type=type, ...)
+     device <- epivizr:::newDevice(obj=obj, id=devId, type=type, ...)
      
      if (type == "block") {
        msIds=devId
