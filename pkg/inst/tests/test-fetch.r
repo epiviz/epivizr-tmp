@@ -1,6 +1,6 @@
 context("data fetch")
 
-sendRequest=FALSE
+sendRequest=sendRequest
 
 test_that("device data fetch works", {
   gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1),

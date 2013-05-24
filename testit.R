@@ -35,6 +35,7 @@ mgr$rmDevice(diff_dev)
 # load expression data
 require(antiProfilesData)
 data(apColonData)
+#require(paste0(annotation(apColonData),".db"),character.only=TRUE)
 
 mgr$listDevices()
 

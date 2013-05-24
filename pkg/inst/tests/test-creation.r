@@ -62,16 +62,7 @@ test_that("create device works for bp data", {
 })
 
 test_that("create device works for gene data", {
-    require(hgu133plus2.db)
-  nprobeids=1000
-  nsamples=6
-  expr=matrix(rnorm(nprobeids*nsamples), nr=nprobeids)
-  pd=data.frame(a=1:nsamples,b=10*(1:nsamples))
-  rownames(pd)=paste0("SAMP_",1:nsamples)
-  rownames(expr)=head(keys(hgu133plus2.db, keytype="PROBEID"), nprobeids)
-  colnames(expr)=rownames(pd)
-
-  eset <- ExpressionSet(assayData=expr, phenoData=AnnotatedDataFrame(pd),annotation="hgu133plus2")
+  eset <- makeEset()
   dev <- epivizr::newDevice(eset, id = "test1", type="gene", x="SAMP_1", y="SAMP_2")
 
   expect_is(dev,"EpivizDevice")
