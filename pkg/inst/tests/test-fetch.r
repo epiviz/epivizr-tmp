@@ -23,7 +23,7 @@ test_that("device data fetch works on bp data", {
   out$min=c(5,-10)
   out$max=c(10,-5)
   out$data=list(list(bp=6,value=6),list(bp=6,value=-6))
-  
+
   expect_equal(res,out)
 })
 

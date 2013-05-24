@@ -42,6 +42,41 @@ EpivizDevice <- setRefClass("EpivizDevice",
       ogr=.self$subsetGR(chr,start,end)
       return(list(start=start(ogr),end=end(ogr)))
     },
+    getDataWithValues=function(chr, start, end, cols) {
+      nCols=length(cols)
+      out=list(min=rep(-6,nCols),
+               max=rep(6,nCols),
+               data=vector("list",nCols))
+      for (i in seq_along(cols)) {
+        out$data[[i]]=list(start=integer(), end=integer(), value=numeric())
+      }
+      
+      ogr=.self$subsetGR(chr,start,end)
+      if (length(ogr)<1) {
+        return(out)  
+      }
+      
+      dataStart=start(ogr)
+      dataEnd=end(ogr)
+      
+      for (i in seq_along(cols)) {
+        vals=mcols(ogr)[[cols[i]]]
+        if (all(is.na(vals))) {
+          next
+        }
+        naIndex=is.na(vals)
+        if (any(naIndex)) {
+          out$data[[i]]=list(start=dataStart[!naIndex], end=dataEnd[!naIndex], value=vals[!naIndex])
+          vals=vals[!naIndex]
+        } else {
+          out$data[[i]]=list(start=dataStart,end=dataEnd,value=vals)
+        }
+        rng=range(pretty(range(vals)))
+        out$min[i]=rng[1]
+        out$max[i]=rng[2]
+      }
+      return(out)
+    },
     update=function(gr) {
       gr <<- gr
       makeTree()
@@ -65,38 +100,13 @@ EpivizBpDevice <- setRefClass("EpivizBpDevice",
   contains="EpivizDevice",
   methods=list(
     getData=function(chr, start, end, cols) {
-      nCols=length(cols)
-      out=list(min=rep(-6,nCols),
-               max=rep(6,nCols),
-               data=vector("list",nCols))
-      for (i in seq_along(cols)) {
-        out$data[[i]]=list(bp=integer(), value=numeric())
+      tmp <- getDataWithValues(chr, start, end, cols)
+      nCols <- length(tmp$data)
+      for (i in seq(len=nCols)) {
+        names(tmp$data[[i]])[1] <- "bp"
+        tmp$data[[i]]$end=NULL
       }
-      
-      ogr=.self$subsetGR(chr,start,end)
-      if (length(ogr)<1) {
-        return(out)  
-      }
-      
-      bp=start(ogr)
-      
-      for (i in seq_along(cols)) {
-        vals=mcols(ogr)[[cols[i]]]
-        if (all(is.na(vals))) {
-          next
-        }
-        naIndex=is.na(vals)
-        if (any(naIndex)) {
-          out$data[[i]]=list(bp=bp[!naIndex],value=vals[!naIndex])
-          vals=vals[!naIndex]
-        } else {
-          out$data[[i]]=list(bp=bp,value=vals)
-        }
-        rng=range(pretty(range(vals)))
-        out$min[i]=rng[1]
-        out$max[i]=rng[2]
-      }
-      return(out)
+      tmp
     },
     update=function(gr=gr,mdCols=NULL) {
       callSuper(gr=gr)
@@ -116,12 +126,6 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
     mdCols="ANY"
   ),
   contains="EpivizDevice",
-  methods=list(
-    getData=function(chr, start, end) {
-      ogr=.self$subsetGR(chr, start, end)
-      out=list(start=start(ogr), end=end(ogr))
-    }  
-  )              
 )
 
 .newBlockDevice <- function(obj, id)
