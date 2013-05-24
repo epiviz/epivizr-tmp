@@ -39,7 +39,31 @@ test_that("device data fetch works on bp data with NAs", {
   out$min=c(5,-6)
   out$max=c(10,6)
   out$data=list(list(bp=6,value=6),list(bp=integer(),value=numeric()))
-  
+
+ expect_equal(res,out)
+})
+
+test_that("device data fetch works on gene data", {
+  eset <- makeEset()
+  dev1 <- epivizr::newDevice(eset, id="testid", type="gene", x="SAMP_1", y="SAMP_2")
+  res <- dev1$getData(chr="chr6",start=30000000,end=40000000, cols=c("SAMP_1","SAMP_2"))
+
+  tmp <- subsetByOverlaps(dev1$gr, GRanges(seqnames="chr6",ranges=IRanges(start=30000000,end=40000000)))
+  m <- match(tmp$PROBEID, featureNames(eset))
+  mat <- exprs(eset)[m,c("SAMP_1","SAMP_2")]
+
+  lims <- unname(apply(mat, 2, function(x) range(pretty(x))))
+
+  out <- list()
+  out$min=lims[1,]
+  out$max=lims[2,]
+  out$data <- list(gene=tmp$SYMBOL,
+                   start=start(tmp),
+                   end=end(tmp),
+                   probe=tmp$PROBEID,
+                   mat[,1],
+                   mat[,2])
+
   expect_equal(res,out)
 })
 
@@ -114,9 +138,8 @@ test_that("mgr fetch no data works", {
     out$blockData$data=structure(list(list(start=integer(), end=integer()),
                                       list(start=integer(), end=integer())),
                                  names=c(devId1,devId2))
-    
-    #print(res);print(out)
-    expect_equal(res,out)
+
+  expect_equal(res,out)
   }, finally=mgr$stopServer())
 })
 

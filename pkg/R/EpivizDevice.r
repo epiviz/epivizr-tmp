@@ -31,51 +31,28 @@ EpivizDevice <- setRefClass("EpivizDevice",
     makeTree=function() {
       tree <<- IntervalForest(ranges(gr), seqnames(gr))
     },
-    subsetGR=function(chr, start, end) {
+    findOverlaps=function(chr, start, end) {
       if (!chr %in% seqlevels(gr))
-        return(GRanges())
+        return(integer())
       
-      hits <- subjectHits(findOverlaps(IRanges(start=start,end=end), tree, partition=Rle(factor(chr))))
-      gr[unique(hits)]
+      olaps <- IRanges::findOverlaps(IRanges(start=start,end=end), tree, partition=Rle(factor(chr)))
+      hits <- subjectHits(olaps)
+      unique(hits)
+    },
+    subsetByOverlaps=function(chr, start, end) {
+      hits <- .self$findOverlaps(chr,start,end)
+
+      if (length(hits)>0) {
+        gr[hits,]
+        } else {
+          GRanges()
+        }
     },
     getData=function(chr, start, end) {
-      ogr=.self$subsetGR(chr,start,end)
+      ogr <- .self$subsetByOverlaps(chr,start,end)
       return(list(start=start(ogr),end=end(ogr)))
     },
     getDataWithValues=function(chr, start, end, cols) {
-      nCols=length(cols)
-      out=list(min=rep(-6,nCols),
-               max=rep(6,nCols),
-               data=vector("list",nCols))
-      for (i in seq_along(cols)) {
-        out$data[[i]]=list(start=integer(), end=integer(), value=numeric())
-      }
-      
-      ogr=.self$subsetGR(chr,start,end)
-      if (length(ogr)<1) {
-        return(out)  
-      }
-      
-      dataStart=start(ogr)
-      dataEnd=end(ogr)
-      
-      for (i in seq_along(cols)) {
-        vals=mcols(ogr)[[cols[i]]]
-        if (all(is.na(vals))) {
-          next
-        }
-        naIndex=is.na(vals)
-        if (any(naIndex)) {
-          out$data[[i]]=list(start=dataStart[!naIndex], end=dataEnd[!naIndex], value=vals[!naIndex])
-          vals=vals[!naIndex]
-        } else {
-          out$data[[i]]=list(start=dataStart,end=dataEnd,value=vals)
-        }
-        rng=range(pretty(range(vals)))
-        out$min[i]=rng[1]
-        out$max[i]=rng[2]
-      }
-      return(out)
     },
     update=function(gr) {
       gr <<- gr
@@ -100,13 +77,38 @@ EpivizBpDevice <- setRefClass("EpivizBpDevice",
   contains="EpivizDevice",
   methods=list(
     getData=function(chr, start, end, cols) {
-      tmp <- getDataWithValues(chr, start, end, cols)
-      nCols <- length(tmp$data)
-      for (i in seq(len=nCols)) {
-        names(tmp$data[[i]])[1] <- "bp"
-        tmp$data[[i]]$end=NULL
+      nCols=length(cols)
+      out=list(min=rep(-6,nCols),
+               max=rep(6,nCols),
+               data=vector("list",nCols))
+      for (i in seq_along(cols)) {
+        out$data[[i]]=list(bp=integer(), value=numeric())
       }
-      tmp
+      
+      ogr=.self$subsetByOverlaps(chr,start,end)
+      if (length(ogr)<1) {
+        return(out)  
+      }
+      
+      bp=start(ogr)
+      
+      for (i in seq_along(cols)) {
+        vals=mcols(ogr)[[cols[i]]]
+        if (all(is.na(vals))) {
+          next
+        }
+        naIndex=is.na(vals)
+        if (any(naIndex)) {
+          out$data[[i]]=list(bp=bp[!naIndex], value=vals[!naIndex])
+          vals=vals[!naIndex]
+        } else {
+          out$data[[i]]=list(bp=bp,value=vals)
+        }
+        rng=range(pretty(range(vals)))
+        out$min[i]=rng[1]
+        out$max[i]=rng[2]
+      }
+      return(out)
     },
     update=function(gr=gr,mdCols=NULL) {
       callSuper(gr=gr)
@@ -126,6 +128,48 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
     mdCols="ANY"
   ),
   contains="EpivizDevice",
+  methods=list(
+    getData=function(chr, start, end, cols) {
+      nCols=length(cols)
+      out=list(min=rep(-6,nCols),
+               max=rep(6,nCols),
+               data=list(gene=character(),
+                         start=integer(),
+                         end=integer(),
+                         probe=character()))
+      for (i in seq_along(cols)) {
+        out$data[[i+4]]=numeric()
+      }
+      
+      ogr=.self$subsetByOverlaps(chr,start,end)
+      if (length(ogr)<1) {
+        return(out)  
+      }
+      
+      out$data$gene=ogr$SYMBOL
+      out$data$start=start(ogr)
+      out$data$end=end(ogr)
+      out$data$probe=ogr$PROBEID
+
+      for (i in seq_along(cols)) {
+        vals=mcols(ogr)[[cols[i]]]
+        if (all(is.na(vals))) {
+          next
+        }
+        naIndex=is.na(vals)
+        if (any(naIndex)) {
+          out$data[[i+4]]=vals[!naIndex]
+          vals=vals[!naIndex]
+        } else {
+          out$data[[i+4]]=vals
+        }
+        rng=range(pretty(range(vals)))
+        out$min[i]=rng[1]
+        out$max[i]=rng[2]
+      }
+      return(out)
+    }
+  )
 )
 
 .newBlockDevice <- function(obj, id)
