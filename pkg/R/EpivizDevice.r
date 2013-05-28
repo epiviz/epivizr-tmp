@@ -28,6 +28,10 @@ EpivizDevice <- setRefClass("EpivizDevice",
     id="character"
   ),
   methods=list(
+    initialize=function(gr, ...) {
+      gr <<- sort(gr)
+      callSuper(...)
+    }
     makeTree=function() {
       tree <<- IntervalForest(ranges(gr), seqnames(gr))
     },
@@ -55,7 +59,7 @@ EpivizDevice <- setRefClass("EpivizDevice",
     getDataWithValues=function(chr, start, end, cols) {
     },
     update=function(gr) {
-      gr <<- gr
+      gr <<- sort(gr)
       makeTree()
       invisible()
     },
@@ -72,14 +76,15 @@ EpivizBlockDevice <- setRefClass("EpivizBlockDevice",
 
 EpivizBpDevice <- setRefClass("EpivizBpDevice",
   fields=list(
-    mdCols="ANY"
+    mdCols="ANY",
+    ylim="numeric"
   ),
   contains="EpivizDevice",
   methods=list(
     getData=function(chr, start, end, cols) {
       nCols=length(cols)
-      out=list(min=rep(-6,nCols),
-               max=rep(6,nCols),
+      out=list(min=.self$ylim[0],
+               max=.self$ylim[1],
                data=vector("list",nCols))
       for (i in seq_along(cols)) {
         out$data[[i]]=list(bp=integer(), value=numeric())
@@ -104,9 +109,9 @@ EpivizBpDevice <- setRefClass("EpivizBpDevice",
         } else {
           out$data[[i]]=list(bp=bp,value=vals)
         }
-        rng=range(pretty(range(vals)))
-        out$min[i]=rng[1]
-        out$max[i]=rng[2]
+        # rng=range(pretty(range(vals)))
+        # out$min[i]=rng[1]
+        # out$max[i]=rng[2]
       }
       return(out)
     },
@@ -125,14 +130,16 @@ EpivizBpDevice <- setRefClass("EpivizBpDevice",
 
 EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   fields=list(
-    mdCols="ANY"
+    mdCols="ANY",
+    xlim="numeric",
+    ylim="numeric"
   ),
   contains="EpivizDevice",
   methods=list(
     getData=function(chr, start, end, cols) {
       nCols=length(cols)
-      out=list(min=rep(-6,nCols),
-               max=rep(6,nCols),
+      out=list(min=c(xlim[1],ylim[1]),
+               max=c(xlim[2],ylim[2]),
                data=list(gene=character(),
                          start=integer(),
                          end=integer(),
@@ -152,7 +159,7 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
       out$data$probe=ogr$PROBEID
 
       for (i in seq_along(cols)) {
-        vals=mcols(ogr)[[cols[i]]]
+        vals=unname(mcols(ogr)[[cols[i]]])
         if (all(is.na(vals))) {
           next
         }
@@ -163,9 +170,9 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
         } else {
           out$data[[i+4]]=vals
         }
-        rng=range(pretty(range(vals)))
-        out$min[i]=rng[1]
-        out$max[i]=rng[2]
+        # rng=range(pretty(range(vals)))
+        # out$min[i]=rng[1]
+        # out$max[i]=rng[2]
       }
       return(out)
     }
@@ -180,7 +187,7 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   return(EpivizBlockDevice$new(gr=obj, id=id))
 }
 
-.newBpDevice <- function(obj, id, mdCols=names(mcols(obj))) {
+.newBpDevice <- function(obj, id, mdCols=names(mcols(obj)), ylim=NULL) {
   if (!is(obj, "GenomicRanges")) {
     stop("'obj' must be a 'GenomicRanges' object")
   }
@@ -188,10 +195,16 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   if (!all(mdCols %in% names(mcols(obj))))
     stop("mdCols not found in GRanges object")
   
-  return(EpivizBpDevice$new(gr=obj,id=id,mdCols=mdCols))
+  if (missing(ylim) || is.null(ylim)) {
+    min <- min(mcols(gr)[,mdCols])
+    max <- max(mcols(gr)[,mdCols])
+    ylim <- range(pretty(seq(min,max,len=10)))
+  }
+
+  return(EpivizBpDevice$new(gr=obj,id=id,mdCols=mdCols,ylim=ylim))
 }
 
-.newGeneDevice <- function(obj, id, x, y, ...) {
+.newGeneDevice <- function(obj, id, x, y, xlim=NULL, ylim=NULL, ...) {
   if (!is(obj, "ExpressionSet")) {
     stop("'obj' must be of class 'ExpressionSet'")
   } 
@@ -228,7 +241,16 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   mcols(gr)[,"SYMBOL"] = res$SYMBOL
   mcols(gr)[,"PROBEID"] = res$PROBEID
 
-  return(EpivizGeneDevice$new(gr=gr, id=id, mdCols=c(x,y)))
+  if (missing(xlim) || is.null(xlim)) {
+    rng <- range(mcols(gr)[,x])
+    xlim <- range(pretty(seq(rng[1],rng[2],len=10)))
+  }
+  if (missing(ylim) || is.null(ylim)) {
+    rng <- range(mcols(gr)[,y])
+    ylim <- range(pretty(seq(rng[1],rng[2],len=10)))
+  }
+
+  return(EpivizGeneDevice$new(gr=gr, id=id, mdCols=c(x,y),xlim=xlim,ylim=ylim))
 }
 
 .typeMap <- list(gene=list(constructor=.newGeneDevice,class="EpivizGeneDevice"),

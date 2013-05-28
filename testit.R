@@ -35,7 +35,18 @@ mgr$rmDevice(diff_dev)
 # load expression data
 require(antiProfilesData)
 data(apColonData)
-#require(paste0(annotation(apColonData),".db"),character.only=TRUE)
+keep <- pData(apColonData)$SubType!="adenoma"
+apColonData <- apColonData[keep,]
+status <- pData(apColonData)$Status
+Indexes <- split(seq(along=status),status)
+
+exprMat <- exprs(apColonData)
+mns <- sapply(Indexes, function(ind) rowMeans(exprMat[,ind]))
+mat <- cbind(colonM=mns[,"1"]-mns[,"0"], colonA=0.5*(mns[,"1"]+mns[,"0"]))
+
+eset <- ExpressionSet(assayData=mat, annotation=annotation(apColonData))
+expr_dev <- mgr$addDevice(eset, "MAPlot", type="gene", x="colonA", y="colonM")
+mgr$service()
 
 mgr$listDevices()
 

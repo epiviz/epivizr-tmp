@@ -63,9 +63,9 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    },
    openBrowser=function(url=NULL) {
      if (missing(url) || is.null(url)) {
-       browseURL(url)
-     } else {
        browseURL(.self$url)
+     } else {
+       browseURL(url)
      }
      server$startServer()
      service()
@@ -244,7 +244,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
          if (length(ids)>0)
             curOut[ids] = lapply(devices$block[ids], .getFromOneDevice)
          out[[dataName]]$data=curOut
-       } else {
+       } else if (dataType=="bpMeasurements") {
          ids=measurements[[dataType]]
          
          out[[dataName]]$min=structure(rep(-6,length(ids)),names=ids)
@@ -270,10 +270,47 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
               out[[dataName]]$max[ind]=tmp$max
               out[[dataName]]$data[ind]=tmp$data
             }
+          }
+       } else {
+         ids <- measurements[[dataType]]
+         out[[dataName]]$min=structure(rep(-6,length(ids)),names=ids)
+         out[[dataName]]$max=structure(rep(6,length(ids)),names=ids)
+         out[[dataName]]$data=structure(vector("list",length(ids)+4),names=c("gene","start","end","probe",ids))
+         out[[dataName]]$data$gene=character()
+         out[[dataName]]$data$start=integer()
+         out[[dataName]]$data$end=integer()
+         out[[dataName]]$data$probe=character()
+         for (j in seq_along(ids)) {
+          out[[dataName]]$data[[j+4]]=numeric()
+         }
+         if (length(ids)>0) {
+          theMeasurements=lapply(devices[[devType]],"[[","measurements")
+          devIndexes=sapply(ids, function(id) which(sapply(theMeasurements, function(x) id %in% x)))
+          devIds=split(seq_along(ids), names(devices[[devType]])[devIndexes])
+
+          for (j in seq_along(devIds)) {
+            curDevId=names(devIds)[j]
+            dev=devices[[devType]][[curDevId]]
+
+            ind=devIds[[j]]
+            curCols=dev$obj$mdCols[match(ids[ind],dev$measurements)]
+            tmp=.getFromOneDevice(dev, cols=curCols)
+
+            out[[dataName]]$min[ind]=tmp$min
+            out[[dataName]]$max[ind]=tmp$max
+
+            if (length(out[[dataName]]$data$gene)==0) {
+              out[[dataName]]$data$gene=tmp$data$gene
+              out[[dataName]]$data$start=tmp$data$start
+              out[[dataName]]$data$end=tmp$data$end
+              out[[dataName]]$data$probe=tmp$data$probe
+            }
+            out[[dataName]]$data[ind+4]=tmp$data[-(1:4)]
+          }
          }
        }
      }
-     return(out)
+    return(out)
    },
    refresh=function() {
      'refresh browser'
