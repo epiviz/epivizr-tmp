@@ -20,9 +20,14 @@ test_that("device data fetch works on bp data", {
   
   res <- dev1$getData(chr="chr1", start=2, end=6,cols=c("score1","score2"))
   out=list()
-  out$min=c(5,-10)
-  out$max=c(10,-5)
+  lims <- cbind(range(pretty(seq(1,96,len=10))),
+                range(pretty(seq(-96,-1,len=10))))
+  out$min=lims[1,]
+  out$max=lims[2,]
   out$data=list(list(bp=6,value=6),list(bp=6,value=-6))
+
+  # cat("res\n"); print(res)
+  # cat("out\n"); print(out)
 
   expect_equal(res,out)
 })
@@ -36,9 +41,14 @@ test_that("device data fetch works on bp data with NAs", {
   
   res <- dev1$getData(chr="chr1", start=2, end=6,cols=c("score1","score2"))
   out=list()
-  out$min=c(5,-6)
-  out$max=c(10,6)
+  lims <- cbind(range(pretty(seq(1,96,len=10))),
+                range(pretty(seq(-96,-51,len=10))))
+  out$min=lims[1,]
+  out$max=lims[2,]
   out$data=list(list(bp=6,value=6),list(bp=integer(),value=numeric()))
+
+  # cat("res\n"); print(res)
+  # cat("out\n"); print(out)
 
  expect_equal(res,out)
 })
@@ -48,11 +58,13 @@ test_that("device data fetch works on gene data", {
   dev1 <- epivizr::newDevice(eset, id="testid", type="gene", x="SAMP_1", y="SAMP_2")
   res <- dev1$getData(chr="chr6",start=30000000,end=40000000, cols=c("SAMP_1","SAMP_2"))
 
+  m <- match(dev1$gr$PROBEID, featureNames(eset))
+  mat <- exprs(eset)[m,c("SAMP_1","SAMP_2")]
+  lims <- unname(apply(mat, 2, function(x) range(pretty(x))))
+
   tmp <- subsetByOverlaps(dev1$gr, GRanges(seqnames="chr6",ranges=IRanges(start=30000000,end=40000000)))
   m <- match(tmp$PROBEID, featureNames(eset))
-  mat <- exprs(eset)[m,c("SAMP_1","SAMP_2")]
-
-  lims <- unname(apply(mat, 2, function(x) range(pretty(x))))
+  mat <- exprs(eset)[m, c("SAMP_1", "SAMP_2")]
 
   out <- list()
   out$min=lims[1,]
@@ -86,11 +98,13 @@ test_that("mgr fetch works", {
     dev3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp"); devId3=dev3$id
     dev4 <- mgr$addDevice(eset, "dev4", sendRequest=sendRequest, type="gene", x="SAMP_1", y="SAMP_2"); devId4=dev4$id  
 
-    tmp <- subsetByOverlaps(dev4$gr, GRanges(seqnames="chr6",ranges=IRanges(start=30000000,end=40000000)))
-
-    m <- match(tmp$PROBEID, featureNames(eset))
+    m <- match(dev4$gr$PROBEID, featureNames(eset))
     mat <- exprs(eset)[m,c("SAMP_1","SAMP_2")]
     lims <- unname(apply(mat, 2, function(x) range(pretty(x))))
+  
+    tmp <- subsetByOverlaps(dev4$gr, GRanges(seqnames="chr6",ranges=IRanges(start=30000000,end=40000000)))
+    m <- match(tmp$PROBEID, featureNames(eset))
+    mat <- exprs(eset)[m,c("SAMP_1","SAMP_2")]
     
     if (sendRequest) { 
       tryCatch(mgr$service(),interrupt=function(e) NULL)
@@ -156,14 +170,19 @@ test_that("mgr fetch no data works", {
     
     out <- list(chr="chr11",start=2,end=6)
     out$bpData=list(start=2,end=6,chr="chr11")
-    out$bpData$min=structure(c(-6),names=paste0(devId3,"$","score"))
-    out$bpData$max=structure(c(6),names=paste0(devId3,"$","score"))
+    lim <- range(gr3$score)
+    lim <- range(pretty(range(gr3$score)))
+    out$bpData$min=structure(lim[1],names=paste0(devId3,"$","score"))
+    out$bpData$max=structure(lim[2],names=paste0(devId3,"$","score"))
     out$bpData$data=structure(list(list(bp=integer(),value=numeric())),names=paste0(devId3,"$","score"))
     
     out$blockData=list(start=2,end=6,chr="chr11")
     out$blockData$data=structure(list(list(start=integer(), end=integer()),
                                       list(start=integer(), end=integer())),
                                  names=c(devId1,devId2))
+
+  # cat("res\n"); print(res$bpData)
+  # cat("out\n"); print(out$bpData)
 
   expect_equal(res,out)
   }, finally=mgr$stopServer())
@@ -196,16 +215,21 @@ test_that("data with NAs are handled", {
       
       out <- list(chr="chr1",start=2,end=6)
       out$bpData=list(start=2,end=6,chr="chr1")
-      out$bpData$min=structure(c(5,-6),names=paste0(devId3,"$","score",1:2))
-      out$bpData$max=structure(c(10,6),names=paste0(devId3,"$","score",1:2))
+      lims1 <- range(pretty(range(gr3$score1,na.rm=TRUE)))
+      lims2 <- range(pretty(range(gr3$score2,na.rm=TRUE)))
+
+      out$bpData$min=structure(c(lims1[1],lims2[1]),names=paste0(devId3,"$","score",1:2))
+      out$bpData$max=structure(c(lims1[2],lims2[2]),names=paste0(devId3,"$","score",1:2))
       out$bpData$data=structure(list(list(bp=6,value=6),list(bp=integer(),value=numeric())),names=paste0(devId3,"$","score",1:2))
       
       out$blockData=list(start=2,end=6,chr="chr1")
       out$blockData$data=structure(list(list(start=1:6, end=100:105),
                                         list(start=integer(), end=integer())),
                                    names=c(devId1,devId2))
+
       
-      #print(res);print(out)
+      # cat("res\n"); print(res$bpData);
+      # cat("out\n"); print(out$bpData)
       expect_equal(res,out)
     }, finally=mgr$stopServer())
 })

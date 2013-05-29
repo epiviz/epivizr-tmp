@@ -28,11 +28,8 @@ EpivizDevice <- setRefClass("EpivizDevice",
     id="character"
   ),
   methods=list(
-    initialize=function(gr, ...) {
-      gr <<- sort(gr)
-      callSuper(...)
-    }
     makeTree=function() {
+      gr <<- sort(gr)
       tree <<- IntervalForest(ranges(gr), seqnames(gr))
     },
     findOverlaps=function(chr, start, end) {
@@ -77,14 +74,14 @@ EpivizBlockDevice <- setRefClass("EpivizBlockDevice",
 EpivizBpDevice <- setRefClass("EpivizBpDevice",
   fields=list(
     mdCols="ANY",
-    ylim="numeric"
+    ylim="matrix"
   ),
   contains="EpivizDevice",
   methods=list(
     getData=function(chr, start, end, cols) {
       nCols=length(cols)
-      out=list(min=.self$ylim[0],
-               max=.self$ylim[1],
+      out=list(min=unname(.self$ylim[1,]),
+               max=unname(.self$ylim[2,]),
                data=vector("list",nCols))
       for (i in seq_along(cols)) {
         out$data[[i]]=list(bp=integer(), value=numeric())
@@ -187,7 +184,7 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   return(EpivizBlockDevice$new(gr=obj, id=id))
 }
 
-.newBpDevice <- function(obj, id, mdCols=names(mcols(obj)), ylim=NULL) {
+.newBpDevice <- function(obj, id, mdCols=names(mcols(obj)), ylim=NULL, ...) {
   if (!is(obj, "GenomicRanges")) {
     stop("'obj' must be a 'GenomicRanges' object")
   }
@@ -196,9 +193,8 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
     stop("mdCols not found in GRanges object")
   
   if (missing(ylim) || is.null(ylim)) {
-    min <- min(mcols(gr)[,mdCols])
-    max <- max(mcols(gr)[,mdCols])
-    ylim <- range(pretty(seq(min,max,len=10)))
+    ylim <- sapply(mdCols, function(i) range(mcols(obj)[,i], na.rm=TRUE))
+    ylim <- apply(ylim,2,function(rng) range(pretty(seq(rng[1],rng[2],len=10))))
   }
 
   return(EpivizBpDevice$new(gr=obj,id=id,mdCols=mdCols,ylim=ylim))
