@@ -82,6 +82,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    },
    stopServer=function() {
      'stop epiviz connection'
+     rmAllDevices()
      server$stopServer()
    },
    addDevice=function(obj, devName, type="block", sendRequest=TRUE, ...) {
@@ -149,6 +150,17 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
        server$rmDevice(requestId, chartId, measurements, devType)
      }
      invisible(NULL)
+   },
+   rmAllDevices=function() {
+    'removes all current devices'
+    for (i in seq_along(typeMap)) {
+      curType=names(typeMap)[i]
+      if (length(devices[[curType]])>0) {
+        for (dev in devices[[curType]]) {
+          rmDevice(dev$obj)
+        }
+      }
+    }
    },
    updateDevice=function(device, gr) {
      devId <- device$id

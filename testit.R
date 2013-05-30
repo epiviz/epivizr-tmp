@@ -3,9 +3,9 @@ data(tcga_colon_example)
 
 show(colon_blocks)
 show(colon_curves)
-
+	
 mgr=startEpiviz(localURL="http://localhost/~hcorrada/epiviz",debug=TRUE,proxy=TRUE)
-mgr=startEpiviz()
+#mgr=startEpiviz()
 
 #need to interrupt before continuing on
 blocks_dev <- mgr$addDevice(colon_blocks, "450k colon_blocks")
@@ -24,7 +24,7 @@ means_dev <- mgr$addDevice(colon_curves, "450kMeth",type="bp",mdCols=c("cancerMe
 mgr$service()
 
 # add low-filter smoothed methylation difference estimate
-diff_dev <- mgr$addDevice(colon_curves,"450kMethDiff",type="bp",mdCols=c("smooth"))
+diff_dev <- mgr$addDevice(colon_curves,"450kMethDiff",type="bp",mdCols=c("smooth"),ylim=matrix(c(-.5,.5),nc=1))
 mgr$service()
 
 # list devices
