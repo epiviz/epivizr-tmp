@@ -80,7 +80,7 @@ Now, only this subset of blocks will be displayed in the already existing track.
 
 ### Adding line plots along the genome
 
-We have a number of available device types in `epivizr`. In the previous section, we used the `block` type. For the methylation data at base-pair resolution in the `colon_curves` object, we will use the `bp` type.
+We have a number of available device types in `epivizr`, which are listed using the `listTypes` method. In the previous section, we used the `block` type. For the methylation data at base-pair resolution in the `colon_curves` object, we will use the `bp` type.
 
 ```{r, eval=FALSE}
 # add low-filter smoothed methylation estimates
