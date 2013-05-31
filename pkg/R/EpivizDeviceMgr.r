@@ -236,6 +236,15 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      }
      return(out)
    },
+   listTypes=function() {
+    cat("Epivizr currently defined types\n")
+    
+    out=data.frame(type=names(typeMap),
+                   class=sapply(typeMap,"[[","class"),
+                   description=sapply(typeMap,"[[","description"),
+                   input_class=sapply(typeMap, "[[","input_class"))
+    print(out)
+   },
    getData=function(measurements, chr, start, end) {
      .getFromOneDevice  <- function(dev, ...) dev$obj$getData(chr=chr,start=start,end=end, ...)
      out <- list(chr=chr,start=start,end=end)

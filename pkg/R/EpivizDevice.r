@@ -249,9 +249,18 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
   return(EpivizGeneDevice$new(gr=gr, id=id, mdCols=c(x,y),xlim=xlim,ylim=ylim))
 }
 
-.typeMap <- list(gene=list(constructor=.newGeneDevice,class="EpivizGeneDevice"),
-              bp=list(constructor=.newBpDevice,class="EpivizBpDevice"),
-              block=list(constructor=.newBlockDevice,class="EpivizBlockDevice"))
+.typeMap <- list(gene=list(constructor=.newGeneDevice,
+                           class="EpivizGeneDevice",
+                           description="Scatterplot indexed by probeid",
+                           input_class="ExpressionSet"),
+              bp=list(constructor=.newBpDevice,
+                      class="EpivizBpDevice",
+                      description="Basepair resolution line plot",
+                      input_class="GRanges"),
+              block=list(constructor=.newBlockDevice,
+                         class="EpivizBlockDevice",
+                         description="Region plot",
+                         input_class="GRanges"))
 
 newDevice <- function(obj, id, type="block",...)                      
 {
