@@ -13,7 +13,8 @@ Depends:
     knitr
 Suggests:
     testthat,
-    roxygen2
+    roxygen2,
+    antiProfilesData
 Collate:
     'utils.r'
     'EpivizServer-class.R'

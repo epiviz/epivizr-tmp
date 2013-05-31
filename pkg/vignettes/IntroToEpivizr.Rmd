@@ -14,12 +14,12 @@ The `epivizr` package implements two-way communication between the `R/Bioconduct
 
 In this vignette we will look at colon cancer methylation data from the TCGA project and expression data from the gene expression barcode project. We include methylation data from the Illumina 450kHumanMethylation beadarray processed with the `minfi` package in `epivizr`. We get the expression data from the `antiProfilesData` bioconductor package.
 
-```{r, eval=TRUE, echo=FALSE, results='hide', warning=FALSE, error=FALSE}
+```{r, eval=TRUE, echo=TRUE, results='hide', warning=FALSE, error=FALSE}
 require(epivizr)
 require(antiProfilesData)
 ```
 
-```{r, cache=TRUE}
+```{r}
 data(tcga_colon_example)
 data(apColonData)
 ```
