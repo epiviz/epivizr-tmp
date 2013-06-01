@@ -25,10 +25,5 @@ install_github("epivizr", user="epiviz")
 The easiest way to try it `epivizr` out is to follow the package vignette:
 
 ```{r}
-# in R
 browseVignettes("epivizr")
-```
-
-Or take a look on here: ADD LINK
-
 ```
