@@ -10,7 +10,7 @@ The epivizr package implements two-way communication between the [R/Bioconductor
 ## Installation
 Epivizr is available as an R package. We have extended some of the underlying Bioconductor code in the `IRanges` and `GenomicRanges` packages for more efficient performance. These will be merged to the Bioconductor codebase soon. In the meantime, we require that our versions of these packages are installed. Please follow the following directions within your R session to install epivizr. 
 
-**YOU ARE USING DEVELOPMENT SOFTWARE, USE AT YOUR OWN PERIL.**
+**YOU ARE USING DEVELOPMENT SOFTWARE, USE WITH CAUTION.**
 
 ```{r}
 install.packages("devtools")
