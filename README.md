@@ -27,3 +27,7 @@ The easiest way to try it `epivizr` out is to follow the package vignette:
 ```{r}
 browseVignettes("epivizr")
 ```
+
+## A quick tour
+
+You can get a quick tour of epiviz here: [http://youtu.be/099c4wUxozA](http://youtu.be/099c4wUxozA)
