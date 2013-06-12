@@ -186,7 +186,9 @@ hljs.initHighlightingOnLoad();
 
 <h1>Introduction to epivizr: interactive visualization for epigenomics</h1>
 
-<p><a href="http://epiviz.cbcb.umd.edu"><code>Epiviz</code></a> is an interactive visualization tool for epigenomic data. It supports genome navigation like other genome browsers, but allows multiple visualizations of data within genomic regions using scatterplots, heatmaps and other user-supplied visualizations. It also includes data from the <a href="http://barcode.luhs.org/">Gene Expression Barcode project</a> for transcriptome visualization. It also has a flexible plugin framework so users can add <a href="http://d3js.org/">d3</a> visualizations. You can find more information about Epiviz at <a href="http://epiviz.cbcb.umd.edu/help">http://epiviz.cbcb.umd.edu/help</a> and see an introductory video <a href="http://example.com">here</a>.</p>
+<p><a href="http://epiviz.cbcb.umd.edu"><code>Epiviz</code></a> is an interactive visualization tool for epigenomic data. It supports genome navigation like other genome browsers, but allows multiple visualizations of data within genomic regions using scatterplots, heatmaps and other user-supplied visualizations. It also includes data from the <a href="http://barcode.luhs.org/">Gene Expression Barcode project</a> for transcriptome visualization. It also has a flexible plugin framework so users can add <a href="http://d3js.org/">d3</a> visualizations. You can find more information about Epiviz at <a href="http://epiviz.cbcb.umd.edu/help">http://epiviz.cbcb.umd.edu/help</a> and see a video tour <a href="http://youtu.be/099c4wUxozA">here</a>.</p>
+
+<iframe width="480" height="360" src="http://www.youtube.com/embed/099c4wUxozA" frameborder="0" allowfullscreen></iframe>
 
 <p>The <code>epivizr</code> package implements two-way communication between the <code>R/Bioconductor</code> computational genomics environment and <code>Epiviz</code>. Objects in an <code>R</code> session can be displayed as tracks or plots on Epiviz. Epivizr uses Websockets for communication between the browser Javascript client and the R environment using the same technology underlying the popular <a href="http://www.rstudio.com/shiny/">Shiny</a> system for authoring interactive web-based reports in R.</p>
 
@@ -195,7 +197,76 @@ hljs.initHighlightingOnLoad();
 <p>In this vignette we will look at colon cancer methylation data from the TCGA project and expression data from the gene expression barcode project. We include methylation data from the Illumina 450kHumanMethylation beadarray processed with the <code>minfi</code> package in <code>epivizr</code>. We get the expression data from the <code>antiProfilesData</code> bioconductor package.</p>
 
 <pre><code class="r">require(epivizr)
-require(antiProfilesData)
+</code></pre>
+
+<pre><code>## Loading required package: epivizr
+</code></pre>
+
+<pre><code>## Loading required package: httpuv
+</code></pre>
+
+<pre><code>## Loading required package: Rcpp
+</code></pre>
+
+<pre><code>## Loading required package: GenomicRanges
+</code></pre>
+
+<pre><code>## Loading required package: BiocGenerics
+</code></pre>
+
+<pre><code>## Loading required package: parallel
+</code></pre>
+
+<pre><code>## Attaching package: &#39;BiocGenerics&#39;
+</code></pre>
+
+<pre><code>## The following objects are masked from &#39;package:parallel&#39;:
+## 
+## clusterApply, clusterApplyLB, clusterCall, clusterEvalQ, clusterExport,
+## clusterMap, parApply, parCapply, parLapply, parLapplyLB, parRapply,
+## parSapply, parSapplyLB
+</code></pre>
+
+<pre><code>## The following object is masked from &#39;package:stats&#39;:
+## 
+## xtabs
+</code></pre>
+
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+## anyDuplicated, append, as.data.frame, as.vector, cbind, colnames,
+## duplicated, eval, Filter, Find, get, intersect, lapply, Map, mapply,
+## match, mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+## rbind, Reduce, rep.int, rownames, sapply, setdiff, sort, table, tapply,
+## union, unique, unlist
+</code></pre>
+
+<pre><code>## Loading required package: IRanges
+</code></pre>
+
+<pre><code>## Loading required package: XVector
+</code></pre>
+
+<pre><code>## Loading required package: rjson
+</code></pre>
+
+<pre><code>## Loading required package: knitr
+</code></pre>
+
+<pre><code class="r">require(antiProfilesData)
+</code></pre>
+
+<pre><code>## Loading required package: antiProfilesData
+</code></pre>
+
+<pre><code>## Loading required package: Biobase
+</code></pre>
+
+<pre><code>## Welcome to Bioconductor
+## 
+## Vignettes contain introductory material; view with &#39;browseVignettes()&#39;. To
+## cite Bioconductor, see &#39;citation(&quot;Biobase&quot;)&#39;, and for packages
+## &#39;citation(&quot;pkgname&quot;)&#39;.
 </code></pre>
 
 <pre><code class="r">data(tcga_colon_example)
@@ -421,8 +492,8 @@ mgr$service()
 ## [8] base     
 ## 
 ## other attached packages:
-##  [1] epivizr_0.99            antiProfilesData_0.99.1
-##  [3] Biobase_2.21.3          knitr_1.2              
+##  [1] antiProfilesData_0.99.1 Biobase_2.21.3         
+##  [3] epivizr_0.99            knitr_1.2              
 ##  [5] rjson_0.2.12            GenomicRanges_1.13.16  
 ##  [7] XVector_0.1.0           IRanges_1.19.9         
 ##  [9] BiocGenerics_0.7.2      httpuv_1.0.6.3         
@@ -430,9 +501,9 @@ mgr$service()
 ## [13] devtools_1.2            BiocInstaller_1.11.1   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] codetools_0.2-8 digest_0.6.3    evaluate_0.4.3  formatR_0.7    
-##  [5] httr_0.2        markdown_0.5.4  memoise_0.1     RCurl_1.95-4.1 
-##  [9] stats4_3.1.0    stringr_0.6.2   tools_3.1.0     whisker_0.3-2
+##  [1] digest_0.6.3   evaluate_0.4.3 formatR_0.7    httr_0.2      
+##  [5] memoise_0.1    RCurl_1.95-4.1 stats4_3.1.0   stringr_0.6.2 
+##  [9] tools_3.1.0    whisker_0.3-2
 </code></pre>
 
 </body>
