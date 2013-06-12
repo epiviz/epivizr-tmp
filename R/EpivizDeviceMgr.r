@@ -367,7 +367,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
 #' 
 #' @export
 startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, 
-                        debug=FALSE, proxy=TRUE, openBrowser=TRUE) {
+                        debug=FALSE, proxy=TRUE, workspace=NULL, openBrowser=TRUE) {
   message("Opening websocket...")
   server <- epivizr:::createServer(port=port)
   
@@ -378,15 +378,21 @@ startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, 
   }
   
   controllerHost=sprintf("ws://localhost:%d", port)
-  url=sprintf("%s?chr=%s&start=%d&end=%d&controllerHost=%s&debug=%s&proxy=%s&",
+  url=sprintf("%s?controllerHost=%s&debug=%s&proxy=%s&", 
               url,
-              chr,
-              as.integer(start),
-              as.integer(end),
               controllerHost,
               ifelse(debug,"true","false"),
               ifelse(proxy,"true","false"))
   
+  if (!is.null(workspace)) {
+    url=paste0(url,"workspace=",workspace,"&")
+  } else {
+    url=paste0(url,
+               sprintf("chr=%s&start=%d&end=%d&",
+                       chr,
+                       as.integer(start),
+                       as.integer(end)))
+  }
   tryCatch({
     mgr <- EpivizDeviceMgr$new(server=server, url=url)
     mgr$bindToServer()

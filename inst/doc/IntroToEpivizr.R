@@ -22,7 +22,7 @@ show(colon_curves)
 
 
 ## @knitr , eval=FALSE
-## mgr=startEpiviz()
+## mgr=startEpiviz(workspace="C60FA3168F34DBC763F579C1EADA8AF0")
 
 
 ## @knitr , eval=FALSE
