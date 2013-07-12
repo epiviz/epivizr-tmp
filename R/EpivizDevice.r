@@ -201,52 +201,82 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
 }
 
 .newGeneDevice <- function(obj, id, x, y, xlim=NULL, ylim=NULL, ...) {
-  if (!is(obj, "ExpressionSet")) {
-    stop("'obj' must be of class 'ExpressionSet'")
-  } 
-  if (annotation(obj) != 'hgu133plus2') {
-    stop("only 'hgu133plus2' affy chips supported for now")
-  }
+	if (is(obj, "SummarizedExperiment")) {
+		return(.newGeneSEDevice(obj, id, x, y, xlim, ylim))
+	} else {
+		if (!is(obj, "ExpressionSet")) {
+			stop("'obj' must be of class 'ExpressionSet' or 'SummarizedExperiment'")
+		} 
+		if (annotation(obj) != 'hgu133plus2') {
+			stop("only 'hgu133plus2' affy chips supported for now")
+		}
+		
+		# verify x and y are valid names
+		if (any(!(c(x,y) %in% sampleNames(obj)))) {
+			stop("'x' or 'y' not found in 'sampleNames'")
+		}
+		
+		# make GRanges object with appropriate info
+		probeids = featureNames(obj)
+		annoName = paste0(annotation(obj), ".db")
+		if (!require(annoName, character.only=TRUE)) {
+			stop("package '", annoName, "' is required")
+		}
+		
+		res = suppressWarnings(select(get(annoName), keys=probeids, cols=c("SYMBOL", "CHR", "CHRLOC", "CHRLOCEND"), keytype="PROBEID"))
+		dups = duplicated(res$PROBEID)
+		res = res[!dups,]
+		
+		isna = is.na(res$CHR) | is.na(res$CHRLOC) | is.na(res$CHRLOCEND)
+		res = res[!isna,]
+		
+		gr = GRanges(seqnames=paste0("chr",res$CHR),
+				strand=ifelse(res$CHRLOC>0, "+","-"),
+				ranges=IRanges(start=abs(res$CHRLOC), end=abs(res$CHRLOCEND)))
+		
+		mcols(gr)[,x] = exprs(obj)[!isna,x]
+		mcols(gr)[,y] = exprs(obj)[!isna,y]
+		
+		mcols(gr)[,"SYMBOL"] = res$SYMBOL
+		mcols(gr)[,"PROBEID"] = res$PROBEID
+		
+		if (missing(xlim) || is.null(xlim)) {
+			rng <- range(mcols(gr)[,x])
+			xlim <- range(pretty(seq(rng[1],rng[2],len=10)))
+		}
+		if (missing(ylim) || is.null(ylim)) {
+			rng <- range(mcols(gr)[,y])
+			ylim <- range(pretty(seq(rng[1],rng[2],len=10)))
+		}
+		
+		return(EpivizGeneDevice$new(gr=gr, id=id, mdCols=c(x,y),xlim=xlim,ylim=ylim))
+	}
+}
 
-  # verify x and y are valid names
-  if (any(!(c(x,y) %in% sampleNames(obj)))) {
-    stop("'x' or 'y' not found in 'sampleNames'")
-  }
-
-  # make GRanges object with approprite info
-  probeids = featureNames(obj)
-  annoName = paste0(annotation(obj), ".db")
-  if (!require(annoName, character.only=TRUE)) {
-    stop("package '", annoName, "' is required")
-  }
-
-  res = suppressWarnings(select(get(annoName), keys=probeids, cols=c("SYMBOL", "CHR", "CHRLOC", "CHRLOCEND"), keytype="PROBEID"))
-  dups = duplicated(res$PROBEID)
-  res = res[!dups,]
-
-  isna = is.na(res$CHR) | is.na(res$CHRLOC) | is.na(res$CHRLOCEND)
-  res = res[!isna,]
-
-  gr = GRanges(seqnames=paste0("chr",res$CHR),
-               strand=ifelse(res$CHRLOC>0, "+","-"),
-               ranges=IRanges(start=abs(res$CHRLOC), end=abs(res$CHRLOCEND)))
-
-  mcols(gr)[,x] = exprs(obj)[!isna,x]
-  mcols(gr)[,y] = exprs(obj)[!isna,y]
-
-  mcols(gr)[,"SYMBOL"] = res$SYMBOL
-  mcols(gr)[,"PROBEID"] = res$PROBEID
-
-  if (missing(xlim) || is.null(xlim)) {
-    rng <- range(mcols(gr)[,x])
-    xlim <- range(pretty(seq(rng[1],rng[2],len=10)))
-  }
-  if (missing(ylim) || is.null(ylim)) {
-    rng <- range(mcols(gr)[,y])
-    ylim <- range(pretty(seq(rng[1],rng[2],len=10)))
-  }
-
-  return(EpivizGeneDevice$new(gr=gr, id=id, mdCols=c(x,y),xlim=xlim,ylim=ylim))
+.newGeneSEDevice <- function(obj, id, x, y, xlim=NULL, ylim=NULL, ...) {
+	# verify x and y are valid samples
+	if (any(!(c(x,y) %in% colnames(obj)))) {
+		stop("'x' or 'y' not found as samples")
+	}
+	
+	gr <- rowData(obj)
+	
+	mcols(gr)[,x] <- assay(obj)[,x]
+	mcols(gr)[,y] <- assay(obj)[,y]
+	
+	mcols(gr)[,"SYMBOL"] = ""
+	mcols(gr)[,"PROBEID"] = rownames(obj)
+	
+	if (missing(xlim) || is.null(xlim)) {
+		rng <- range(mcols(gr)[,x])
+		xlim <- range(pretty(seq(rng[1],rng[2],len=10)))
+	}
+	if (missing(ylim) || is.null(ylim)) {
+		rng <- range(mcols(gr)[,y])
+		ylim <- range(pretty(seq(rng[1],rng[2],len=10)))
+	}
+	
+	return(EpivizGeneDevice$new(gr=gr, id=id, mdCols=c(x,y), xlim=xlim, ylim=ylim))
 }
 
 .typeMap <- list(gene=list(constructor=.newGeneDevice,

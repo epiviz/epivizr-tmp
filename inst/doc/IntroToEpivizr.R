@@ -67,7 +67,34 @@ show(eset)
 
 
 ## @knitr , eval=FALSE
-## expr_dev <- mgr$addDevice(eset, "MAPlot", type="gene", x="colonA", y="colonM")
+## eset_dev <- mgr$addDevice(eset, "MAPlot", type="gene", x="colonA", y="colonM")
+## mgr$service()
+
+
+## @knitr 
+data(tcga_colon_expression)
+show(colonSE)
+
+
+## @knitr , eval=FALSE
+## ref_sample <- 2 ^ rowMeans(log2(assay(colonSE) + 1))
+## scaled <- (assay(colonSE) + 1) / ref_sample
+## scaleFactor <- matrixStats::colMedians(scaled)
+## assay_normalized <- sweep(assay(colonSE), 2, scaleFactor, "/")
+## assay(colonSE) <- assay_normalized
+
+
+## @knitr , eval=FALSE
+## status <- colData(colonSE)$sample_type
+## index <- split(seq(along = status), status)
+## logCounts <- log2(assay(colonSE) + 1)
+## means <- sapply(index, function(ind) rowMeans(logCounts[, ind]))
+## mat <- cbind(cancer = means[, "Primary Tumor"], normal = means[, "Solid Tissue Normal"])
+
+
+## @knitr , eval=FALSE
+## sumexp <- SummarizedExperiment(mat, rowData=rowData(colonSE))
+## se_dev <- mgr$addDevice(sumexp, "Mean by Sample Type", type="gene", x="cancer", y="normal")
 ## mgr$service()
 
 

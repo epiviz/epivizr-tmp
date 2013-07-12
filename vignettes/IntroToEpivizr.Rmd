@@ -131,11 +131,49 @@ show(eset)
 Including the annotation type in this object is essential since `epivizr` will use that annotation to determine genomic locations for this data so that only probesets inside the current window are displayed. 
 
 ```{r, eval=FALSE}
-expr_dev <- mgr$addDevice(eset, "MAPlot", type="gene", x="colonA", y="colonM")
+eset_dev <- mgr$addDevice(eset, "MAPlot", type="gene", x="colonA", y="colonM")
 mgr$service()
 ```
 
 In this case, we specify which data is displayed in axis of the scatter plot using arguments `x` and `y`.
+
+### The SummarizedExperiment Object
+
+`Epiviz` is also able to display plots of data in the form of a `SummarizedExperiment` object. If we load the `tcga_colon_expression` dataset, we can see that the `colonSE` object contains information on 239322 exons in 40 samples.
+
+```{r}
+data(tcga_colon_expression)
+show(colonSE)
+```
+
+The `assay` slot holds a matrix of raw sequencing counts, so before we can plot a scatterplot showing expression, we must first normalize the count data. We use the geometric mean of each row as a reference sample to divide each column (sample) by, then use the median of each column as a scaling factor to divide each row (exon) by.
+
+```{r, eval=FALSE}
+ref_sample <- 2 ^ rowMeans(log2(assay(colonSE) + 1))
+scaled <- (assay(colonSE) + 1) / ref_sample
+scaleFactor <- matrixStats::colMedians(scaled)
+assay_normalized <- sweep(assay(colonSE), 2, scaleFactor, "/")
+assay(colonSE) <- assay_normalized
+```
+
+Now, using the expression data in the `assay` slot and the sample data in the `colData` slot, we can plot mean exon expression by sample type.
+
+```{r, eval=FALSE}
+status <- colData(colonSE)$sample_type
+index <- split(seq(along = status), status)
+logCounts <- log2(assay(colonSE) + 1)
+means <- sapply(index, function(ind) rowMeans(logCounts[, ind]))
+mat <- cbind(cancer = means[, "Primary Tumor"], normal = means[, "Solid Tissue Normal"])
+```
+
+We just create a new `SummarizedExperiment` object with the two column matrix. All the information about the features of interest, in this case exons, are stored in the `rowData` slot and are automatically queried by `Epiviz`.
+
+```{r, eval=FALSE}
+sumexp <- SummarizedExperiment(mat, rowData=rowData(colonSE))
+se_dev <- mgr$addDevice(sumexp, "Mean by Sample Type", type="gene", x="cancer", y="normal")
+mgr$service()
+```
+Again, the x and y arguments specify what data will be displayed along which axis.
 
 ### Closing the session
 
