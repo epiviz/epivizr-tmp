@@ -166,7 +166,7 @@ means <- sapply(index, function(ind) rowMeans(logCounts[, ind]))
 mat <- cbind(cancer = means[, "Primary Tumor"], normal = means[, "Solid Tissue Normal"])
 ```
 
-We just create a new `SummarizedExperiment` object with the two column matrix. All the information about the features of interest, in this case exons, are stored in the `rowData` slot and are automatically queried by `Epiviz`.
+We just create a new `SummarizedExperiment` object with the two column matrix, and all the information about the features of interest, in this case exons, are stored in the `rowData` slot and are automatically queried by `Epiviz`.
 
 ```{r, eval=FALSE}
 sumexp <- SummarizedExperiment(mat, rowData=rowData(colonSE))

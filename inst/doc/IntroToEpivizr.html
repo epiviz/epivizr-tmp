@@ -202,6 +202,19 @@ hr {
 require(antiProfilesData)
 </code></pre>
 
+<pre><code>## Loading required package: antiProfilesData
+</code></pre>
+
+<pre><code>## Loading required package: Biobase
+</code></pre>
+
+<pre><code>## Welcome to Bioconductor
+## 
+## Vignettes contain introductory material; view with &#39;browseVignettes()&#39;. To
+## cite Bioconductor, see &#39;citation(&quot;Biobase&quot;)&#39;, and for packages
+## &#39;citation(&quot;pkgname&quot;)&#39;.
+</code></pre>
+
 <pre><code class="r">data(tcga_colon_example)
 data(apColonData)
 </code></pre>
@@ -441,7 +454,7 @@ means &lt;- sapply(index, function(ind) rowMeans(logCounts[, ind]))
 mat &lt;- cbind(cancer = means[, &quot;Primary Tumor&quot;], normal = means[, &quot;Solid Tissue Normal&quot;])
 </code></pre>
 
-<p>We just create a new <code>SummarizedExperiment</code> object with the two column matrix. All the information about the features of interest, in this case exons, are stored in the <code>rowData</code> slot and are automatically queried by <code>Epiviz</code>.</p>
+<p>We just create a new <code>SummarizedExperiment</code> object with the two column matrix, and all the information about the features of interest, in this case exons, are stored in the <code>rowData</code> slot and are automatically queried by <code>Epiviz</code>.</p>
 
 <pre><code class="r">sumexp &lt;- SummarizedExperiment(mat, rowData = rowData(colonSE))
 se_dev &lt;- mgr$addDevice(sumexp, &quot;Mean by Sample Type&quot;, type = &quot;gene&quot;, x = &quot;cancer&quot;, 
@@ -480,18 +493,16 @@ mgr$service()
 ## 
 ## other attached packages:
 ##  [1] antiProfilesData_0.99.1 Biobase_2.21.6         
-##  [3] devtools_1.3            epivizr_0.99           
+##  [3] devtools_1.3            epivizr_0.99.1         
 ##  [5] knitr_1.2               rjson_0.2.12           
 ##  [7] GenomicRanges_1.13.26   XVector_0.1.0          
 ##  [9] IRanges_1.19.15         BiocGenerics_0.7.2     
 ## [11] httpuv_1.0.6.3          Rcpp_0.10.4            
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] digest_0.6.3      evaluate_0.4.4    formatR_0.8      
-##  [4] httr_0.2          markdown_0.6.1    matrixStats_0.8.1
-##  [7] memoise_0.1       R.methodsS3_1.4.4 RCurl_1.95-4.1   
-## [10] stats4_3.0.1      stringr_0.6.2     tools_3.0.1      
-## [13] whisker_0.3-2
+##  [1] digest_0.6.3   evaluate_0.4.4 formatR_0.8    httr_0.2      
+##  [5] memoise_0.1    RCurl_1.95-4.1 stats4_3.0.1   stringr_0.6.2 
+##  [9] tools_3.0.1    whisker_0.3-2
 </code></pre>
 
 </body>
