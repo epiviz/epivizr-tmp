@@ -15,7 +15,7 @@ test_that("addDevice works for blocks", {
     expect_false(is.null(mgr$devices$block[[devId]]))
     expect_equal(mgr$devices$block[[devId]]$name, "dev1")
     expect_equal(mgr$devices$block[[devId]]$measurements, devId)
-    expect_equal(as(mgr$devices$block[[devId]]$obj$tree, "IRanges"), ranges(gr))
+    expect_equal(as(mgr$devices$block[[devId]]$obj$tree, "GRanges"), unname(gr))
     expect_equal(mgr$activeId, devId)
     
     if (sendRequest) {
@@ -36,7 +36,7 @@ test_that("update works", {
     mgr$updateDevice(dev, gr2)
     
     expect_equal(mgr$devices$block[[devId]]$obj$gr, gr2)
-    expect_equal(as(mgr$devices$block[[devId]]$obj$tree, "IRanges"), ranges(gr2))    
+    expect_equal(as(mgr$devices$block[[devId]]$obj$tree, "GRanges"), unname(gr2))    
   }, finally=mgr$stopServer())
 })
 
@@ -53,7 +53,7 @@ test_that("addDevice works for bp", {
     expect_false(is.null(mgr$devices$bp[[devId]]))
     expect_equal(mgr$devices$bp[[devId]]$name, "dev1")
     expect_equal(mgr$devices$bp[[devId]]$measurements, paste0(devId,"$","score",1:2))
-    expect_equal(as(mgr$devices$bp[[devId]]$obj$tree, "IRanges"), ranges(gr))
+    expect_equal(as(mgr$devices$bp[[devId]]$obj$tree, "GRanges"), unname(gr))
     expect_equal(mgr$devices$bp[[devId]]$obj$mdCols, paste0("score",1:2))
     expect_equal(mgr$activeId, devId)
     

@@ -5,13 +5,13 @@ mgr<-list(getData=function(measurements, chr, start, end) {
 })
 
 test_that("createServer creates a proper object", {
-  server <- epivizr::createServer(port=7123L)
+  server <- epivizr:::createServer(port=7123L)
   expect_is(server, "EpivizServer")
   expect_true(server$isClosed())
 })
 
 test_that("startServer and stopServer work appropriately", {
-  server <- epivizr::createServer(port=7123L)
+  server <- epivizr:::createServer(port=7123L)
   expect_true(server$isClosed())
   
   server$startServer()
@@ -22,7 +22,7 @@ test_that("startServer and stopServer work appropriately", {
 })
 
 test_that("socket messaging works", {
-  server <- epivizr::createServer(port=7123L)
+  server <- epivizr:::createServer(port=7123L)
   server$bindManager(mgr)
   server$startServer()
   
@@ -37,7 +37,7 @@ test_that("socket messaging works", {
   
 
 test_that("runServer works", {
-  server <- epivizr::createServer(port=7123L)
+  server <- epivizr:::createServer(port=7123L)
   server$bindManager(mgr)
   
   browseURL("http://localhost:7123/")

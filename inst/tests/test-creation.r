@@ -40,11 +40,11 @@ test_that("create device works for block", {
   expect_is(dev,"EpivizDevice")
   expect_is(dev, "EpivizBlockDevice")
   expect_is(dev$gr, "GenomicRanges")
-  expect_is(dev$tree, "IntervalForest")
+  expect_is(dev$tree, "GIntervalTree")
   
   expect_equal(dev$gr, gr)
-  expect_equal(as(dev$tree, "IRanges"), unname(ranges(gr)))
-  expect_equal(dev$tree@partition, seqnames(gr))
+  expect_equal(as(dev$tree, "GRanges"), unname(gr))
+  expect_equal(seqnames(dev$tree), seqnames(gr))
 })
 
 test_that("create device works for bp data", {
@@ -53,11 +53,11 @@ test_that("create device works for bp data", {
   expect_is(dev,"EpivizDevice")
   expect_is(dev, "EpivizBpDevice")
   expect_is(dev$gr, "GenomicRanges")
-  expect_is(dev$tree, "IntervalForest")
+  expect_is(dev$tree, "GIntervalTree")
   
   expect_equal(dev$gr, gr)
-  expect_equal(as(dev$tree, "IRanges"), unname(ranges(gr)))
-  expect_equal(dev$tree@partition, seqnames(gr))
+  expect_equal(as(dev$tree, "GRanges"), unname(gr))
+  expect_equal(seqnames(dev$tree), seqnames(gr))
   expect_equal(dev$mdCols, "score")
 })
 
@@ -68,7 +68,7 @@ test_that("create device works for gene data", {
   expect_is(dev,"EpivizDevice")
   expect_is(dev, "EpivizGeneDevice")
   expect_is(dev$gr, "GRanges")
-  expect_is(dev$tree, "IntervalForest")
+  expect_is(dev$tree, "GIntervalTree")
 
   m <- match(dev$gr$PROBEID, featureNames(eset))
   expect_equal(exprs(eset)[m,"SAMP_1"], dev$gr$SAMP_1)

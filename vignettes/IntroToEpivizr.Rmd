@@ -107,7 +107,7 @@ We can use the session manager to list tracks we have added so far, or to remove
 
 ```{r, eval=FALSE}
 mgr$listDevices()
-mgr$rmDevice(diff_dev)
+mgr$rmDevice(means_dev)
 ```
 
 ### Adding a scatterplot
@@ -170,7 +170,7 @@ We just create a new `SummarizedExperiment` object with the two column matrix, a
 
 ```{r, eval=FALSE}
 sumexp <- SummarizedExperiment(mat, rowData=rowData(colonSE))
-se_dev <- mgr$addDevice(sumexp, "Mean by Sample Type", type="gene", x="cancer", y="normal")
+se_dev <- mgr$addDevice(sumexp, "Mean by Sample Type", type="gene", x="normal", y="cancer")
 mgr$service()
 ```
 Again, the x and y arguments specify what data will be displayed along which axis.

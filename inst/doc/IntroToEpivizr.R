@@ -49,7 +49,7 @@ show(colon_curves)
 
 ## @knitr , eval=FALSE
 ## mgr$listDevices()
-## mgr$rmDevice(diff_dev)
+## mgr$rmDevice(means_dev)
 
 
 ## @knitr 
@@ -94,7 +94,7 @@ show(colonSE)
 
 ## @knitr , eval=FALSE
 ## sumexp <- SummarizedExperiment(mat, rowData=rowData(colonSE))
-## se_dev <- mgr$addDevice(sumexp, "Mean by Sample Type", type="gene", x="cancer", y="normal")
+## se_dev <- mgr$addDevice(sumexp, "Mean by Sample Type", type="gene", x="normal", y="cancer")
 ## mgr$service()
 
 

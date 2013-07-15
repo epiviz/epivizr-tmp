@@ -24,19 +24,19 @@
 EpivizDevice <- setRefClass("EpivizDevice",
   fields=list(
     gr="GRanges",
-    tree="IntervalForest",
+    tree="GIntervalTree",
     id="character"
   ),
   methods=list(
     makeTree=function() {
-      gr <<- sort(gr)
-      tree <<- IntervalForest(ranges(gr), seqnames(gr))
+      tree <<- GIntervalTree(gr)
     },
     findOverlaps=function(chr, start, end) {
       if (!chr %in% seqlevels(gr))
         return(integer())
       
-      olaps <- IRanges::findOverlaps(IRanges(start=start,end=end), tree, partition=Rle(factor(chr)))
+      query <- GRanges(seqnames=chr,ranges=IRanges(start=start,end=end))
+      olaps <- IRanges::findOverlaps(query, tree, select="all")
       hits <- subjectHits(olaps)
       unique(hits)
     },
@@ -202,7 +202,7 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
 
 .newGeneDevice <- function(obj, id, x, y, xlim=NULL, ylim=NULL, ...) {
 	if (is(obj, "SummarizedExperiment")) {
-		return(.newGeneSEDevice(obj, id, x, y, xlim, ylim))
+		return(.newGeneSEDevice(obj, id=id, x=x, y=y, xlim=xlim, ylim=ylim, ...))
 	} else {
 		if (!is(obj, "ExpressionSet")) {
 			stop("'obj' must be of class 'ExpressionSet' or 'SummarizedExperiment'")
@@ -223,7 +223,7 @@ EpivizGeneDevice <- setRefClass("EpivizGeneDevice",
 			stop("package '", annoName, "' is required")
 		}
 		
-		res = suppressWarnings(select(get(annoName), keys=probeids, cols=c("SYMBOL", "CHR", "CHRLOC", "CHRLOCEND"), keytype="PROBEID"))
+		res = suppressWarnings(select(get(annoName), keys=probeids, columns=c("SYMBOL", "CHR", "CHRLOC", "CHRLOCEND"), keytype="PROBEID"))
 		dups = duplicated(res$PROBEID)
 		res = res[!dups,]
 		

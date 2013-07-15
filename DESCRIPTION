@@ -14,7 +14,9 @@ Depends:
 Suggests:
     testthat,
     roxygen2,
-    antiProfilesData
+    antiProfilesData,
+    matrixStats,
+    hgu133plus2.db
 Collate:
     'utils.r'
     'EpivizServer-class.R'
