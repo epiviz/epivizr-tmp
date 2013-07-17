@@ -29,6 +29,7 @@ EpivizDevice <- setRefClass("EpivizDevice",
   ),
   methods=list(
     makeTree=function() {
+      gr <<- sort(gr)
       tree <<- GIntervalTree(gr)
     },
     findOverlaps=function(chr, start, end) {
