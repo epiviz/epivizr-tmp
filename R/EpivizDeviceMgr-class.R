@@ -413,3 +413,16 @@ startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, 
   return(mgr)
 }
 
+.typeMap <- list(gene=list(constructor=.newGeneDevice,
+                           class="EpivizGeneDevice",
+                           description="Scatterplot indexed by probeid",
+                           input_class="ExpressionSet"),
+              bp=list(constructor=.newBpDevice,
+                      class="EpivizBpDevice",
+                      description="Basepair resolution line plot",
+                      input_class="GRanges"),
+              block=list(constructor=.newBlockDevice,
+                         class="EpivizBlockDevice",
+                         description="Region plot",
+                         input_class="GRanges"))
+
