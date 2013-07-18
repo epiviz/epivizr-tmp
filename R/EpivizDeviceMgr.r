@@ -339,9 +339,30 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    },
    navigate=function(chr, start, end) {
      'navigate to given position'
-     server$navigate(chr=chr,start=start,end=end)
-   }
-  )
+     callback=function(data) {
+         invisible(NULL)
+      }
+     requestId=callbackArray$append(callback)
+     server$navigate(requestId=requestId,chr=chr,start=start,end=end)
+   },
+   slideshow=function(granges, n=10) {
+    'navigate to successive positions'
+    if (!is(granges, "GenomicRanges"))
+      stop("'granges' must be a 'GenomicRanges' object")
+
+    ind <- seq(len=n)
+    chr=as.character(seqnames(granges)[ind])
+    start=start(granges)[ind]
+    end=end(granges)[ind]
+    for (i in seq(len=n)) {
+      cat("Region", i, "of", n, ". Press key to continue (ESC to stop)...\n")
+      readLines(n=1)
+      navigate(chr=chr[i], start=start[i], end=end[i])
+      tryCatch(service(), interrupt=function(int) invisible(NULL))
+
+    }
+    invisible(NULL)
+  })
 )
 
 #' Start the epiviz interface
