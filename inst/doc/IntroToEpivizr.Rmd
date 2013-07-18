@@ -175,6 +175,27 @@ mgr$service()
 ```
 Again, the x and y arguments specify what data will be displayed along which axis.
 
+### Slideshow
+
+We can navigate to a location on the genome using the `navigate` method of the session manager:
+
+```{r, eval=FALSE}
+mgr$navigate("chr2", 110000000, 120000000)
+```
+
+There is a convenience function to quickly navigate to a series of locations in succession.
+We can use that to browse the genome along a ranked list of regions. Let's navigate to the
+top 5 colon blocks obtained from the 450k array ranked by p-value (the `colon_blocks` object is
+already sorted by p-value)
+
+```{r, eval=FALSE}
+foldChange=mat[,"cancer"]-mat[,"normal"]
+ind=order(foldChange,decreasing=TRUE)
+slideshowRegions <- rowData(sumexp)[ind]
+slideshowRegions <- resize(slideshowRegions, fix="center", width=width(slideshowRegions)+2000000)
+mgr$slideshow(slideshowRegions, n=5)
+```
+
 ### Closing the session
 
 To close the connection to `Epiviz` and remove all tracks added during the interactive session, we use the `stopServer` function.
