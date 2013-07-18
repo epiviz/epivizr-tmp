@@ -31,8 +31,8 @@ show(colon_curves)
 
 
 ## ----, eval=FALSE--------------------------------------------------------
-## # subset to those with pvalue <0.05
-## keep <- colon_blocks$p.value < 0.05
+## # subset to those with length > 25Kbp
+## keep <- width(colon_blocks) > 25000
 ## mgr$updateDevice(blocks_dev, colon_blocks[keep,])
 
 
