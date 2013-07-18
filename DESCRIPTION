@@ -22,4 +22,3 @@ Collate:
     'EpivizServer-class.R'
     'EpivizDevice.r'
     'EpivizDeviceMgr.r'
-    'epivizr-package.r'
