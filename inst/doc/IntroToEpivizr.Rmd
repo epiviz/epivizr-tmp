@@ -70,11 +70,11 @@ mgr$service()
 
 You should now see that a new track is added to your `Epiviz` session. You can think of this track as an interactive display device in `R`. As you navigate on the browser, data is requested from the `R` session through the websocket connection. Remember to escape to continue with your interactive `R` session. The `blocks_dev` object inherits from class `EpivizDevice`, which serves as the fundamental type for display devices in `epivizr`. Note that the "brushing" effect we implement in `Epiviz` works for `epivizr` tracks as well.
 
-The point of having interactive data connections to `Epiviz` is that we may want to iteratively compute and visualize our data. For example, we may want to only display methylation blocks that at a certain statistical significance level.
+The point of having interactive data connections to `Epiviz` is that we may want to iteratively compute and visualize our data. For example, we may want to only display methylation blocks that at a certain statistical significance level. In this case, we will filter by block size.
 
 ```{r, eval=FALSE}
-# subset to those with pvalue <0.05
-keep <- colon_blocks$p.value < 0.05
+# subset to those with length > 25Kbp
+keep <- width(colon_blocks) > 25000
 mgr$updateDevice(blocks_dev, colon_blocks[keep,])
 ```
 

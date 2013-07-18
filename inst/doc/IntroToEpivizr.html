@@ -199,7 +199,37 @@ hr {
 <p>In this vignette we will look at colon cancer methylation data from the TCGA project and expression data from the gene expression barcode project. We include methylation data from the Illumina 450kHumanMethylation beadarray processed with the <code>minfi</code> package in <code>epivizr</code>. We get the expression data from the <code>antiProfilesData</code> bioconductor package.</p>
 
 <pre><code class="r">require(epivizr)
-require(antiProfilesData)
+</code></pre>
+
+<pre><code>## Loading required package: epivizr Loading required package: httpuv Loading
+## required package: Rcpp Loading required package: GenomicRanges Loading
+## required package: BiocGenerics Loading required package: parallel
+## 
+## Attaching package: &#39;BiocGenerics&#39;
+## 
+## The following objects are masked from &#39;package:parallel&#39;:
+## 
+## clusterApply, clusterApplyLB, clusterCall, clusterEvalQ, clusterExport,
+## clusterMap, parApply, parCapply, parLapply, parLapplyLB, parRapply,
+## parSapply, parSapplyLB
+## 
+## The following object is masked from &#39;package:stats&#39;:
+## 
+## xtabs
+## 
+## The following objects are masked from &#39;package:base&#39;:
+## 
+## anyDuplicated, append, as.data.frame, as.vector, cbind, colnames,
+## duplicated, eval, Filter, Find, get, intersect, lapply, Map, mapply,
+## match, mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+## rbind, Reduce, rep.int, rownames, sapply, setdiff, sort, table, tapply,
+## union, unique, unlist
+## 
+## Loading required package: IRanges Loading required package: XVector
+## Loading required package: rjson Loading required package: knitr
+</code></pre>
+
+<pre><code class="r">require(antiProfilesData)
 </code></pre>
 
 <pre><code>## Loading required package: antiProfilesData Loading required package:
@@ -336,10 +366,10 @@ mgr$service()
 
 <p>You should now see that a new track is added to your <code>Epiviz</code> session. You can think of this track as an interactive display device in <code>R</code>. As you navigate on the browser, data is requested from the <code>R</code> session through the websocket connection. Remember to escape to continue with your interactive <code>R</code> session. The <code>blocks_dev</code> object inherits from class <code>EpivizDevice</code>, which serves as the fundamental type for display devices in <code>epivizr</code>. Note that the &ldquo;brushing&rdquo; effect we implement in <code>Epiviz</code> works for <code>epivizr</code> tracks as well.</p>
 
-<p>The point of having interactive data connections to <code>Epiviz</code> is that we may want to iteratively compute and visualize our data. For example, we may want to only display methylation blocks that at a certain statistical significance level.</p>
+<p>The point of having interactive data connections to <code>Epiviz</code> is that we may want to iteratively compute and visualize our data. For example, we may want to only display methylation blocks that at a certain statistical significance level. In this case, we will filter by block size.</p>
 
-<pre><code class="r"># subset to those with pvalue &lt;0.05
-keep &lt;- colon_blocks$p.value &lt; 0.05
+<pre><code class="r"># subset to those with length &gt; 25Kbp
+keep &lt;- width(colon_blocks) &gt; 25000
 mgr$updateDevice(blocks_dev, colon_blocks[keep, ])
 </code></pre>
 
@@ -511,9 +541,9 @@ mgr$slideshow(slideshowRegions, n = 5)
 ## [13] devtools_1.3            BiocInstaller_1.11.3   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] codetools_0.2-8 digest_0.6.3    evaluate_0.4.4  formatR_0.8    
-##  [5] httr_0.2        memoise_0.1     RCurl_1.95-4.1  stats4_3.0.1   
-##  [9] stringr_0.6.2   tools_3.0.1     whisker_0.3-2
+##  [1] digest_0.6.3   evaluate_0.4.4 formatR_0.8    httr_0.2      
+##  [5] memoise_0.1    RCurl_1.95-4.1 stats4_3.0.1   stringr_0.6.2 
+##  [9] tools_3.0.1    whisker_0.3-2
 </code></pre>
 
 </body>
