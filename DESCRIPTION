@@ -8,7 +8,7 @@ Description: Websocket communication to http://epiviz.cbcb.umd.edu
 VignetteBuilder: knitr
 Depends:
     httpuv,
-    GenomicRanges,
+    GenomicRanges (>= 1.13.34),
     rjson,
     knitr
 Suggests:
