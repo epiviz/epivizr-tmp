@@ -8,15 +8,14 @@ The epivizr package implements two-way communication between the [R/Bioconductor
  
 
 ## Installation
-Epivizr is available as an R package. We have extended some of the underlying Bioconductor code in the `IRanges` and `GenomicRanges` packages for more efficient performance. These will be merged to the Bioconductor codebase soon. In the meantime, we require that our versions of these packages are installed. Please follow the following directions within your R session to install epivizr. 
+Epivizr is available as an R package. We have extended some of the underlying Bioconductor code in the `IRanges` (`IntervalForest` class) and `GenomicRanges` (`GIntervalTree` class) packages for more efficient performance. These are now available in the Bioconductor devel branch (see
+[http://bioconductor.org/developers/how-to/useDevel/](http://bioconductor.org/developers/how-to/useDevel/) for more info. The easiest way to install `epivizr` is the following: 
 
 **YOU ARE USING DEVELOPMENT SOFTWARE, USE WITH CAUTION.**
 
 ```{r}
 install.packages("devtools")
 library(devtools)
-install_github("IRanges",user="hcorrada")
-install_github("GenomicRanges",user="hcorrada")
 install_github("epivizr", user="epiviz")
 ```
 
