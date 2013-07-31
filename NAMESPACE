@@ -1,3 +1,10 @@
-export(startEpiviz)
-exportClasses(EpivizDevice)
 exportClasses(EpivizDeviceMgr)
+
+exportClasses(EpivizDevice,
+			  EpivizTrackDevice,
+			  EpivizFeatureDevice,
+			  EpivizBlockDevice,
+			  EpivizBpDevice,
+			  EpivizGeneDevice)
+
+export(startEpiviz)
