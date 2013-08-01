@@ -1,7 +1,7 @@
-setGeneric("newDevice", signature=c("object"), 
-	function(object, columns=NULL, ...) standardGeneric("newDevice"))
+setGeneric("register", signature=c("object"), 
+	function(object, columns=NULL, ...) standardGeneric("register"))
 
-setMethod("newDevice", "GRanges",
+setMethod("register", "GRanges",
 	function(object, columns, type=c("block","bp")) {
 		type <- match.arg(type)
 		dev <- switch(type,
@@ -10,7 +10,7 @@ setMethod("newDevice", "GRanges",
 		return(dev)
 })
 
-setMethod("newDevice", "ExpressionSet",
+setMethod("register", "ExpressionSet",
 	function(object, columns, annotation=NULL) {
 		if (is.null(annotation) || missing(annotation)) 
 			annotation <- annotation(object)
@@ -53,7 +53,7 @@ setMethod("newDevice", "ExpressionSet",
 })
 
 
-setMethod("newDevice", "SummarizedExperiment",
+setMethod("register", "SummarizedExperiment",
 	function(object, columns, assay=1) {
 	
 	gr <- rowData(object)

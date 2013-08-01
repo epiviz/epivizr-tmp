@@ -1,10 +1,10 @@
-context("newDevice creation")
+context("register measurement")
 
 openBrowser=sendRequest
 
-test_that("create device works for block", {
+test_that("register measurement works for block", {
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=100))
-  dev <- epivizr::newDevice(gr)
+  dev <- epivizr::register(gr)
   expect_true(validObject(dev))
 
   expect_is(dev,"EpivizDevice")
@@ -17,9 +17,9 @@ test_that("create device works for block", {
   expect_equal(seqnames(dev$tree), seqnames(gr))
 })
 
-test_that("create device works for bp data", {
+test_that("register works for bp data", {
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1),score=rnorm(10))
-  dev <- epivizr::newDevice(gr, columns="score", type="bp")
+  dev <- epivizr::register(gr, columns="score", type="bp")
   expect_true(validObject(dev))
 
   expect_is(dev,"EpivizDevice")
@@ -36,9 +36,9 @@ test_that("create device works for bp data", {
   expect_equal(dev$ylim, cbind(score=rng))
 })
 
-test_that("create device works for ExpressionSet", {
+test_that("register works for ExpressionSet", {
   eset <- makeEset()
-  dev <- epivizr::newDevice(eset, columns=c("SAMP_1", "SAMP_2"))
+  dev <- epivizr::register(eset, columns=c("SAMP_1", "SAMP_2"))
   expect_true(validObject(dev))
 
   expect_is(dev,"EpivizDevice")
@@ -50,13 +50,13 @@ test_that("create device works for ExpressionSet", {
   expect_equal(exprs(eset)[m,"SAMP_1"], dev$object$SAMP_1)
   expect_equal(exprs(eset)[m,"SAMP_2"], dev$object$SAMP_2)
 
-  rngs <- apply(exprs(eset)[,c("SAMP_1","SAMP_2")], 2, function(x) range(pretty(range(x))))
+  rngs <- apply(exprs(eset)[m,c("SAMP_1","SAMP_2")], 2, function(x) range(pretty(range(x))))
   expect_equal(dev$ylim, rngs, check.attributes=FALSE)
 })
 
-test_that("create device works for SummarizedExperiment", {
+test_that("register works for SummarizedExperiment", {
 	sset <- makeSExp()
-	dev <- epivizr::newDevice(sset, columns=c("A","B"), assay=2)
+	dev <- epivizr::register(sset, columns=c("A","B"), assay=2)
 	expect_true(validObject(dev))
 
 	expect_is(dev, "EpivizDevice")

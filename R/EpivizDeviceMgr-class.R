@@ -36,23 +36,29 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
   fields=list(
     url="character",
     devices="list",
+    msList="list",
     typeMap="list",
-    idCounter="integer",
+    msIdCounter="integer",
     activeId="character",
     chartIdMap="list",
+    msIdMap="list",
     server="EpivizServer",
-    callbackArray="IndexedArray"))
+    callbackArray="IndexedArray"),
+  methods=list(
+    initialize=function(...) {
+     msIdCounter <<- 0L
+     activeId <<- ""
+     chartIdMap <<- list()
+     msIdMap <<- list()
+     typeMap <<- .typeMap
+     devices <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
+     msList <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
+     callSuper(...)
+   })
+)
 
 # session management methods
 EpivizDeviceMgr$methods(list(
-   initialize=function(...) {
-     idCounter <<- 0L
-     activeId <<- ""
-     chartIdMap <<- list()
-     typeMap <<- .typeMap
-     devices <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
-     callSuper(...)
-   },
    bindToServer=function() {
      server$bindManager(.self)
    },
@@ -84,7 +90,7 @@ EpivizDeviceMgr$methods(list(
    },
    stopServer=function() {
      'stop epiviz connection'
-     rmAllDevices()
+     .self$rmAllDevices()
      server$stopServer()
    },
    show=function() {
@@ -120,7 +126,7 @@ EpivizDeviceMgr$methods(list(
         jsMsId <- data$id
 
         # TODO add msIdMap
-        msIdMap[[msId]] << jsMsId
+        msIdMap[[msId]] <<- jsMsId
         message("Measurement ", msName, " added to browser and connected")
       }
       requestId <- callbackArray$append(callback)
@@ -327,7 +333,7 @@ EpivizDeviceMgr$methods(list(
    )
 )
 
-.measurementTypeMap <- list(gene=list(class="EpivizFeatureDevice",
+.typeMap <- list(gene=list(class="EpivizFeatureDevice",
                            description="Scatterplot indexed by probeid",
                            input_class="ExpressionSet"),
               bp=list(class="EpivizBpDevice",
