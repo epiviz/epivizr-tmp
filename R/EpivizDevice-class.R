@@ -32,18 +32,24 @@ EpivizDevice <- setRefClass("EpivizDevice",
     ylim="matrix"
   ),
   methods=list(
-    initialize=function(object=GRanges(), columns=NULL, ylim=matrix(), ...) {
+    initialize=function(object=GRanges(), columns=NULL, ylim, ...) {
       object <<- sort(object)
       makeTree()
 
-      if (!is.null(columns)) {
+      columns <<- columns
+
+      if (is.null(columns)) {
+        if (ncol(mcols(object))>0)
+          columns <<- names(mcols(object))
+      }
+
+      if (!is.null(.self$columns)) {
         if (missing(ylim)) {
-          ylim <<- sapply(columns, function(x) range(pretty(range(mcols(object)[,x]))))
+          ylim <<- sapply(.self$columns, function(x) range(pretty(range(mcols(object)[,x], na.rm=TRUE))))
         } else {
           ylim <<- ylim
         }
       }
-      columns <<- columns
       callSuper(...)
     },
     makeTree=function() {
@@ -52,6 +58,13 @@ EpivizDevice <- setRefClass("EpivizDevice",
     update=function(object) {
       object <<- sort(object)
       makeTree()
+
+      if (!is.null(columns)) {
+        if (any(!(columns %in% names(mcols(object)))))
+          stop("columns ", paste(columns,collapse=","), " not found in 'object'")
+
+        ylim <<- sapply(columns, function(x) range(pretty(range(mcols(object)[,x]))))
+      }
       invisible()
     },
     getId=function() {
@@ -61,9 +74,25 @@ EpivizDevice <- setRefClass("EpivizDevice",
       id <<- id
       invisible()
     },
+    getMeasurements=function(devName, devId) {
+      if (is.null(columns)) {
+        structure(list(devName), names=devId)
+      } else {
+        msIds=paste0(devId,"$",columns)
+        structure(as.list(paste0(devName,"$",columns)), names=msIds)
+      }
+    },
+
     setMgr=function(mgr) {
       mgr <<- mgr
       invisible()
+    },
+    show=function() {
+      cat("Epivizr Device", id, "\n")
+      methods::show(object)
+      cat("\n\tcolumns:", paste(columns,collapse=","),"\n")
+      cat("\tlimits:\n")
+      print(ylim)
     }
   )
 )
@@ -116,7 +145,7 @@ EpivizDevice$methods(list(
         return(integer())
       
       query <- GRanges(seqnames=chr,ranges=IRanges(start=start,end=end))
-      olaps <- findOverlaps(query, tree, select="all")
+      olaps <- GenomicRanges::findOverlaps(query, tree, select="all")
       hits <- subjectHits(olaps)
       unique(hits)
     },
@@ -131,7 +160,8 @@ EpivizDevice$methods(list(
     },
     getData=function(chr, start, end) {
       sobject <- .self$subsetByOverlaps(chr,start,end)
-      return(list(start=start(sobject),end=end(sobject)))
+      out <- list(start=start(sobject),end=end(sobject))
+      return(out)
     }
   )
 )

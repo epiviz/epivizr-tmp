@@ -35,14 +35,15 @@ test_that("update works", {
     devId <- dev$id
     mgr$updateDevice(dev, gr2)
     
-    expect_equal(mgr$devices$block[[devId]]$obj$gr, gr2)
+    expect_equal(mgr$devices$block[[devId]]$obj$object, gr2)
     expect_equal(as(mgr$devices$block[[devId]]$obj$tree, "GRanges"), unname(gr2))    
   }, finally=mgr$stopServer())
 })
 
 test_that("addDevice works for bp", {
   sendRequest=sendRequest
-  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), score1=rnorm(length(seq(1,100,by=25))),score2=rnorm(length(seq(1,100,by=25))))
+  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), 
+    score1=rnorm(length(seq(1,100,by=25))),score2=rnorm(length(seq(1,100,by=25))))
   mgr <- .startMGR(openBrowser=sendRequest)
   
   tryCatch({
@@ -54,7 +55,7 @@ test_that("addDevice works for bp", {
     expect_equal(mgr$devices$bp[[devId]]$name, "dev1")
     expect_equal(mgr$devices$bp[[devId]]$measurements, paste0(devId,"$","score",1:2))
     expect_equal(as(mgr$devices$bp[[devId]]$obj$tree, "GRanges"), unname(gr))
-    expect_equal(mgr$devices$bp[[devId]]$obj$mdCols, paste0("score",1:2))
+    expect_equal(mgr$devices$bp[[devId]]$obj$columns, paste0("score",1:2))
     expect_equal(mgr$activeId, devId)
     
     if (sendRequest) {
@@ -69,14 +70,14 @@ test_that("addDevice works for gene", {
   mgr <- .startMGR(openBrowser=sendRequest)
   
   tryCatch({
-    dev <- mgr$addDevice(eset, "dev1", sendRequest=sendRequest, type="gene", x="SAMP_1", y="SAMP_2")
+    dev <- mgr$addDevice(eset, "dev1", sendRequest=sendRequest, columns=c("SAMP_1","SAMP_2"))
     devId <- dev$id
     
     expect_equal(length(mgr$devices$gene), 1)
     expect_false(is.null(mgr$devices$gene[[devId]]))
     expect_equal(mgr$devices$gene[[devId]]$name, "dev1")
     expect_equal(mgr$devices$gene[[devId]]$measurements, paste0(devId,"$","SAMP_",1:2))
-    expect_equal(mgr$devices$gene[[devId]]$obj$mdCols, paste0("SAMP_",1:2))
+    expect_equal(mgr$devices$gene[[devId]]$obj$columns, paste0("SAMP_",1:2))
     expect_equal(mgr$activeId, devId)
     
     if (sendRequest) {
@@ -87,7 +88,8 @@ test_that("addDevice works for gene", {
 
 test_that("rmDevice works", {
   sendRequest=sendRequest
-  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), score1=rnorm(length(seq(1,100,by=25))),score2=rnorm(length(seq(1,100,by=25))))
+  gr <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), 
+    score1=rnorm(length(seq(1,100,by=25))),score2=rnorm(length(seq(1,100,by=25))))
   
   mgr <- .startMGR(openBrowser=sendRequest)
   
@@ -114,13 +116,13 @@ test_that("listDevices works", {
     dev1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest); devId1=dev1$id
     dev2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest); devId2=dev2$id
     dev3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp"); devId3=dev3$id
-    dev4 <- mgr$addDevice(eset, "dev4", sendRequest = sendRequest, type="gene", x="SAMP_1", y="SAMP_2"); devId4=dev4$id
+    dev4 <- mgr$addDevice(eset, "dev4", sendRequest = sendRequest, columns=c("SAMP_1", "SAMP_2")); devId4=dev4$id
     
     devs <- mgr$listDevices()
     expected_df <- list(gene=data.frame(id=devId4,
                              active="*",
                              name="dev4",
-                             length=length(dev4$gr),
+                             length=length(dev4$object),
                              connected=ifelse(sendRequest,"*",""),
                              stringsAsFactors=FALSE),
                         bp=data.frame(id=devId3,
@@ -175,7 +177,7 @@ test_that("getMeasurements works", {
     dev1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest); devId1=dev1$id
     dev2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest); devId2=dev2$id
     dev3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp"); devId3=dev3$id
-    dev4 <- mgr$addDevice(eset, "dev4", sendRequest=sendRequest, type="gene", x="SAMP_1", y="SAMP_2"); devId4=dev4$id  
+    dev4 <- mgr$addDevice(eset, "dev4", sendRequest=sendRequest, columns=c("SAMP_1", "SAMP_2")); devId4=dev4$id  
     res <- mgr$getMeasurements()
 
     out <- list(geneMeasurements=structure(list("dev4$SAMP_1","dev4$SAMP_2"), names=paste0(devId4, c("$SAMP_1","$SAMP_2"))),

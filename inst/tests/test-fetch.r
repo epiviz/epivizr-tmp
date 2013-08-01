@@ -5,7 +5,7 @@ sendRequest=sendRequest
 test_that("device data fetch works", {
   gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=1),
                  seqinfo=Seqinfo(seqnames="chr1",genome="hcb"))
-  dev1 <- epivizr::newDevice(gr1,id="testid")
+  dev1 <- epivizr::newDevice(gr1)
   
   res <- dev1$getData(chr="chr1", start=2, end=6)
   out <- list(start=2:6,end=2:6)
@@ -16,9 +16,9 @@ test_that("device data fetch works on bp data", {
   gr3 <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=5), width=1), score1=seq(1,100,by=5), score2=-seq(1,100,by=5),
                  seqinfo=Seqinfo(seqnames=c("chr1","chr2"),genome="hcb"))
   
-  dev1 <- epivizr::newDevice(gr3,id="testid",type="bp")
+  dev1 <- epivizr::newDevice(gr3, type="bp")
   
-  res <- dev1$getData(chr="chr1", start=2, end=6,cols=c("score1","score2"))
+  res <- dev1$getData(chr="chr1", start=2, end=6,columnsRequested=c("score1","score2"))
   out=list()
   lims <- cbind(range(pretty(seq(1,96,len=10))),
                 range(pretty(seq(-96,-1,len=10))))
@@ -37,9 +37,9 @@ test_that("device data fetch works on bp data with NAs", {
                  seqinfo=Seqinfo(seqnames=c("chr1","chr2"),genome="hcb"))
   gr3$score2[1:10]=NA
   
-  dev1 <- epivizr::newDevice(gr3,id="testid",type="bp")
+  dev1 <- epivizr::newDevice(gr3, type="bp")
   
-  res <- dev1$getData(chr="chr1", start=2, end=6,cols=c("score1","score2"))
+  res <- dev1$getData(chr="chr1", start=2, end=6,columnsRequested=c("score1","score2"))
   out=list()
   lims <- cbind(range(pretty(seq(1,96,len=10))),
                 range(pretty(seq(-96,-51,len=10))))
@@ -47,22 +47,22 @@ test_that("device data fetch works on bp data with NAs", {
   out$max=lims[2,]
   out$data=list(list(bp=6,value=6),list(bp=integer(),value=numeric()))
 
-  # cat("res\n"); print(res)
-  # cat("out\n"); print(out)
+   # cat("res\n"); print(res)
+   # cat("out\n"); print(out)
 
  expect_equal(res,out)
 })
 
 test_that("device data fetch works on gene data", {
   eset <- makeEset()
-  dev1 <- epivizr::newDevice(eset, id="testid", type="gene", x="SAMP_1", y="SAMP_2")
-  res <- dev1$getData(chr="chr6",start=30000000,end=40000000, cols=c("SAMP_1","SAMP_2"))
+  dev1 <- epivizr::newDevice(eset, columns=c("SAMP_1", "SAMP_2"))
+  res <- dev1$getData(chr="chr6",start=30000000,end=40000000, columnsRequested=c("SAMP_1","SAMP_2"))
 
-  m <- match(dev1$gr$PROBEID, featureNames(eset))
+  m <- match(dev1$object$PROBEID, featureNames(eset))
   mat <- exprs(eset)[m,c("SAMP_1","SAMP_2")]
   lims <- unname(apply(mat, 2, function(x) range(pretty(x))))
 
-  tmp <- subsetByOverlaps(dev1$gr, GRanges(seqnames="chr6",ranges=IRanges(start=30000000,end=40000000)))
+  tmp <- subsetByOverlaps(dev1$object, GRanges(seqnames="chr6",ranges=IRanges(start=30000000,end=40000000)))
   m <- match(tmp$PROBEID, featureNames(eset))
   mat <- exprs(eset)[m, c("SAMP_1", "SAMP_2")]
 
@@ -96,13 +96,13 @@ test_that("mgr fetch works", {
     dev1 <- mgr$addDevice(gr1, "dev1",sendRequest=sendRequest); devId1=dev1$id
     dev2 <- mgr$addDevice(gr2, "dev2",sendRequest=sendRequest); devId2=dev2$id
     dev3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp"); devId3=dev3$id
-    dev4 <- mgr$addDevice(eset, "dev4", sendRequest=sendRequest, type="gene", x="SAMP_1", y="SAMP_2"); devId4=dev4$id  
+    dev4 <- mgr$addDevice(eset, "dev4", sendRequest=sendRequest, columns=c("SAMP_1", "SAMP_2")); devId4=dev4$id  
 
-    m <- match(dev4$gr$PROBEID, featureNames(eset))
+    m <- match(dev4$object$PROBEID, featureNames(eset))
     mat <- exprs(eset)[m,c("SAMP_1","SAMP_2")]
     lims <- unname(apply(mat, 2, function(x) range(pretty(x))))
   
-    tmp <- subsetByOverlaps(dev4$gr, GRanges(seqnames="chr6",ranges=IRanges(start=30000000,end=40000000)))
+    tmp <- subsetByOverlaps(dev4$object, GRanges(seqnames="chr6",ranges=IRanges(start=30000000,end=40000000)))
     m <- match(tmp$PROBEID, featureNames(eset))
     mat <- exprs(eset)[m,c("SAMP_1","SAMP_2")]
     
@@ -137,8 +137,8 @@ test_that("mgr fetch works", {
                                       list(start=integer(), end=integer())),
                                  names=c(devId1,devId2))
     
-    #cat("res\n"); print(res$geneData)
-    #cat("out\n"); print(out$geneData)
+    # cat("res\n"); print(res$bpData)
+    # cat("out\n"); print(out$bpData)
 
     expect_equal(res$geneData,out$geneData)
     expect_equal(res$bpData,out$bpData)

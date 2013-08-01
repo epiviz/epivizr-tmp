@@ -1,6 +1,9 @@
-exportClasses(EpivizDeviceMgr)
+import(methods)
+import(Biobase)
+import(GenomicRanges)
 
-exportClasses(EpivizDevice,
+exportClasses(EpivizDeviceMgr,
+			  EpivizDevice,
 			  EpivizTrackDevice,
 			  EpivizFeatureDevice,
 			  EpivizBlockDevice,
