@@ -11,4 +11,4 @@ proxy=TRUE
   }
 }
 
-sendRequest = FALSE
+sendRequest = TRUE

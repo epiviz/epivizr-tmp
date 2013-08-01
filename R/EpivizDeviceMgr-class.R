@@ -41,8 +41,10 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     activeId="character",
     chartIdMap="list",
     server="EpivizServer",
-    callbackArray="IndexedArray"),
-  methods=list(
+    callbackArray="IndexedArray"))
+
+# session management methods
+EpivizDeviceMgr$methods(list(
    initialize=function(...) {
      idCounter <<- 0L
      activeId <<- ""
@@ -90,34 +92,65 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
       cat("Current devices:\n")
       print(listDevices()); cat("\n")
       listTypes()
-   },
-   addDevice=function(obj, devName, sendRequest=TRUE, ...) {
-     'add device to epiviz browser'
-     device <- epivizr:::newDevice(obj, ...)
-     type = getDeviceType(class(device))
+   })
+)
 
-     idCounter <<- idCounter + 1L
-     devId <- sprintf("epivizDev_%s_%d", type, idCounter)
-     device$setId(devId)
-     device$setMgr(.self)
+# measurement management methods
+EpivizDeviceMgr$methods(list(
+   addMeasurements=function(obj, msName, sendRequest=TRUE, ...) {
+    'add measurements to epiviz session'
+    # TODO: change newDevice to register method
+    epivizObject <- epivizr:::register(obj, ...)
+    type <- getMeasurementType(class(epivizObject))
+
+    # TODO change IdCounter to measurementIdCounter
+    msIdCounter <<- msIdCounter + 1L
+    msId <- sprintf("epivizMs_%s_%d", type, msIdCounter)
+    epivizObject$setId(msId)
+    epivizObject$setMgr(.self)
+
+    measurements <- epivizObject$getMeasurements(msName, msId)
+    msRecord <- list(measurements=names(measurements), name=msName, obj=epivizObject)
+
+    # TODO: make measurements list
+    msList[[type]][[msId]] <<- msRecord
+
+    if (sendRequest) {
+      callback <- function(data) {
+        jsMsId <- data$id
+
+        # TODO add msIdMap
+        msIdMap[[msId]] << jsMsId
+        message("Measurement ", msName, " added to browser and connected")
+      }
+      requestId <- callbackArray$append(callback)
+
+      # TODO: add addMeasurement method to server
+      server$addMeasurement(requestId, type, measurements) 
+    }
+    return(epivizObject)
+   },
+   updateMeasurements=function(device, gr) {
+     devId <- device$id
+     slot <- which(sapply(devices, function(x) devId %in% names(x)))
+     if (length(slot)<1)
+       stop("device not recognized by manager")
+
+     device$update(gr)
      
-     measurements = device$getMeasurements(devName, devId)
+     devType <- names(typeMap)[slot]
+     devName <- devices[[devType]][[devId]]$name
      
-     devRecord=list(measurements=names(measurements), name=devName, obj=device)
-     devices[[type]][[devId]] <<- devRecord
-     activeId <<- devId
-     
-     if (sendRequest) {
+     chartId <- chartIdMap[[devId]]
+     if (!is.null(chartId)) {
        callback=function(data) {
-         trkId = data$id
-         chartIdMap[[devId]] <<- trkId
-         message("Device ", devName, " added to browser and connected")
+         message("cache for device ", devName, " cleared")
        }
        requestId=callbackArray$append(callback)
-       server$addDevice(requestId, type, measurements)
-     } 
-     return(device)
-   },  
+       server$clearCache(requestId, chartId) 
+     }
+     invisible()
+   },
    rmDevice=function(device) {
      'delete device from epiviz browser'
      devId <- device$id
@@ -157,35 +190,6 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
         }
       }
     }
-   },
-   updateDevice=function(device, gr) {
-     devId <- device$id
-     slot <- which(sapply(devices, function(x) devId %in% names(x)))
-     if (length(slot)<1)
-       stop("device not recognized by manager")
-
-     device$update(gr)
-     
-     devType <- names(typeMap)[slot]
-     devName <- devices[[devType]][[devId]]$name
-     
-     chartId <- chartIdMap[[devId]]
-     if (!is.null(chartId)) {
-       callback=function(data) {
-         message("cache for device ", devName, " cleared")
-       }
-       requestId=callbackArray$append(callback)
-       server$clearCache(requestId, chartId) 
-     }
-     invisible()
-   },
-   setActive=function (devId) {
-     'set given device as active in browser'
-     slot=which(sapply(lapply(devices,names), function(x) devId %in% x))
-     if (length(slot)<1)
-       stop("device Id not found")
-     activeId <<- devId
-     invisible(NULL)
    },
    listDevices=function() {
      'list devices in browser'
@@ -231,21 +235,6 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
       out[[nm]]=measurements 
      }
      return(out)
-   },
-   listTypes=function() {
-    cat("Epivizr currently defined types\n")
-    
-    out=data.frame(type=names(typeMap),
-                   class=sapply(typeMap,"[[","class"),
-                   description=sapply(typeMap,"[[","description"),
-                   input_class=sapply(typeMap, "[[","input_class"))
-    print(out)
-   },
-   getDeviceType=function(deviceClass) {
-    m=match(deviceClass, sapply(typeMap,"[[","class"))
-    if (is.na(m))
-      stop("'deviceClass' ", deviceClass, " not found in 'typeMap'")
-    names(typeMap)[m]
    },
    getData=function(measurements, chr, start, end) {
      .getFromOneDevice  <- function(dev, ...) dev$obj$getData(chr=chr,start=start,end=end, ...)
@@ -334,7 +323,80 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
        }
      }
     return(out)
+   }
+   )
+)
+
+.measurementTypeMap <- list(gene=list(class="EpivizFeatureDevice",
+                           description="Scatterplot indexed by probeid",
+                           input_class="ExpressionSet"),
+              bp=list(class="EpivizBpDevice",
+                      description="Basepair resolution line plot",
+                      input_class="GRanges"),
+              block=list(class="EpivizBlockDevice",
+                         description="Region plot",
+                         input_class="GRanges"))
+
+
+# chart management methods
+EpivizDeviceMgr$methods(list(
+   addChart=function(msObject, ...) {
+     # TODO: move this code to an addDevice method
+     # device <- epivizr:::newDevice(obj, ...)
+     # type = getDeviceType(class(device))
+
+     # idCounter <<- idCounter + 1L
+     # devId <- sprintf("epivizDev_%s_%d", type, idCounter)
+     # device$setId(devId)
+     # device$setMgr(.self)
+     
+     # measurements = device$getMeasurements(devName, devId)
+     
+     # devRecord=list(measurements=names(measurements), name=devName, obj=device)
+     # devices[[type]][[devId]] <<- devRecord
+     # activeId <<- devId
+     
+     # if (sendRequest) {
+     #   callback=function(data) {
+     #     trkId = data$id
+     #     chartIdMap[[devId]] <<- trkId
+     #     message("Device ", devName, " added to browser and connected")
+     #   }
+     #   requestId=callbackArray$append(callback)
+     #   server$addDevice(requestId, type, measurements)
+     # } 
+     # return(device)
+   },  
+   setActive=function (devId) {
+     'set given device as active in browser'
+     slot=which(sapply(lapply(devices,names), function(x) devId %in% x))
+     if (length(slot)<1)
+       stop("device Id not found")
+     activeId <<- devId
+     invisible(NULL)
    },
+   plot=function(obj, devName, sendRequest=TRUE, ...) {
+     'add device to epiviz browser'
+     msObject <- addMeasurement(obj, devName, sendRequest=sendRequest, ...)
+
+     # TODO: implement EpivizDataTypes class hierarchy
+     # TODO: to mirror the JS data type class hierarchy
+     # TODO: implement plot method for EpivzDataTypes
+     devObject <- msObject$plot(sendRequest=sendRequest, ...)
+
+     # TODO: implement EpivizDevice class hierarchy
+     # TODO: to mirror JS chart type class hierarchy
+     devId <- devObject$getId()
+     activeId <<- devId
+     return(devObject)
+   }
+   )
+)
+
+.chartTypeMap <- list()
+
+# navigation methods
+EpivizDeviceMgr$methods(list(
    refresh=function() {
      'refresh browser'
      server$refresh()
@@ -414,14 +476,4 @@ startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, 
   }
   return(mgr)
 }
-
-.typeMap <- list(gene=list(class="EpivizFeatureDevice",
-                           description="Scatterplot indexed by probeid",
-                           input_class="ExpressionSet"),
-              bp=list(class="EpivizBpDevice",
-                      description="Basepair resolution line plot",
-                      input_class="GRanges"),
-              block=list(class="EpivizBlockDevice",
-                         description="Region plot",
-                         input_class="GRanges"))
 
