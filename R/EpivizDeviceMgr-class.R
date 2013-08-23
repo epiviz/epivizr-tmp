@@ -112,8 +112,8 @@ EpivizDeviceMgr$methods(list(
     epivizObject$setMgr(.self)
 
     measurements <- epivizObject$getMeasurements(msName, msId)
-    msRecord <- list(measurements=names(measurements), name=msName, obj=epivizObject, connected=FALSE)
-
+    msRecord <- list(measurements=names(measurements), 
+      name=msName, obj=epivizObject, connected=FALSE)
     msList[[type]][[msId]] <<- msRecord
 
     if (sendRequest) {
@@ -335,13 +335,13 @@ EpivizDeviceMgr$methods(list(
 )
 
 .typeMap <- list(gene=list(class="EpivizFeatureDevice",
-                           description="Scatterplot indexed by probeid",
-                           input_class="ExpressionSet"),
+                           description="Data indexed by feature",
+                           input_class="SummarizedExperiment"),
               bp=list(class="EpivizBpDevice",
-                      description="Basepair resolution line plot",
+                      description="Basepair resolution data",
                       input_class="GRanges"),
               block=list(class="EpivizBlockDevice",
-                         description="Region plot",
+                         description="Genomic region data",
                          input_class="GRanges"))
 
 

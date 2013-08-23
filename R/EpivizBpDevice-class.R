@@ -30,6 +30,12 @@ EpivizBpDevice <- setRefClass("EpivizBpDevice",
 IRanges::setValidity2("EpivizBpDevice", .valid.EpivizBpDevice)
 
 EpivizBpDevice$methods(
+  getMeasurements=function(devName, devId) {
+    out <- paste(devName, columns, sep="$")
+    nms <- paste(devId, columns, sep="$")
+    names(out) <- nms
+    out
+  },
   getData=function(chr, start, end, columnsRequested) {
       out <- callSuper(chr,start,end,columnsRequested)
       for (i in seq_along(columnsRequested)) {

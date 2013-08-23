@@ -44,7 +44,7 @@ EpivizFeatureDevice <- setRefClass("EpivizFeatureDevice",
       return("'assay' not found in 'object'")
     return(NULL)
   }
-  
+
   if (x$assay > length(assays(x$object)))
     return("'assay' not found in 'object'")
   NULL
@@ -59,6 +59,12 @@ EpivizFeatureDevice <- setRefClass("EpivizFeatureDevice",
 IRanges::setValidity2("EpivizFeatureDevice", .valid.EpivizFeatureDevice)
 
 EpivizFeatureDevice$methods(
+    getMeasurements=function(devName, devId) {
+     out <- paste(devName, columns, sep="$")
+      nms <- paste(devId, columns, sep="$")
+      names(out) <- nms
+      out
+    },
     getData=function(chr, start, end, columnsRequested) {
       columnsMatch <- match(columnsRequested, columns)
       if (any(is.na(columnsMatch)))

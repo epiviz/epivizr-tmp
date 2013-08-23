@@ -80,16 +80,18 @@ EpivizDevice <- setRefClass("EpivizDevice",
       ylim <<- ylim
     }, 
     getMeasurements=function(devName, devId) {
-      .getMeasurements(object, columns)
+      out <- devName
+      names(out) <- devId
+      out
     },
     setMgr=function(mgr) {
       mgr <<- mgr
       invisible()
     },
     show=function() {
-      cat("Epivizr Device", id, "\n")
+      cat(class(.self), "object", id, "\n")
       methods::show(object)
-      cat("\n\tcolumns:", .showColumns(object, columns),"\n")
+      cat("\n\tcolumns:", paste(columns,collapse=","),"\n")
       cat("\tlimits:\n")
       print(ylim)
     }
@@ -110,8 +112,8 @@ EpivizDevice <- setRefClass("EpivizDevice",
 
 IRanges::setValidity2("EpivizDevice", .valid.EpivizDevice)
 
-setGeneric(".getMeasurements", function(object, columns) standardGeneric(".getMeasurements"))
-
+#######
+# get data
 EpivizDevice$methods(list(
     findOverlaps=function(chr, start, end) {
       if (!chr %in% seqlevels(tree))
