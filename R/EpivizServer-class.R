@@ -116,6 +116,14 @@ EpivizServer <- setRefClass("EpivizServer",
       }
       invisible()
     },
+    addMeasurements=function(requestId, msType, measurements) {
+      request=list(type="request",
+                   id=requestId,
+                   action="addMeasurements",
+                   data=list(measurements=measurements,
+                             type=msType))
+      sendRequest(request)
+    },
     addDevice=function(requestId, devType, measurements) {
       request=list(type="request",
                    id=requestId,

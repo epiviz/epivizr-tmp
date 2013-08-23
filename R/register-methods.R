@@ -1,13 +1,33 @@
 setGeneric("register", signature=c("object"), 
 	function(object, columns=NULL, ...) standardGeneric("register"))
 
-setMethod("register", "GRanges",
+setMethod("register", "GenomicRanges",
 	function(object, columns, type=c("block","bp")) {
 		type <- match.arg(type)
+		if (!is(object, "GIntervalTree")) {
+			object <- as(object, "GIntervalTree")
+		}
 		dev <- switch(type,
-					  block=EpivizBlockDevice$new(object=object, columns=columns),
+					  block=EpivizBlockDevice$new(object=object),
 					  bp=EpivizBpDevice$new(object=object, columns=columns))
 		return(dev)
+})
+
+setMethod("register", "SummarizedExperiment",
+	function(object, columns=NULL, assay=1) {
+		if (!is(rowData(object), "GIntervalTree")) {
+			rowData(object) <- as(rowData(object), "GIntervalTree")
+		}
+
+		mcolNames <- names(mcols(rowData(object)))
+
+		if (!("PROBEID" %in% mcolNames)) {
+			rowData(object)$PROBEID <- ""
+		} 
+		if (!("SYMBOL" %in% mcolNames)) {
+			rowData(object)$SYMBOL <- ""
+		} 
+		EpivizFeatureDevice$new(object=object, columns=columns, assay=assay)
 })
 
 setMethod("register", "ExpressionSet",
@@ -41,36 +61,17 @@ setMethod("register", "ExpressionSet",
 		if (any(!(columns %in% colnames(exprs(object)))))
 			stop("'columns' not found on 'exprs(object)'")
 
-
-		# wanted to do this, but got error, couldn't figure out why
-		# mcols(gr)[,columns] <- exprs(object)[!drop,columns]
-		for (col in columns) mcols(gr)[[col]] <- exprs(object)[!drop,col]
-
 		mcols(gr)[,"SYMBOL"] = res$SYMBOL
 		mcols(gr)[,"PROBEID"] = res$PROBEID
-		
-		EpivizFeatureDevice$new(object=gr, columns=columns)
+
+		mat <- exprs(object)[!drop,columns]
+		colnames(mat) <- columns
+
+		sumexp <- SummarizedExperiment(assays=SimpleList(mat),
+									  rowData=gr,
+									  colData=DataFrame(pData(object)[columns,]))
+
+		register(sumexp, columns=columns, assay=1)
 })
 
-
-setMethod("register", "SummarizedExperiment",
-	function(object, columns, assay=1) {
-	
-	gr <- rowData(object)
-	mat <- assay(object, assay)
-
-	if (any(!columns %in% colnames(mat)))
-		stop("'columns' not found on 'assay(object)'")
-
-	for (col in columns) mcols(gr)[[col]] <- mat[,col]
-	mcols(gr)[,"SYMBOL"] = ""
-
-	if (!is.null(rownames(object))) {
-		mcols(gr)[,"PROBEID"] = rownames(object)
-	} else {
-		mcols(gr)[,"PROBEID"] = ""
-	}
-	
-	EpivizFeatureDevice$new(object=gr, columns=columns)
-})
 

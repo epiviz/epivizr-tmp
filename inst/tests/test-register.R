@@ -7,14 +7,12 @@ test_that("register measurement works for block", {
   dev <- epivizr::register(gr)
   expect_true(validObject(dev))
 
-  expect_is(dev,"EpivizDevice")
   expect_is(dev, "EpivizBlockDevice")
-  expect_is(dev$object, "GenomicRanges")
-  expect_is(dev$tree, "GIntervalTree")
-  
-  expect_equal(dev$object, gr)
-  expect_equal(as(dev$tree, "GRanges"), unname(gr))
-  expect_equal(seqnames(dev$tree), seqnames(gr))
+  expect_is(dev$object, "GIntervalTree")
+
+  expect_equal(as(dev$object, "GRanges"), gr)
+
+  expect_true(is.null(dev$columns))
 })
 
 test_that("register works for bp data", {
@@ -22,18 +20,40 @@ test_that("register works for bp data", {
   dev <- epivizr::register(gr, columns="score", type="bp")
   expect_true(validObject(dev))
 
-  expect_is(dev,"EpivizDevice")
   expect_is(dev, "EpivizBpDevice")
-  expect_is(dev$object, "GenomicRanges")
-  expect_is(dev$tree, "GIntervalTree")
+  expect_is(dev$object, "GIntervalTree")
   
-  expect_equal(dev$object, gr)
-  expect_equal(as(dev$tree, "GRanges"), unname(gr))
-  expect_equal(seqnames(dev$tree), seqnames(gr))
-  expect_equal(dev$columns, "score")
-
+  expect_equal(as(dev$object, "GRanges"), unname(gr))
+  expect_equal(dev$columns, "score") 
   rng=range(pretty(range(gr$score)))
   expect_equal(dev$ylim, cbind(score=rng))
+})
+
+test_that("register works for SummarizedExperiment", {
+  sset <- makeSExp()
+  dev <- epivizr::register(sset, columns=c("A","B"), assay="counts2")
+  expect_true(validObject(dev))
+
+  expect_is(dev, "EpivizFeatureDevice")
+  expect_is(dev$object, "SummarizedExperiment")
+  gr <- as(rowData(dev$object), "GRanges")
+  expect_false(is.null(gr$PROBEID))
+  expect_false(is.null(gr$SYMBOL))
+  gr$PROBEID <- NULL
+  gr$SYMBOL <- NULL
+  expect_identical(gr, unname(rowData(sset)))
+
+  expect_identical(assays(dev$object), assays(sset))
+  expect_identical(colData(dev$object), colData(sset))
+
+  columns=c("A","B")
+  expect_identical(dev$columns, columns)
+  emat <- assay(sset,"counts2")[,c("A","B")]
+  mat <- assay(dev$object,"counts2")[,c("A","B")]
+  expect_equal(emat, mat)
+
+  rngs <- apply(emat, 2, function(x) range(pretty(range(x))))
+  expect_equal(dev$ylim, rngs, check.attributes=FALSE)
 })
 
 test_that("register works for ExpressionSet", {
@@ -41,32 +61,19 @@ test_that("register works for ExpressionSet", {
   dev <- epivizr::register(eset, columns=c("SAMP_1", "SAMP_2"))
   expect_true(validObject(dev))
 
-  expect_is(dev,"EpivizDevice")
   expect_is(dev, "EpivizFeatureDevice")
-  expect_is(dev$object, "GRanges")
-  expect_is(dev$tree, "GIntervalTree")
+  expect_is(dev$object, "SummarizedExperiment")
 
-  m <- match(dev$object$PROBEID, featureNames(eset))
-  expect_equal(exprs(eset)[m,"SAMP_1"], dev$object$SAMP_1)
-  expect_equal(exprs(eset)[m,"SAMP_2"], dev$object$SAMP_2)
+  obj <- dev$object
+  gr <- rowData(obj)
+
+  m <- match(gr$PROBEID, featureNames(eset))
+  mat <- assay(obj)
+
+  expect_equal(exprs(eset)[m,"SAMP_1"], mat[,"SAMP_1"], check.names=FALSE, check.attributes=FALSE)
+  expect_equal(exprs(eset)[m,"SAMP_2"], mat[,"SAMP_2"], check.names=FALSE, check.attributes=FALSE)
 
   rngs <- apply(exprs(eset)[m,c("SAMP_1","SAMP_2")], 2, function(x) range(pretty(range(x))))
   expect_equal(dev$ylim, rngs, check.attributes=FALSE)
 })
 
-test_that("register works for SummarizedExperiment", {
-	sset <- makeSExp()
-	dev <- epivizr::register(sset, columns=c("A","B"), assay=2)
-	expect_true(validObject(dev))
-
-	expect_is(dev, "EpivizDevice")
-	expect_is(dev, "EpivizFeatureDevice")
-	expect_is(dev$object, "GRanges")
-	expect_is(dev$tree, "GIntervalTree")
-
-	mat <- assay(sset,"counts2")[,c("A","B")]
-	expect_equal(mat[,"A"], dev$object$A)
-	expect_equal(mat[,"B"], dev$object$B)
-	rngs <- apply(mat, 2, function(x) range(pretty(range(x))))
-	expect_equal(dev$ylim, rngs, check.attributes=FALSE)
-})

@@ -24,47 +24,47 @@
 EpivizDevice <- setRefClass("EpivizDevice",
   contains="VIRTUAL",
   fields=list(
-    object="GenomicRanges",
-    tree="GIntervalTree",
+    object="ANY",
     mgr="EpivizDeviceMgr",
     id="character",
     columns="ANY",
-    ylim="matrix"
+    ylim="ANY"
   ),
   methods=list(
-    initialize=function(object=GRanges(), columns=NULL, ylim, ...) {
-      object <<- sort(object)
-      makeTree()
-
+    initialize=function(object=GIntervalTree(GRanges()), columns=NULL, ...) {
+      object <<- object
       columns <<- columns
 
-      if (is.null(columns)) {
-        if (ncol(mcols(object))>0)
-          columns <<- names(mcols(object))
-      }
+      if (!.self$.checkColumns(columns))
+        stop("Invalid 'columns' argument")
 
-      if (!is.null(.self$columns)) {
-        if (missing(ylim)) {
-          ylim <<- sapply(.self$columns, function(x) range(pretty(range(mcols(object)[,x], na.rm=TRUE))))
-        } else {
-          ylim <<- ylim
-        }
-      }
+      if (is.null(.self$columns))
+        columns <<- .self$.getColumns()
+
+      ylim <<- .self$.getLimits()
       callSuper(...)
     },
-    makeTree=function() {
-      tree <<- GIntervalTree(as(object, "GRanges"))
+    .checkColumns=function(columns) {
+      is.null(columns)
     },
-    update=function(object) {
-      object <<- sort(object)
-      makeTree()
+    .getColumns=function() {
+      NULL
+    },
+    .getLimits=function() {
+      NULL
+    },
+    update=function(newObject) {
+      if(class(newObject) != class(object)) {
+        stop("class of 'newObject' is not equal to class of current 'object'")
+      }
 
       if (!is.null(columns)) {
-        if (any(!(columns %in% names(mcols(object)))))
-          stop("columns ", paste(columns,collapse=","), " not found in 'object'")
+        if (!.checkColumns(object, columns))
+          stop("columns not found in 'newObject'")
 
-        ylim <<- sapply(columns, function(x) range(pretty(range(mcols(object)[,x]))))
+        ylim <<- .getLimits(object, columns)
       }
+      object <<- newObject
       invisible()
     },
     getId=function() {
@@ -74,15 +74,14 @@ EpivizDevice <- setRefClass("EpivizDevice",
       id <<- id
       invisible()
     },
+    setLimits=function(ylim) {
+      if (!.checkLimits(ylim))
+          stop("'invalid' limits argument")
+      ylim <<- ylim
+    }, 
     getMeasurements=function(devName, devId) {
-      if (is.null(columns)) {
-        structure(list(devName), names=devId)
-      } else {
-        msIds=paste0(devId,"$",columns)
-        structure(as.list(paste0(devName,"$",columns)), names=msIds)
-      }
+      .getMeasurements(object, columns)
     },
-
     setMgr=function(mgr) {
       mgr <<- mgr
       invisible()
@@ -90,54 +89,28 @@ EpivizDevice <- setRefClass("EpivizDevice",
     show=function() {
       cat("Epivizr Device", id, "\n")
       methods::show(object)
-      cat("\n\tcolumns:", paste(columns,collapse=","),"\n")
+      cat("\n\tcolumns:", .showColumns(object, columns),"\n")
       cat("\tlimits:\n")
       print(ylim)
     }
   )
 )
 
+#####
+# validity
 .valid.EpivizDevice.columns <- function(x) {
-  if (!is.null(x$columns)) {
-    if (any(!(x$columns %in% names(mcols(x$object)))))
-      return("'columns' not in 'object' names")
-  }
+  if(!x$.checkColumns(x$columns))
+    return("invalid 'columns' slot")
   NULL
 }
 
-.valid.EpivizDevice.seqnames <- function(x) {
-  if (any(seqlevels(x$object) != seqlevels(x$tree)))
-    return("'seqlevels(x$object)' does not match 'seqlevels(x$tree)'")
-  NULL
+.valid.EpivizDevice <- function(x) {
+  c(.valid.EpivizDevice.columns(x))
 }
 
-.valid.EpivizDevice.length <- function(x) {
-  if (length(x$object) != length(x$tree))
-    return("'length(x$object)' does not match 'length(x$tree)'")
-  NULL
-}
+IRanges::setValidity2("EpivizDevice", .valid.EpivizDevice)
 
-.valid.EpivizDevice.ylim <- function(x) {
-  if (!is.null(x$columns)) {
-    if (!ncol(x$ylim) == length(x$columns))
-      return("'ncol(x$ylim)' does not match 'length(x$columns)'")
-
-    if (nrow(x$ylim) != 2L) {
-      return("'nrow(x$ylim)' does not equal 2")
-    }
-  }
-  NULL
-}
-
-.valid.EpivizDevice <- function(object) {
-  c(.valid.EpivizDevice.columns(object),
-    .valid.EpivizDevice.seqnames(object),
-    .valid.EpivizDevice.length(object),
-    .valid.EpivizDevice.ylim(object))
-}
-
-setValidity("EpivizDevice", .valid.EpivizDevice)
-
+setGeneric(".getMeasurements", function(object, columns) standardGeneric(".getMeasurements"))
 
 EpivizDevice$methods(list(
     findOverlaps=function(chr, start, end) {

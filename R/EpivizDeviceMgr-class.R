@@ -41,7 +41,6 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     msIdCounter="integer",
     activeId="character",
     chartIdMap="list",
-    msIdMap="list",
     server="EpivizServer",
     callbackArray="IndexedArray"),
   methods=list(
@@ -49,7 +48,6 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      msIdCounter <<- 0L
      activeId <<- ""
      chartIdMap <<- list()
-     msIdMap <<- list()
      typeMap <<- .typeMap
      devices <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
      msList <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
@@ -105,34 +103,28 @@ EpivizDeviceMgr$methods(list(
 EpivizDeviceMgr$methods(list(
    addMeasurements=function(obj, msName, sendRequest=TRUE, ...) {
     'add measurements to epiviz session'
-    # TODO: change newDevice to register method
     epivizObject <- epivizr:::register(obj, ...)
-    type <- getMeasurementType(class(epivizObject))
+    type <- .self$getMeasurementType(class(epivizObject))
 
-    # TODO change IdCounter to measurementIdCounter
     msIdCounter <<- msIdCounter + 1L
     msId <- sprintf("epivizMs_%s_%d", type, msIdCounter)
     epivizObject$setId(msId)
     epivizObject$setMgr(.self)
 
     measurements <- epivizObject$getMeasurements(msName, msId)
-    msRecord <- list(measurements=names(measurements), name=msName, obj=epivizObject)
+    msRecord <- list(measurements=names(measurements), name=msName, obj=epivizObject, connected=FALSE)
 
-    # TODO: make measurements list
     msList[[type]][[msId]] <<- msRecord
 
     if (sendRequest) {
       callback <- function(data) {
-        jsMsId <- data$id
-
-        # TODO add msIdMap
-        msIdMap[[msId]] <<- jsMsId
+        msList[[type]][[msId]][["connected"]] <<- TRUE
         message("Measurement ", msName, " added to browser and connected")
       }
       requestId <- callbackArray$append(callback)
 
       # TODO: add addMeasurement method to server
-      server$addMeasurement(requestId, type, measurements) 
+      server$addMeasurements(requestId, type, measurements) 
     }
     return(epivizObject)
    },
@@ -331,6 +323,15 @@ EpivizDeviceMgr$methods(list(
     return(out)
    }
    )
+)
+
+EpivizDeviceMgr$methods(list(
+  getMeasurementType=function(objClass) {
+    m <- match(objClass, sapply(typeMap, "[[", "class"))
+    if (is.na(m))
+      stop("Class ", objClass, " not found in 'typeMap'")
+    names(typeMap)[m]
+  })
 )
 
 .typeMap <- list(gene=list(class="EpivizFeatureDevice",

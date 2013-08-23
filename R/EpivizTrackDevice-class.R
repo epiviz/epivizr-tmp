@@ -1,6 +1,19 @@
 EpivizTrackDevice <- setRefClass("EpivizTrackDevice",
-  contains="EpivizDevice",
-  methods=list(
+  contains="EpivizDevice")
+
+.valid.EpivizTrackDevice.object <- function(x) {
+	if(!is(x$object, "GIntervalTree"))
+		return("'object' is not a 'GIntervalTree' object")
+	NULL
+}
+
+.valid.EpivizTrackDevice <- function(x) {
+	c(.valid.EpivizTrackDevice.object(x))
+}
+
+IRanges::setValidity2("EpivizTrackDevice", .valid.EpivizTrackDevice)
+
+EpivizTrackDevice$methods(
   	getData=function(chr, start, end, columnsRequested) {
   		if (is.null(columns))
   			return(callSuper(chr,start,end))
@@ -38,5 +51,5 @@ EpivizTrackDevice <- setRefClass("EpivizTrackDevice",
 	    return(out)
   	}
   )
-)
+
 
