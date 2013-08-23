@@ -1,5 +1,5 @@
-EpivizFeatureDevice <- setRefClass("EpivizFeatureDevice",
-  contains="EpivizDevice",
+EpivizFeatureData <- setRefClass("EpivizFeatureData",
+  contains="EpivizData",
   fields=list(assay="ANY"),
   methods=list(
     initialize=function(assay=1, ...) {
@@ -20,7 +20,7 @@ EpivizFeatureDevice <- setRefClass("EpivizFeatureDevice",
   )
 )
 
-.valid.EpivizFeatureDevice.object <- function(x) {
+.valid.EpivizFeatureData.object <- function(x) {
   if(!is(x$object, "SummarizedExperiment"))
     return("'object' must be of class 'SummarizedExperiment'")
   if(!is(rowData(x$object), "GIntervalTree"))
@@ -28,7 +28,7 @@ EpivizFeatureDevice <- setRefClass("EpivizFeatureDevice",
   NULL
 }
 
-.valid.EpivizFeatureDevice.ylim <- function(x) {
+.valid.EpivizFeatureData.ylim <- function(x) {
   if(!is(x$ylim, "matrix"))
     return("'ylim' must be a matrix")
   if(nrow(x$ylim) != 2)
@@ -38,7 +38,7 @@ EpivizFeatureDevice <- setRefClass("EpivizFeatureDevice",
   NULL
 }
 
-.valid.EpivizFeatureDevice.assay <- function(x) {
+.valid.EpivizFeatureData.assay <- function(x) {
   if (is.character(x$assay)) {
     if(!(x$assay %in% names(assays(x$object))))
       return("'assay' not found in 'object'")
@@ -50,15 +50,15 @@ EpivizFeatureDevice <- setRefClass("EpivizFeatureDevice",
   NULL
 }
 
-.valid.EpivizFeatureDevice <- function(x) {
-  c(.valid.EpivizFeatureDevice.object(x),
-    .valid.EpivizFeatureDevice.ylim(x),
-    .valid.EpivizFeatureDevice.assay(x))
+.valid.EpivizFeatureData <- function(x) {
+  c(.valid.EpivizFeatureData.object(x),
+    .valid.EpivizFeatureData.ylim(x),
+    .valid.EpivizFeatureData.assay(x))
 }
 
-IRanges::setValidity2("EpivizFeatureDevice", .valid.EpivizFeatureDevice)
+IRanges::setValidity2("EpivizFeatureData", .valid.EpivizFeatureData)
 
-EpivizFeatureDevice$methods(
+EpivizFeatureData$methods(
     getMeasurements=function(devName, devId) {
      out <- paste(devName, columns, sep="$")
       nms <- paste(devId, columns, sep="$")

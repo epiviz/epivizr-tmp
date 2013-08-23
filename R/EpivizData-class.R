@@ -21,7 +21,7 @@
 #' @rdname EpivizDevice-class
 #' 
 #' @exportClass EpivizDevice
-EpivizDevice <- setRefClass("EpivizDevice",
+EpivizData <- setRefClass("EpivizData",
   contains="VIRTUAL",
   fields=list(
     object="ANY",
@@ -100,21 +100,21 @@ EpivizDevice <- setRefClass("EpivizDevice",
 
 #####
 # validity
-.valid.EpivizDevice.columns <- function(x) {
+.valid.EpivizData.columns <- function(x) {
   if(!x$.checkColumns(x$columns))
     return("invalid 'columns' slot")
   NULL
 }
 
-.valid.EpivizDevice <- function(x) {
-  c(.valid.EpivizDevice.columns(x))
+.valid.EpivizData <- function(x) {
+  c(.valid.EpivizData.columns(x))
 }
 
-IRanges::setValidity2("EpivizDevice", .valid.EpivizDevice)
+IRanges::setValidity2("EpivizData", .valid.EpivizData)
 
 #######
 # get data
-EpivizDevice$methods(list(
+EpivizData$methods(list(
     findOverlaps=function(chr, start, end) {
       if (!chr %in% seqlevels(tree))
         return(integer())

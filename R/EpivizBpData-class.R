@@ -1,5 +1,5 @@
-EpivizBpDevice <- setRefClass("EpivizBpDevice",
-  contains="EpivizTrackDevice",
+EpivizBpData <- setRefClass("EpivizBpData",
+  contains="EpivizTrackData",
   methods=list(
     .checkColumns=function(columns) {
       all(columns %in% names(mcols(object)))
@@ -13,7 +13,7 @@ EpivizBpDevice <- setRefClass("EpivizBpDevice",
   )
 )
 
-.valid.EpivizBpDevice.ylim <- function(x) {
+.valid.EpivizBpData.ylim <- function(x) {
   if(!is(x$ylim, "matrix"))
     return("'ylim' must be a matrix")
   if(nrow(x$ylim) != 2)
@@ -23,13 +23,13 @@ EpivizBpDevice <- setRefClass("EpivizBpDevice",
   NULL
 }
 
-.valid.EpivizBpDevice <- function(x) {
-  c(.valid.EpivizBpDevice.ylim(x))
+.valid.EpivizBpData <- function(x) {
+  c(.valid.EpivizBpData.ylim(x))
 }
 
-IRanges::setValidity2("EpivizBpDevice", .valid.EpivizBpDevice)
+IRanges::setValidity2("EpivizBpData", .valid.EpivizBpData)
 
-EpivizBpDevice$methods(
+EpivizBpData$methods(
   getMeasurements=function(devName, devId) {
     out <- paste(devName, columns, sep="$")
     nms <- paste(devId, columns, sep="$")

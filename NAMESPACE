@@ -3,11 +3,10 @@ import(Biobase)
 import(GenomicRanges)
 
 exportClasses(EpivizDeviceMgr,
-			  EpivizDevice,
-			  EpivizTrackDevice,
-			  EpivizFeatureDevice,
-			  EpivizBlockDevice,
-			  EpivizBpDevice,
-			  EpivizGeneDevice)
+			  EpivizData,
+			  EpivizTrackData,
+			  EpivizFeatureData,
+			  EpivizBlockData,
+			  EpivizBpData)
 
 export(startEpiviz)

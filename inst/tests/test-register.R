@@ -7,7 +7,7 @@ test_that("register measurement works for block", {
   dev <- epivizr::register(gr)
   expect_true(validObject(dev))
 
-  expect_is(dev, "EpivizBlockDevice")
+  expect_is(dev, "EpivizBlockData")
   expect_is(dev$object, "GIntervalTree")
 
   expect_equal(as(dev$object, "GRanges"), gr)
@@ -20,7 +20,7 @@ test_that("register works for bp data", {
   dev <- epivizr::register(gr, columns="score", type="bp")
   expect_true(validObject(dev))
 
-  expect_is(dev, "EpivizBpDevice")
+  expect_is(dev, "EpivizBpData")
   expect_is(dev$object, "GIntervalTree")
   
   expect_equal(as(dev$object, "GRanges"), unname(gr))
@@ -34,7 +34,7 @@ test_that("register works for SummarizedExperiment", {
   dev <- epivizr::register(sset, columns=c("A","B"), assay="counts2")
   expect_true(validObject(dev))
 
-  expect_is(dev, "EpivizFeatureDevice")
+  expect_is(dev, "EpivizFeatureData")
   expect_is(dev$object, "SummarizedExperiment")
   gr <- as(rowData(dev$object), "GRanges")
   expect_false(is.null(gr$PROBEID))
@@ -61,7 +61,7 @@ test_that("register works for ExpressionSet", {
   dev <- epivizr::register(eset, columns=c("SAMP_1", "SAMP_2"))
   expect_true(validObject(dev))
 
-  expect_is(dev, "EpivizFeatureDevice")
+  expect_is(dev, "EpivizFeatureData")
   expect_is(dev$object, "SummarizedExperiment")
 
   obj <- dev$object

@@ -334,13 +334,13 @@ EpivizDeviceMgr$methods(list(
   })
 )
 
-.typeMap <- list(gene=list(class="EpivizFeatureDevice",
+.typeMap <- list(gene=list(class="EpivizFeatureData",
                            description="Data indexed by feature",
                            input_class="SummarizedExperiment"),
-              bp=list(class="EpivizBpDevice",
+              bp=list(class="EpivizBpData",
                       description="Basepair resolution data",
                       input_class="GRanges"),
-              block=list(class="EpivizBlockDevice",
+              block=list(class="EpivizBlockData",
                          description="Genomic region data",
                          input_class="GRanges"))
 
@@ -382,16 +382,15 @@ EpivizDeviceMgr$methods(list(
      activeId <<- devId
      invisible(NULL)
    },
-   plot=function(obj, devName, sendRequest=TRUE, ...) {
+   addDevice=function(obj, devName, sendRequest=TRUE, ...) {
      'add device to epiviz browser'
      msObject <- addMeasurement(obj, devName, sendRequest=sendRequest, ...)
 
-     # TODO: implement EpivizDataTypes class hierarchy
-     # TODO: to mirror the JS data type class hierarchy
-     # TODO: implement plot method for EpivzDataTypes
+     # TODO: change EpivizDevice to EpivizData
+     # TODO: implement plot method for EpivizData objects
      devObject <- msObject$plot(sendRequest=sendRequest, ...)
 
-     # TODO: implement EpivizDevice class hierarchy
+     # TODO: implement EpivizChart class hierarchy
      # TODO: to mirror JS chart type class hierarchy
      devId <- devObject$getId()
      activeId <<- devId
