@@ -4,7 +4,7 @@ openBrowser=sendRequest
 
 test_that("register measurement works for block", {
   gr <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=100))
-  dev <- epivizr::register(gr)
+  dev <- epivizr:::register(gr)
   expect_true(validObject(dev))
 
   expect_is(dev, "EpivizBlockData")

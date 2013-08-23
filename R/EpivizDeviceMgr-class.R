@@ -39,6 +39,8 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     msList="list",
     typeMap="list",
     msIdCounter="integer",
+    chartList="list",
+    chartIdCounter="integer",
     activeId="character",
     chartIdMap="list",
     server="EpivizServer",
@@ -46,11 +48,13 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
   methods=list(
     initialize=function(...) {
      msIdCounter <<- 0L
+     chartIdCounter <<- 0L
      activeId <<- ""
      chartIdMap <<- list()
      typeMap <<- .typeMap
      devices <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
      msList <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
+     chartList <<- list()
      callSuper(...)
    })
 )
@@ -109,9 +113,10 @@ EpivizDeviceMgr$methods(list(
     msIdCounter <<- msIdCounter + 1L
     msId <- sprintf("epivizMs_%s_%d", type, msIdCounter)
     epivizObject$setId(msId)
+    epivizObject$setName(msName)
     epivizObject$setMgr(.self)
 
-    measurements <- epivizObject$getMeasurements(msName, msId)
+    measurements <- epivizObject$getMeasurements()
     msRecord <- list(measurements=names(measurements), 
       name=msName, obj=epivizObject, connected=FALSE)
     msList[[type]][[msId]] <<- msRecord
@@ -127,6 +132,26 @@ EpivizDeviceMgr$methods(list(
       server$addMeasurements(requestId, type, measurements) 
     }
     return(epivizObject)
+   },
+   .checkMeasurements=function(msType, ms, sendRequest=TRUE, ...) {
+    if (!is.character(ms)) return(FALSE)
+    if (!(msType %in% names(msList))) return(FALSE)
+
+    typeList <- msList[[msType]]
+    allMeasurements <- lapply(typeList, "[[", "measurements")
+    m <- sapply(ms, function(curMs) {
+      isFound <- sapply(allMeasurements, function(x) curMs %in% x)
+      if (any(isFound)) which(isFound) else NA
+    })
+    if (any(is.na(m)))
+      return(FALSE)
+
+    if (sendRequest) {
+      isConnected <- sapply(typeList, "[[", "connected")[m]
+      all(isConnected)
+    } else {
+      TRUE
+    }
    },
    updateMeasurements=function(device, gr) {
      devId <- device$id
@@ -347,32 +372,23 @@ EpivizDeviceMgr$methods(list(
 
 # chart management methods
 EpivizDeviceMgr$methods(list(
-   addChart=function(msObject, ...) {
-     # TODO: move this code to an addDevice method
-     # device <- epivizr:::newDevice(obj, ...)
-     # type = getDeviceType(class(device))
+   addChart=function(chartObject, sendRequest=TRUE, ...) {
+    chartIdCounter <<- chartIdCounter + 1L
+    chartId <- sprintf("epivizChart_%d", chartIdCounter)
+    chartObject$setId(chartId)
+    chartList[[chartId]] <<- chartObject
 
-     # idCounter <<- idCounter + 1L
-     # devId <- sprintf("epivizDev_%s_%d", type, idCounter)
-     # device$setId(devId)
-     # device$setMgr(.self)
-     
-     # measurements = device$getMeasurements(devName, devId)
-     
-     # devRecord=list(measurements=names(measurements), name=devName, obj=device)
-     # devices[[type]][[devId]] <<- devRecord
-     # activeId <<- devId
-     
-     # if (sendRequest) {
-     #   callback=function(data) {
-     #     trkId = data$id
-     #     chartIdMap[[devId]] <<- trkId
-     #     message("Device ", devName, " added to browser and connected")
-     #   }
-     #   requestId=callbackArray$append(callback)
-     #   server$addDevice(requestId, type, measurements)
-     # } 
-     # return(device)
+    if (sendRequest) {
+      callback=function(data) {
+        appChartId = data$id
+        chartIdMap[[chartId]] <<- appChartId
+        activeId <<- chartId
+        message("Chart ", chartId, " added to browser and connected")  
+      }
+      requestId=callbackArray$append(callback)
+      server$addChart(requestId, chartObject$type, chartObject$measurements)
+    }
+    invisible(NULL)
    },  
    setActive=function (devId) {
      'set given device as active in browser'
@@ -384,17 +400,9 @@ EpivizDeviceMgr$methods(list(
    },
    addDevice=function(obj, devName, sendRequest=TRUE, ...) {
      'add device to epiviz browser'
-     msObject <- addMeasurement(obj, devName, sendRequest=sendRequest, ...)
-
-     # TODO: change EpivizDevice to EpivizData
-     # TODO: implement plot method for EpivizData objects
-     devObject <- msObject$plot(sendRequest=sendRequest, ...)
-
-     # TODO: implement EpivizChart class hierarchy
-     # TODO: to mirror JS chart type class hierarchy
-     devId <- devObject$getId()
-     activeId <<- devId
-     return(devObject)
+     msObject <- .self$addMeasurements(obj, devName, sendRequest=sendRequest, ...)
+     chartObject <- msObject$plot(sendRequest=sendRequest, ...)
+     EpivizDevice$new(msObject=msObject, chartObject=chartObject)
    }
    )
 )

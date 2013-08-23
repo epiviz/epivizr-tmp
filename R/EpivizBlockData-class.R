@@ -4,7 +4,10 @@ EpivizBlockData <- setRefClass("EpivizBlockData",
   	initialize=function(object=GIntervalTree(GRanges()), ...) {
   		callSuper(object=object, ...)
   		columns <<- NULL
-  	}
+  	},
+    plot=function(...) {
+      mgr$blockChart(ms=names(getMeasurements())[1], ...)
+    }
   )
 )
 

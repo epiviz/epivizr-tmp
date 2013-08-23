@@ -27,6 +27,7 @@ EpivizData <- setRefClass("EpivizData",
     object="ANY",
     mgr="EpivizDeviceMgr",
     id="character",
+    name="character",
     columns="ANY",
     ylim="ANY"
   ),
@@ -74,14 +75,19 @@ EpivizData <- setRefClass("EpivizData",
       id <<- id
       invisible()
     },
+    getName=function() {return(name)},
+    setName=function(name) {
+      name <<- name
+      invisible()
+    },
     setLimits=function(ylim) {
       if (!.checkLimits(ylim))
           stop("'invalid' limits argument")
       ylim <<- ylim
     }, 
-    getMeasurements=function(devName, devId) {
-      out <- devName
-      names(out) <- devId
+    getMeasurements=function() {
+      out <- name
+      names(out) <- id
       out
     },
     setMgr=function(mgr) {
@@ -94,6 +100,9 @@ EpivizData <- setRefClass("EpivizData",
       cat("\n\tcolumns:", paste(columns,collapse=","),"\n")
       cat("\tlimits:\n")
       print(ylim)
+    },
+    plot=function() {
+      stop("'plot' method called on virtual class object")
     }
   )
 )

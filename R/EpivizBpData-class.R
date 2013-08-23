@@ -9,6 +9,9 @@ EpivizBpData <- setRefClass("EpivizBpData",
     },
     .getLimits=function() {
       sapply(mcols(object)[columns], function(x) range(pretty(range(x))))
+    },
+    plot=function(...) {
+      mgr$lineChart(ms=names(getMeasurements()), ...)
     }
   )
 )
@@ -30,9 +33,9 @@ EpivizBpData <- setRefClass("EpivizBpData",
 IRanges::setValidity2("EpivizBpData", .valid.EpivizBpData)
 
 EpivizBpData$methods(
-  getMeasurements=function(devName, devId) {
-    out <- paste(devName, columns, sep="$")
-    nms <- paste(devId, columns, sep="$")
+  getMeasurements=function() {
+    out <- paste(name, columns, sep="$")
+    nms <- paste(id, columns, sep="$")
     names(out) <- nms
     out
   },

@@ -8,8 +8,8 @@ setMethod("register", "GenomicRanges",
 			object <- as(object, "GIntervalTree")
 		}
 		dev <- switch(type,
-					  block=EpivizBlockDevice$new(object=object),
-					  bp=EpivizBpDevice$new(object=object, columns=columns))
+					  block=EpivizBlockData$new(object=object),
+					  bp=EpivizBpData$new(object=object, columns=columns))
 		return(dev)
 })
 
@@ -27,7 +27,7 @@ setMethod("register", "SummarizedExperiment",
 		if (!("SYMBOL" %in% mcolNames)) {
 			rowData(object)$SYMBOL <- ""
 		} 
-		EpivizFeatureDevice$new(object=object, columns=columns, assay=assay)
+		EpivizFeatureData$new(object=object, columns=columns, assay=assay)
 })
 
 setMethod("register", "ExpressionSet",

@@ -28,3 +28,5 @@ Collate:
     'EpivizBlockData-class.R'
     'EpivizBpData-class.R'
     'register-methods.R'
+    'EpivizChart-class.R'
+    'EpivizDevice-class.R'

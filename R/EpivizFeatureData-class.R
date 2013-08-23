@@ -16,6 +16,10 @@ EpivizFeatureData <- setRefClass("EpivizFeatureData",
       mat <- GenomicRanges::assay(object, i=assay)
       colIndex <- match(columns, rownames(colData(object)))
       sapply(seq(along=columns), function(i) range(pretty(range(mat[,i]))))
+    },
+    plot=function(...) {
+      ms <- names(getMeasurements())
+      mgr$scatterChart(x=ms[1], y=ms[2], ...)
     }
   )
 )
@@ -59,9 +63,9 @@ EpivizFeatureData <- setRefClass("EpivizFeatureData",
 IRanges::setValidity2("EpivizFeatureData", .valid.EpivizFeatureData)
 
 EpivizFeatureData$methods(
-    getMeasurements=function(devName, devId) {
-     out <- paste(devName, columns, sep="$")
-      nms <- paste(devId, columns, sep="$")
+    getMeasurements=function() {
+     out <- paste(name, columns, sep="$")
+      nms <- paste(id, columns, sep="$")
       names(out) <- nms
       out
     },
