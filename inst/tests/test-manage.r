@@ -165,25 +165,3 @@ test_that("setActive works", {
   },finally=mgr$stopServer())
 })
 
-test_that("getMeasurements works", {
-  sendRequest=sendRequest
-  gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=1:10, width=100))
-  gr2 <- GRanges(seqnames="chr2", ranges=IRanges(start=2:20, width=100))
-  gr3 <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=25), width=1), score=rnorm(length(seq(1,100,by=25))))
-  eset <- makeEset()
-
-  mgr <- .startMGR(openBrowser=sendRequest)
-  tryCatch({
-    dev1 <- mgr$addDevice(gr1, "dev1", sendRequest=sendRequest); devId1=dev1$id
-    dev2 <- mgr$addDevice(gr2, "dev2", sendRequest=sendRequest); devId2=dev2$id
-    dev3 <- mgr$addDevice(gr3, "dev3", sendRequest=sendRequest, type="bp"); devId3=dev3$id
-    dev4 <- mgr$addDevice(eset, "dev4", sendRequest=sendRequest, columns=c("SAMP_1", "SAMP_2")); devId4=dev4$id  
-    res <- mgr$getMeasurements()
-
-    out <- list(geneMeasurements=structure(list("dev4$SAMP_1","dev4$SAMP_2"), names=paste0(devId4, c("$SAMP_1","$SAMP_2"))),
-                bpMeasurements=structure(list("dev3$score"), names=paste0(devId3,"$score")), 
-                blockMeasurements=structure(list("dev1","dev2"), names=c(devId1,devId2)))
-
-    expect_equal(res,out)
-  }, finally=mgr$stopServer())
-})

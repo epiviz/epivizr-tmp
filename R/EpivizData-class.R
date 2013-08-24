@@ -29,7 +29,9 @@ EpivizData <- setRefClass("EpivizData",
     id="character",
     name="character",
     columns="ANY",
-    ylim="ANY"
+    ylim="ANY",
+    curQuery="ANY",
+    curHits="ANY"
   ),
   methods=list(
     initialize=function(object=GIntervalTree(GRanges()), columns=NULL, ...) {
@@ -43,6 +45,9 @@ EpivizData <- setRefClass("EpivizData",
         columns <<- .self$.getColumns()
 
       ylim <<- .self$.getLimits()
+
+      curQuery <<- NULL
+      curHits <<- NULL
       callSuper(...)
     },
     .checkColumns=function(columns) {
@@ -86,9 +91,7 @@ EpivizData <- setRefClass("EpivizData",
       ylim <<- ylim
     }, 
     getMeasurements=function() {
-      out <- name
-      names(out) <- id
-      out
+      stop("'getMeasurements' called on virtual class object")
     },
     setMgr=function(mgr) {
       mgr <<- mgr
@@ -123,33 +126,41 @@ IRanges::setValidity2("EpivizData", .valid.EpivizData)
 
 #######
 # get data
-EpivizData$methods(list(
-    findOverlaps=function(chr, start, end) {
-      if (!chr %in% seqlevels(tree))
-        return(integer())
-      
-      query <- GRanges(seqnames=chr,ranges=IRanges(start=start,end=end))
-      olaps <- GenomicRanges::findOverlaps(query, tree, select="all")
-      hits <- subjectHits(olaps)
-      unique(hits)
-    },
-    subsetByOverlaps=function(chr, start, end) {
-      hits <- .self$findOverlaps(chr,start,end)
+EpivizData$methods(
+  packageData=function(msId) {
+    stop("'packageData' called on object of virtual class")
+  },
+  getData=function(query, msId=NULL) {
+    if (!is(query, "GRanges"))
+      stop("'query' must be a GRanges object")
+    if (length(query) != 1) {
+      stop("'query' must be of length 1")
+    }
 
-      if (length(hits)>0) {
-        object[hits,]
-        } else {
-          new(class(object))
-        }
+    if (is.null(curQuery) || !identical(unname(query), unname(curQuery))) {
+      curQuery <<- query
+      olaps <- GenomicRanges::findOverlaps(query, object, select="all")
+      curHits <<- subjectHits(olaps)
+    }
+    packageData(msId=msId)
+  }
+)
+
+EpivizDataPack <- setRefClass("EpivizDataPack",
+  fields=list(
+    length="integer"),
+  methods=list(
+    initialize=function(length=0L, ...) {
+      length <<- length
+      callSuper(...)
     },
-    getData=function(chr, start, end) {
-      sobject <- .self$subsetByOverlaps(chr,start,end)
-      out <- list(start=start(sobject),end=end(sobject))
-      return(out)
+    set=function(obj, msId, index) {
+      step("calling 'set' on virtual class")
+    },
+    getData=function() {
+      stop("calling 'getData' on virtual class")
     }
   )
 )
-
-
 
 

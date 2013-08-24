@@ -2,9 +2,10 @@ EpivizFeatureData <- setRefClass("EpivizFeatureData",
   contains="EpivizData",
   fields=list(assay="ANY"),
   methods=list(
-    initialize=function(assay=1, ...) {
+    initialize=function(object=SummarizedExperiment(matrix(nr=0,nc=0),rowData=GRanges()),
+                        assay=1, ...) {
       assay <<- assay
-      callSuper(...)
+      callSuper(object=object, ...)
     },
     .checkColumns=function(columns) {
       all(columns %in% rownames(colData(object)))
@@ -13,9 +14,9 @@ EpivizFeatureData <- setRefClass("EpivizFeatureData",
       rownames(colData(object))
     },
     .getLimits=function() {
-      mat <- GenomicRanges::assay(object, i=assay)
+      mat <- GenomicRanges::assay(object, i=.self$assay)
       colIndex <- match(columns, rownames(colData(object)))
-      sapply(seq(along=columns), function(i) range(pretty(range(mat[,i]))))
+      sapply(seq(along=columns), function(i) range(pretty(range(mat[,i], na.rm=TRUE))))
     },
     plot=function(...) {
       ms <- names(getMeasurements())
@@ -69,43 +70,82 @@ EpivizFeatureData$methods(
       names(out) <- nms
       out
     },
-    getData=function(chr, start, end, columnsRequested) {
-      columnsMatch <- match(columnsRequested, columns)
-      if (any(is.na(columnsMatch)))
-        stop("'columnsRequested' not found in device 'columns'")
+    parseMeasurement=function(msId) {
+      column <- strsplit(msId, split="\\$")[[1]][2]
+      if(!.checkColumns(column)) {
+        stop("invalid parsed measurement")
+      }
+      column
+    },
+    packageData=function(msId) {
+      column <- parseMeasurement(msId)
+      m <- match(column, columns)
+      out <- list(min=unname(ylim[1,m]), max=unname(ylim[2, m]))
 
-      nCols=length(cols)
-      out=list(min=unname(.self$ylim[1,columnsMatch]),
-               max=unname(.self$ylim[2,columnsMatch]),
-               data=list(gene=character(),
+      if (!length(curHits)) {
+        out$data <- list(gene=character(),
                          start=integer(),
                          end=integer(),
-                         probe=character()))
-      for (i in seq_along(cols)) {
-        out$data[[i+4]]=numeric()
+                         probe=character(),
+                         value=numeric())
+      } else {
+        tmp <- object[curHits,]
+        m <- match(column, rownames(colData(tmp)))
+        out$data <- list(gene=mcols(rowData(tmp))$SYMBOL,
+                         start=start(rowData(tmp)), 
+                         end=end(rowData(tmp)),
+                         probe=mcols(rowData(tmp))$PROBEID,
+                         value=assay(tmp, .self$assay)[,m])
       }
-      
-      sobject = .self$subsetByOverlaps(chr,start,end)
-      if (length(sobject)<1) {
-        return(out)  
-      }
-      
-      out$data$gene=sobject$SYMBOL
-      out$data$start=start(sobject)
-      out$data$end=end(sobject)
-      out$data$probe=sobject$PROBEID
+      out
+    }
+)
 
-      for (i in seq_along(columnsRequested)) {
-        vals=unname(mcols(sobject)[[columnsRequested[i]]])
-        if (all(is.na(vals))) {
-          next
-        }
-        out$data[[i+4]]=vals
-        naIndex=is.na(vals)
-        if (any(naIndex)) 
-          out$data[[i+4]]=vals[!naIndex]
+EpivizFeatureDataPack <- setRefClass("EpivizFeatureDataPack",
+  contains="EpivizDataPack",
+  fields=list(
+    min="numeric",
+    max="numeric",
+    gene="character",
+    start="integer",
+    end="integer",
+    probe="character",
+    data="list"),
+  methods=list(
+    initialize=function(...) {
+      callSuper(...)
+      nms <- rep("", length)
+      min <<- structure(rep(-6, length), names=nms)
+      max <<- structure(rep(6, length), names=nms)
+      gene <<- character()
+      start <<- integer()
+      end <<- integer()
+      probe <<- character()
+      data <<- structure(vector("list", length), names=nms)
+    },
+    set=function(curData, msId, index) {
+      min[index] <<- curData$min
+      names(min)[index] <<- msId
+
+      max[index] <<- curData$max
+      names(max)[index] <<- msId
+
+      if (length(gene)==0) {
+        gene <<- curData$data$gene
+        start <<- curData$data$start
+        end <<- curData$data$end
+        probe <<- curData$data$probe
       }
-      return(out)
+
+      data[[index]] <<- curData$data$value
+      names(data)[index] <<- msId
+    },
+    getData=function() {
+      outData <- list(gene=gene, start=start, end=end, probe=probe)
+      outData <- c(outData, data)
+      list(min=min,max=max,data=outData)
     }
   )
+)
 
+EpivizFeatureData$methods(.initPack=function(length=0L) {EpivizFeatureDataPack$new(length=length)})

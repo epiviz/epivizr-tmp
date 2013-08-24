@@ -1,6 +1,9 @@
 EpivizBpData <- setRefClass("EpivizBpData",
   contains="EpivizTrackData",
   methods=list(
+    # initialize=function(object=GRanges(), ...) {
+    #   callSuper(object=object, ...)
+    # },
     .checkColumns=function(columns) {
       all(columns %in% names(mcols(object)))
     },
@@ -8,7 +11,7 @@ EpivizBpData <- setRefClass("EpivizBpData",
       names(mcols(object))
     },
     .getLimits=function() {
-      sapply(mcols(object)[columns], function(x) range(pretty(range(x))))
+      sapply(mcols(object)[columns], function(x) range(pretty(range(x, na.rm=TRUE))))
     },
     plot=function(...) {
       mgr$lineChart(ms=names(getMeasurements()), ...)
@@ -39,13 +42,59 @@ EpivizBpData$methods(
     names(out) <- nms
     out
   },
-  getData=function(chr, start, end, columnsRequested) {
-      out <- callSuper(chr,start,end,columnsRequested)
-      for (i in seq_along(columnsRequested)) {
-          origData <- out$data[[i]]
-          out$data[[i]] <- list(bp=origData$start, value=origData$value)
-      }
-      return(out)
+  parseMeasurement=function(msId) {
+    column <- strsplit(msId, split="\\$")[[1]][2]
+    if(!.checkColumns(column)) {
+      stop("invalid parsed measurement")
     }
+    column
+  },
+  packageData=function(msId) {
+    column <- parseMeasurement(msId)
+    m <- match(column, columns)
+    out <- list(min=unname(ylim[1,m]), max=unname(ylim[2, m]))
+    out$data <- list(bp=integer(), value=numeric())
+
+    if (length(curHits)) {
+      tmp <- object[curHits,]
+      vals <- mcols(tmp)[[column]]
+      naIndx <- is.na(vals)
+      if (!all(naIndx)) {
+        if (any(naIndx)) {
+          out$data <- list(bp=start(tmp)[!naIndx], value=vals[!naIndx])  
+        } else {
+          out$data <- list(bp=start(tmp), value=vals)
+        }
+      }
+    }
+    out
+  }
 )
 
+EpivizBpDataPack <- setRefClass("EpivizBpDataPack",
+  contains="EpivizDataPack",
+  fields=list(
+    min="numeric",
+    max="numeric",
+    data="list"),
+  methods=list(
+    initialize=function(...) {
+      callSuper(...)
+      min <<- structure(rep(-6, length), names=rep("", length))
+      max <<- structure(rep(6, length), names=rep("", length))
+      data <<- lapply(seq(len=length), function(i) list(bp=integer(), value=numeric()))
+      names(data) <<- rep("", length)
+    },
+    set=function(curData, msId, index) {
+      min[index] <<- curData$min
+      max[index] <<- curData$max
+      names(min)[index] <<- msId
+      names(max)[index] <<- msId
+      data[[index]] <<- curData$data
+      names(data)[index] <<- msId
+    },
+    getData=function() {
+      list(min=min,max=max,data=data)
+    }
+  ))
+EpivizBpData$methods(.initPack=function(length=0L) {EpivizBpDataPack$new(length=length)})

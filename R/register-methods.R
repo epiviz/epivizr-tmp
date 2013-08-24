@@ -68,7 +68,7 @@ setMethod("register", "ExpressionSet",
 		colnames(mat) <- columns
 
 		sumexp <- SummarizedExperiment(assays=SimpleList(mat),
-									  rowData=gr,
+									  rowData=GIntervalTree(gr),
 									  colData=DataFrame(pData(object)[columns,]))
 
 		register(sumexp, columns=columns, assay=1)
