@@ -19,7 +19,17 @@ test_that("block data fetch works", {
   expect_equal(res,out)
 })
 
-test_that("bp data fetch works", {
+test_that("device data fetch works on unsorted data", {
+  gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=10:1, width=1),
+                 seqinfo=Seqinfo(seqnames="chr1",genome="hcb"))
+  dev1 <- epivizr::newDevice(gr1,id="testid")
+  
+  res <- dev1$getData(chr="chr1", start=2, end=6)
+  out <- list(start=2:6,end=2:6)
+  expect_equal(res,out)
+})
+
+test_that("device data fetch works on bp data", {
   gr3 <- GRanges(seqnames="chr1", ranges=IRanges(start=seq(1,100,by=5), width=1), score1=seq(1,100,by=5), score2=-seq(1,100,by=5),
                  seqinfo=Seqinfo(seqnames=c("chr1","chr2"),genome="hcb"))
   

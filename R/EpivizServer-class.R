@@ -151,13 +151,15 @@ EpivizServer <- setRefClass("EpivizServer",
     refresh=function() {
       request=list(action="refresh")
       # TODO: finish implementation
+      # sendRequest(request)
       invisible()
     },
-    navigate=function(chr,start,end) {
-      request=list(action="navigate",
+    navigate=function(requestId,chr,start,end) {
+      request=list(type="request",
+                   action="navigate",
+                   id=requestId,
                    data=list(chr=chr,start=start,end=end))
-      #TODO: finish implementation
-      invisible(NULL)
+      sendRequest(request)
     },
     sendRequestsInQueue=function(WS) {
       while (!is.null(request <- requestQueue$pop())) {
