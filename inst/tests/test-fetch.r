@@ -19,13 +19,19 @@ test_that("block data fetch works", {
   expect_equal(res,out)
 })
 
-test_that("device data fetch works on unsorted data", {
+test_that("msmt fetch works on unsorted data", {
   gr1 <- GRanges(seqnames="chr1", ranges=IRanges(start=10:1, width=1),
                  seqinfo=Seqinfo(seqnames="chr1",genome="hcb"))
-  dev1 <- epivizr::newDevice(gr1,id="testid")
+  msObj1 <- epivizr::register(gr1)
   
-  res <- dev1$getData(chr="chr1", start=2, end=6)
-  out <- list(start=2:6,end=2:6)
+  dataPack <- EpivizBlockData$new()$.initPack(1L)
+  dataPack$set(msObj1$getData(query=GRanges(seqnames="chr1", ranges=IRanges(start=2, end=6))), 
+              msId="block1",
+              index=1)
+  res <- dataPack$getData()
+
+  out <- list(data=list())
+  out$data$block1 <- list(start=2:6,end=2:6)
   expect_equal(res,out)
 })
 
@@ -114,17 +120,18 @@ test_that("feature data fetch works", {
 
   olaps <- findOverlaps(query, msObj$object)
   tmp <- msObj$object[unique(subjectHits(olaps)),]
+  o <- order(start(tmp))
 
-  m <- match(rowData(tmp)$PROBEID, featureNames(eset))
+  m <- match(rowData(tmp)$PROBEID[o], featureNames(eset))
   mat <- exprs(eset)[m, c("SAMP_1", "SAMP_2")]
 
   out <- list()
   out$min=structure(lims[1,], names=paste0("feat1$SAMP_",1:2))
   out$max=structure(lims[2,], names=paste0("feat1$SAMP_",1:2))
-  out$data <- list(gene=rowData(tmp)$SYMBOL,
-                   start=start(tmp),
-                   end=end(tmp),
-                   probe=rowData(tmp)$PROBEID,
+  out$data <- list(gene=rowData(tmp)$SYMBOL[o],
+                   start=start(tmp)[o],
+                   end=end(tmp)[o],
+                   probe=rowData(tmp)$PROBEID[o],
                    `feat1$SAMP_1`=unname(mat[,1]),
                    `feat1$SAMP_2`=unname(mat[,2]))
 
@@ -159,7 +166,8 @@ test_that("mgr fetch works", {
     query <- GRanges(seqnames="chr6",ranges=IRanges(start=30000000,end=40000000))
 
     tmp <- subsetByOverlaps(dev4$object, query)
-    m <- match(rowData(tmp)$PROBEID, featureNames(eset))
+    o <- order(start(tmp))
+    m <- match(rowData(tmp)$PROBEID[o], featureNames(eset))
     mat <- exprs(eset)[m,c("SAMP_1","SAMP_2")]
     
     if (sendRequest) { 
@@ -175,10 +183,10 @@ test_that("mgr fetch works", {
     out$geneData=list(start=30000000,end=40000000,chr="chr6")
     out$geneData$min=structure(lims[1,],names=paste0(devId4,"$","SAMP_",1:2))
     out$geneData$max=structure(lims[2,],names=paste0(devId4,"$","SAMP_",1:2))
-    out$geneData$data=list(gene=rowData(tmp)$SYMBOL,
-                   start=start(tmp),
-                   end=end(tmp),
-                   probe=rowData(tmp)$PROBEID,
+    out$geneData$data=list(gene=rowData(tmp)$SYMBOL[o],
+                   start=start(tmp)[o],
+                   end=end(tmp)[o],
+                   probe=rowData(tmp)$PROBEID[o],
                    unname(mat[,1]),
                    unname(mat[,2]))
     names(out$geneData$data)[5:6]=paste0(devId4,"$SAMP_",1:2)

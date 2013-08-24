@@ -141,6 +141,10 @@ EpivizData$methods(
       curQuery <<- query
       olaps <- GenomicRanges::findOverlaps(query, object, select="all")
       curHits <<- subjectHits(olaps)
+      if (IRanges:::isNotSorted(start(object)[curHits])) {
+        ord <- order(start(object)[curHits])
+        curHits <<- curHits[ord]
+      }
     }
     packageData(msId=msId)
   }
