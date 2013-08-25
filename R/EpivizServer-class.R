@@ -132,6 +132,14 @@ EpivizServer <- setRefClass("EpivizServer",
                              type=chartType))
       sendRequest(request)
     },
+    rmMeasurements=function(requestId, measurements, msType) {
+      request <- list(type="request",
+                      id=requestId,
+                      action="rmMeasurements",
+                      data=list(measurements=measurements,
+                                type=msType))
+      sendRequest(request)
+    },
     rmDevice=function(requestId, chartId, measurements, devType) {
       request=list(type="request",
                    id=requestId,

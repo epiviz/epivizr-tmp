@@ -59,9 +59,13 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
    },
    show=function() {
       cat("Epiviz device manager object.\n")
-      cat("Current devices:\n")
+      cat("Charts:\n")
+      print(listCharts()); cat("\n")
+      cat("Measurements:\n")
+      print(listMeasurements()); cat("\n")
+      cat("Devices:\n")
       print(listDevices()); cat("\n")
-      listTypes()
+#      listTypes()
    }
   )
 )
@@ -200,17 +204,80 @@ EpivizDeviceMgr$methods(
      }
      invisible()
    },
-   # TODO: implement
+   .getMsObject=function(msObjId) {
+      slot <- sapply(msList, function(typeList) msObjId %in% names(typeList))
+      if (!any(slot)) {
+        stop("could not find measurement object")
+      }
+      slot <- which(slot)
+      typeList <- msList[[slot]]
+      m <- match(msObjId, names(typeList))
+      typeList[[m]]$obj
+   },
    rmMeasurements=function(msObj) {
-    invisible()
+    if (is.character(msObj)) {
+      # passed the id instead of the object
+      msObj <- .self$.getMsObject(msObj)
+    }
+
+    msType <- .self$getMeasurementType(class(msObj))
+    typeList <- msList[[msType]]
+
+    slot <- match(msObj$getId(), names(typeList))
+    if (is.na(slot))
+      stop("object not found")
+     
+    objRecord <- typeList[[slot]]
+    msName <- objRecord$name
+    ms <- objRecord$measurements
+
+    msList[[msType]][[msObj$getId()]] <<- NULL
+    if(objRecord$connected) {
+      callback=function(data) {
+        message("measurement object ", msName, " removed and disconnected")  
+      }
+      requestId=callbackArray$append(callback)
+      server$rmMeasurements(requestId, ms, msType)
+    }
+    invisible(NULL)
    },
    # TODO: implement
    rmAllMeasurements=function() {
-    invisible()
+    for (i in seq_along(msList)) {
+      curType=names(msList)[i]
+      if (length(msList[[curType]])>0) {
+        for (objRecord in msList[[curType]]) {
+          rmDevice(objRecord$obj)
+        }
+      }
+    }
    },
    # TODO: implement
    listMeasurements=function(onlyLocal=TRUE) {
-    invisible()
+    if (!onlyLocal) {
+      stop("'onlyLocal=FALSE' not implemented yet")
+    }
+
+    .doOneList <- function(ms) {
+      ids=names(ms)
+      nms=sapply(ms, "[[", "name")
+      lens=sapply(ms, function(x) length(x$obj$object))
+      connected=ifelse(sapply(ms, "[[", "connected"), "*", "")
+      ms=sapply(lapply(ms,"[[","measurements"), paste, collapse=",")
+      data.frame(id=ids,
+                 name=nms,
+                 length=lens,
+                 connected=connected,
+                 measurements=ms,
+                 stringsAsFactors=FALSE,row.names=NULL)  
+   }
+   out <- list()
+   for (i in seq_along(msList)) {
+     curType=names(msList)[i]
+     if (length(msList[[curType]])>0)
+       out[[curType]] <- .doOneList(msList[[curType]])
+   }
+   return(out)
    },
    getMeasurements=function() {
      out <- list()
