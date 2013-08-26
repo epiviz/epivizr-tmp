@@ -26,6 +26,7 @@ EpivizData <- setRefClass("EpivizData",
   fields=list(
     object="ANY",
     mgr="EpivizDeviceMgr",
+    inDevice="logical",
     id="character",
     name="character",
     columns="ANY",
@@ -48,6 +49,7 @@ EpivizData <- setRefClass("EpivizData",
 
       curQuery <<- NULL
       curHits <<- NULL
+      inDevice <<- FALSE
       callSuper(...)
     },
     .checkColumns=function(columns) {
@@ -97,6 +99,7 @@ EpivizData <- setRefClass("EpivizData",
       mgr <<- mgr
       invisible()
     },
+    setInDevice=function(x) {inDevice <<- x},
     show=function() {
       cat(class(.self), "object", id, "\n")
       methods::show(object)

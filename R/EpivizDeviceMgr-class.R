@@ -43,18 +43,22 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     chartIdCounter="integer",
     activeId="character",
     chartIdMap="list",
+    deviceList="list",
+    deviceIdCounter="integer",
     server="EpivizServer",
     callbackArray="IndexedArray"),
   methods=list(
     initialize=function(...) {
      msIdCounter <<- 0L
      chartIdCounter <<- 0L
+     deviceIdCounter <<- 0L
      activeId <<- ""
      chartIdMap <<- list()
      typeMap <<- .typeMap
      devices <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
      msList <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
      chartList <<- list()
+     deviceList <<- list()
      callSuper(...)
    },
    show=function() {
@@ -221,6 +225,9 @@ EpivizDeviceMgr$methods(
       msObj <- .self$.getMsObject(msObj)
     }
 
+    if (!is(msObj, "EpivizData"))
+      stop("'msObj' must be an 'EpivizData' object")
+
     msType <- .self$getMeasurementType(class(msObj))
     typeList <- msList[[msType]]
 
@@ -243,17 +250,19 @@ EpivizDeviceMgr$methods(
     invisible(NULL)
    },
    # TODO: implement
-   rmAllMeasurements=function() {
+   rmAllMeasurements=function(which=c("noDevice", "onlyDevice", "all")) {
+    which <- match.arg(which)
     for (i in seq_along(msList)) {
       curType=names(msList)[i]
       if (length(msList[[curType]])>0) {
         for (objRecord in msList[[curType]]) {
-          rmDevice(objRecord$obj)
+          if((!objRecord$obj$inDevice && (which %in% c("noDevice", "all")) ||
+             (objRecord$obj$inDevice && (which %in% c("onlyDevice", "all")))))
+            rmMeasurements(objRecord$obj)
         }
       }
     }
    },
-   # TODO: implement
    listMeasurements=function(onlyLocal=TRUE) {
     if (!onlyLocal) {
       stop("'onlyLocal=FALSE' not implemented yet")
@@ -342,7 +351,7 @@ EpivizDeviceMgr$methods(
 )
 
 # chart management methods
-EpivizDeviceMgr$methods(list(
+EpivizDeviceMgr$methods(
    addChart=function(chartObject, sendRequest=TRUE, ...) {
     chartIdCounter <<- chartIdCounter + 1L
     chartId <- sprintf("epivizChart_%d", chartIdCounter)
@@ -373,6 +382,9 @@ EpivizDeviceMgr$methods(list(
       chartObj <- .self$.getChartObject(chartObj)
     }
 
+    if (!is(chartObj, "EpivizChart"))
+      stop("'chartObj' must be an 'EpivizChart' object")
+
     slot <- match(chartObj$getId(), names(chartList))
     if (is.na(slot))
       stop("object not found")
@@ -389,16 +401,14 @@ EpivizDeviceMgr$methods(list(
     }
     invisible(NULL)
    },
-   # TODO: implement
-   rmAllCharts=function() {
-    for (i in seq_along(msList)) {
-      curType=names(msList)[i]
-      if (length(msList[[curType]])>0) {
-        for (objRecord in msList[[curType]]) {
-          rmDevice(objRecord$obj)
-        }
-      }
+   rmAllCharts=function(which=c("noDevice", "onlyDevice", "all")) {
+    which = match.arg(which)
+    for (obj in chartList) {
+      if ((!obj$inDevice && (which %in% c("noDevice", "all"))) ||
+          (obj$inDevice && (which %in% c("onlyDevice", "all"))))
+        rmChart(obj)
     }
+    invisible()
    }, 
    listCharts=function() {
     ids <- names(chartList)
@@ -421,81 +431,66 @@ EpivizDeviceMgr$methods(list(
      activeId <<- devId
      invisible(NULL)
    }
-   )
 )
 
 # device management methods
 EpivizDeviceMgr$methods(
    addDevice=function(obj, devName, sendRequest=TRUE, ...) {
      'add device to epiviz browser'
-     msObject <- .self$addMeasurements(obj, devName, sendRequest=sendRequest, ...)
-     chartObject <- msObject$plot(sendRequest=sendRequest, ...)
-     EpivizDevice$new(msObject=msObject, chartObject=chartObject)
+      deviceIdCounter <<- deviceIdCounter + 1L
+      deviceId <- sprintf("epivizDevice_%d", deviceIdCounter)
+ 
+      msObject <- .self$addMeasurements(obj, devName, sendRequest=sendRequest, ...)
+      msObject$setInDevice(TRUE)
+
+      chartObject <- msObject$plot(sendRequest=sendRequest, inDevice=TRUE, ...)
+      chartObject$setInDevice(TRUE)
+
+      deviceObj <- EpivizDevice$new(msObject=msObject, chartObject=chartObject)
+      deviceObj$setId(deviceId)
+      deviceList[[deviceId]] <<- deviceObj
+      deviceObj
    },
    # TODO: turn this into a rmMeasurement method
-   rmDevice=function(device) {
+   rmDevice=function(deviceObj) {
      'delete device from epiviz browser'
-     devId <- device$id
-     slot=which(sapply(devices, function(x) devId %in% names(x)))
-     if (length(slot)<1)
-       stop("device Id not found")
-     
-     devType=names(typeMap)[slot]
-     devName=devices[[devType]][[devId]]$name
-     measurements=devices[[devType]][[devId]]$measurements
-     
-     devices[[devType]][[devId]] <<- NULL
-     
-     if (activeId == devId) {
-       message("removed active device, use setActive to make another device the active device")
-       activeId <<- ""
+     if (is.character(deviceObj)) {
+      deviceObj <- deviceList[[deviceObj]]
+      if (is.null(deviceObj)) 
+        stop("did not find object")
      }
-     
-     if(!is.null(chartIdMap[[devId]])) {
-       chartId=chartIdMap[[devId]]
-       chartIdMap[[devId]] <<- NULL
-       callback=function(data) {
-         message("device ", devName, " removed and disconnected")  
-       }
-       requestId=callbackArray$append(callback)
-       server$rmDevice(requestId, chartId, measurements, devType)
-     }
-     invisible(NULL)
+
+     if (!is(deviceObj, "EpivizDevice"))
+      stop("'deviceObj' must be an 'EpivizDevice' object")
+
+     devId <- deviceObj$getId()
+     if (is.null(deviceList[[devId]]))
+      stop("did not find obejct")
+
+     rmChart(deviceObj$getChartObject())
+     rmMeasurements(deviceObj$getMsObject())
+     deviceList[[devId]] <<- NULL
+     invisible()
    },
-   # TODO: turn this into a rmAllMeasurements method
    rmAllDevices=function() {
-    'removes all current devices'
-    for (i in seq_along(typeMap)) {
-      curType=names(typeMap)[i]
-      if (length(devices[[curType]])>0) {
-        for (dev in devices[[curType]]) {
-          rmDevice(dev$obj)
-        }
-      }
+    for (obj in deviceList) {
+      rmDevice(obj)
     }
    },
    listDevices=function() {
      'list devices in browser'
-     .doOneList <- function(devs) {
-        ids=names(devs)
-        nms=sapply(devs, "[[", "name")
-        lens=sapply(devs, function(x) length(x$obj$object))
-        active=ifelse(ids==activeId, "*","")
-        connected=ifelse(ids %in% names(chartIdMap), "*", "")
-        data.frame(id=ids,
-                    active=active,
-                    name=nms,
-                    length=lens,
-                    connected=connected,
-                    stringsAsFactors=FALSE,row.names=NULL)  
-     }
-     out <- list()
-     for (i in seq_along(typeMap)) {
-       curType=names(typeMap)[i]
-       if (length(devices[[curType]])>0)
-         out[[curType]] <- .doOneList(devices[[curType]])
-     }
-     return(out)
+    ids <- names(deviceList)
+    type <- sapply(deviceList, function(x) x$getChartObject()$type)
+    ms <- sapply(deviceList, function(x) paste0(x$getChartObject()$measurements, collapse=","))
+    connected <- ifelse(sapply(deviceList, function(x) x$getChartId() %in% names(chartIdMap)), "*", "")
+    out <- data.frame(id=ids, 
+                      type=type, 
+                      measurements=ms, 
+                      connected=connected,
+                      stringsAsFactors=FALSE)
+    rownames(out) <- NULL
+    out
+
    }
 )
 
