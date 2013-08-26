@@ -6,7 +6,12 @@ EpivizChart <- setRefClass("EpivizChart",
 		type="character"),
 	methods=list(
 		setId=function(id) {id <<- id},
-		getId=function() {return(id)}
+		getId=function() {return(id)},
+		show=function() {
+			cat("EpivizChart object: ", getId(), "\n")
+			cat("type: ", type, "\n")
+			cat("measurements: ", paste0(measurements, collapse=","), "\n")
+		}
 	)
 )
 

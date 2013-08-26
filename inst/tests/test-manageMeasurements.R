@@ -69,19 +69,19 @@ test_that("listMeasurements works", {
                              name="dev4",
                              length=length(dev4$object),
                              connected=ifelse(sendRequest,"*",""),
-                             measurements=paste0(devId4,"$SAMP_",1:2,collapse=","),
+                             columns=paste0("SAMP_",1:2,collapse=","),
                              stringsAsFactors=FALSE),
                         bp=data.frame(id=devId3,
                                       name="dev3",
                                       length=length(gr3),
                                       connected=ifelse(sendRequest,"*",""),
-                                      measurements=paste0(devId3,"$score"),
+                                      columns="score",
                                       stringsAsFactors=FALSE),
                         block=data.frame(id=c(devId1,devId2),
                               name=c("dev1","dev2"),
                               length=c(length(gr1),length(gr2)),
                               connected=ifelse(sendRequest,c("*","*"),c("","")),
-                              measurements=c(devId1,devId2),
+                              columns=c("",""),
                               stringsAsFactors=FALSE)
                         )
     expect_equal(devs, expected_df)

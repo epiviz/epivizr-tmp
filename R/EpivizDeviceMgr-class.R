@@ -176,6 +176,7 @@ EpivizDeviceMgr$methods(
       return(FALSE)
 
     if (sendRequest) {
+      typeList <- msList[[msType]]
       isConnected <- sapply(typeList, "[[", "connected")[m]
       all(isConnected)
     } else {
@@ -259,16 +260,17 @@ EpivizDeviceMgr$methods(
     }
 
     .doOneList <- function(ms) {
-      ids=names(ms)
-      nms=sapply(ms, "[[", "name")
-      lens=sapply(ms, function(x) length(x$obj$object))
-      connected=ifelse(sapply(ms, "[[", "connected"), "*", "")
-      ms=sapply(lapply(ms,"[[","measurements"), paste, collapse=",")
+      ids <- names(ms)
+      nms <- sapply(ms, "[[", "name")
+      lens <- sapply(ms, function(x) length(x$obj$object))
+      connected <- ifelse(sapply(ms, "[[", "connected"), "*", "")
+      columns <- sapply(ms, function(x) paste0(x$obj$columns,collapse=","))
+
       data.frame(id=ids,
                  name=nms,
                  length=lens,
                  connected=connected,
-                 measurements=ms,
+                 columns=columns,
                  stringsAsFactors=FALSE,row.names=NULL)  
    }
    out <- list()
@@ -338,84 +340,6 @@ EpivizDeviceMgr$methods(
      return(out)
    }
 )
-       # if (dataType=="blockMeasurements") {
-       #   ids=measurements$blockMeasurements
-       #   curOut=lapply(seq_along(ids), function(i) list(start=integer(),end=integer()))
-       #   names(curOut)=ids
-         
-       #   ids=ids[ids %in% sapply(devices$block, "[[", "measurements")]
-       #   if (length(ids)>0)
-       #      curOut[ids] = lapply(devices$block[ids], .getFromOneDevice)
-       #   out[[dataName]]$data=curOut
-       # } else if (dataType=="bpMeasurements") {
-       #   ids=measurements[[dataType]]
-         
-       #   out[[dataName]]$min=structure(rep(-6,length(ids)),names=ids)
-       #   out[[dataName]]$max=structure(rep(6,length(ids)), names=ids)
-       #   out[[dataName]]$data=structure(vector("list",length(ids)), names=ids)
-       #   for (j in seq_along(ids)) {
-       #     out[[dataName]]$data[[j]]=list(bp=integer(),value=numeric())
-       #   }
-       #   if (length(ids)>0) {
-       #     theMeasurements=lapply(devices[[devType]],"[[","measurements")
-       #     devIndexes=sapply(ids, function(id) which(sapply(theMeasurements, function(x) id %in% x)))
-       #     devIds=split(seq_along(ids),names(devices[[devType]])[devIndexes])
-           
-       #     for (j in seq_along(devIds)) {
-       #        curDevId=names(devIds)[j]
-       #        dev=devices[[devType]][[curDevId]]
-           
-       #        ind=devIds[[j]]
-       #        curCols=dev$obj$columns[match(ids[ind],dev$measurements)]
-              
-       #        tmp=.getFromOneDevice(dev, columnsRequested=curCols)
-       #        out[[dataName]]$min[ind]=tmp$min
-       #        out[[dataName]]$max[ind]=tmp$max
-       #        out[[dataName]]$data[ind]=tmp$data
-       #      }
-       #    }
-       # } else {
-       #   ids <- measurements[[dataType]]
-       #   out[[dataName]]$min=structure(rep(-6,length(ids)),names=ids)
-       #   out[[dataName]]$max=structure(rep(6,length(ids)),names=ids)
-       #   out[[dataName]]$data=structure(vector("list",length(ids)+4),names=c("gene","start","end","probe",ids))
-       #   out[[dataName]]$data$gene=character()
-       #   out[[dataName]]$data$start=integer()
-       #   out[[dataName]]$data$end=integer()
-       #   out[[dataName]]$data$probe=character()
-       #   for (j in seq_along(ids)) {
-       #    out[[dataName]]$data[[j+4]]=numeric()
-       #   }
-       #   if (length(ids)>0) {
-       #    theMeasurements=lapply(devices[[devType]],"[[","measurements")
-       #    devIndexes=sapply(ids, function(id) which(sapply(theMeasurements, function(x) id %in% x)))
-       #    devIds=split(seq_along(ids), names(devices[[devType]])[devIndexes])
-
-       #    for (j in seq_along(devIds)) {
-       #      curDevId=names(devIds)[j]
-       #      dev=devices[[devType]][[curDevId]]
-
-       #      ind=devIds[[j]]
-       #      curCols=dev$obj$columns[match(ids[ind],dev$measurements)]
-       #      tmp=.getFromOneDevice(dev, columnsRequested=curCols)
-
-       #      out[[dataName]]$min[ind]=tmp$min
-       #      out[[dataName]]$max[ind]=tmp$max
-
-       #      if (length(out[[dataName]]$data$gene)==0) {
-       #        out[[dataName]]$data$gene=tmp$data$gene
-       #        out[[dataName]]$data$start=tmp$data$start
-       #        out[[dataName]]$data$end=tmp$data$end
-       #        out[[dataName]]$data$probe=tmp$data$probe
-       #      }
-       #      out[[dataName]]$data[ind+4]=tmp$data[-(1:4)]
-       #    }
-       #   }
-#        }
-#      }
-#     return(out)
-#    }
-# )   
 
 # chart management methods
 EpivizDeviceMgr$methods(list(
@@ -436,7 +360,59 @@ EpivizDeviceMgr$methods(list(
       server$addChart(requestId, chartObject$type, chartObject$measurements)
     }
     invisible(NULL)
-   },  
+   }, 
+   .getChartObject=function(chartId) {
+    obj <- chartList[[chartId]]
+    if (is.null(obj))
+      stop("cannot find object")
+    obj
+   },
+   rmChart=function(chartObj) {
+    if (is.character(chartObj)) {
+      # passed the id instead of the object
+      chartObj <- .self$.getChartObject(chartObj)
+    }
+
+    slot <- match(chartObj$getId(), names(chartList))
+    if (is.na(slot))
+      stop("object not found")
+
+    chartId <- chartObj$getId()
+    chartList[[chartId]] <<- NULL
+
+    if(!is.null(chartIdMap[[chartId]])) {
+      callback=function(data) {
+        message("chart ", chartId, " removed and disconnected")  
+      }
+      requestId=callbackArray$append(callback)
+      server$rmChart(requestId, chartIdMap[[chartId]])
+    }
+    invisible(NULL)
+   },
+   # TODO: implement
+   rmAllCharts=function() {
+    for (i in seq_along(msList)) {
+      curType=names(msList)[i]
+      if (length(msList[[curType]])>0) {
+        for (objRecord in msList[[curType]]) {
+          rmDevice(objRecord$obj)
+        }
+      }
+    }
+   }, 
+   listCharts=function() {
+    ids <- names(chartList)
+    type <- sapply(chartList, function(x) x$type)
+    ms <- sapply(chartList, function(x) paste0(x$measurements, collapse=","))
+    connected <- ifelse(sapply(names(chartList), function(x) x %in% names(chartIdMap)), "*", "")
+    out <- data.frame(id=ids, 
+                      type=type, 
+                      measurements=ms, 
+                      connected=connected,
+                      stringsAsFactors=FALSE)
+    rownames(out) <- NULL
+    out
+   },
    setActive=function (devId) {
      'set given device as active in browser'
      slot=which(sapply(lapply(devices,names), function(x) devId %in% x))
