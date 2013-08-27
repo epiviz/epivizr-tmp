@@ -14,7 +14,7 @@ EpivizBpData <- setRefClass("EpivizBpData",
       sapply(mcols(object)[columns], function(x) range(pretty(range(x, na.rm=TRUE))))
     },
     plot=function(...) {
-      mgr$lineChart(ms=names(getMeasurements()), ...)
+      mgr$lineChart(ms=getMeasurements(), ...)
     }
   )
 )

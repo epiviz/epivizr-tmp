@@ -11,11 +11,12 @@ test_that("blockChart works", {
     msObj <- mgr$addMeasurements(gr, "ms1", sendRequest=sendRequest)
     msId <- msObj$getId()
 
-    chartObj <- mgr$blockChart(msId, sendRequest=sendRequest)
+    ms <- structure(msObj$getName(), names=msId)
+    chartObj <- mgr$blockChart(ms, sendRequest=sendRequest)
     chartId <- chartObj$getId()
 
     expect_is(chartObj, "EpivizChart")
-    expect_equal(chartObj$measurements, msId)
+    expect_equal(chartObj$measurements, ms)
     expect_equal(chartObj$type, "blocksTrack")
     expect_false(is.null(mgr$chartList[[chartId]]))
 
@@ -36,8 +37,9 @@ test_that("plot block works", {
 	chartObj <- msObj$plot(sendRequest=sendRequest)
     chartId <- chartObj$getId()
 
+    ms <- structure(msObj$getName(), names=msId)
     expect_is(chartObj, "EpivizChart")
-    expect_equal(chartObj$measurements, msId)
+    expect_equal(chartObj$measurements, ms)
     expect_equal(chartObj$type, "blocksTrack")
     expect_false(is.null(mgr$chartList[[chartId]]))
 
@@ -59,7 +61,8 @@ test_that("addDevice block works", {
     chartId <- devObj$getChartId()
 
     chartObj <- devObj$getChartObject()
-    expect_equal(chartObj$measurements, msId)
+    ms <- structure(devObj$getMsObject()$getName(), names=msId)
+    expect_equal(chartObj$measurements, ms)
     expect_equal(chartObj$type, "blocksTrack")
     expect_false(is.null(mgr$chartList[[chartId]]))
 
@@ -78,10 +81,11 @@ test_that("lineChart works", {
     msObj <- mgr$addMeasurements(gr, "ms1", sendRequest=sendRequest, type="bp")
     msId <- msObj$getId()
 
-    chartObj <- mgr$lineChart(paste0(msId,"$score2"), sendRequest=sendRequest)
+    ms <- structure(paste0(msObj$getName(), "$score2"), names=paste0(msId,"$score2"))
+    chartObj <- mgr$lineChart(ms, sendRequest=sendRequest)
     chartId <- chartObj$getId()
 
-    expect_equal(chartObj$measurements, paste0(msId,"$score2"))
+    expect_equal(chartObj$measurements, ms)
     expect_equal(chartObj$type, "lineTrack")
     expect_false(is.null(mgr$chartList[[chartId]]))
 
@@ -103,7 +107,7 @@ test_that("plot bp works", {
     chartObj <- msObj$plot(sendRequest=sendRequest)
     chartId <- chartObj$getId()
 
-    ms <- paste0(msId,"$score",1:2)
+    ms <- structure(paste0(msObj$getName(), "$score", 1:2), names=paste0(msId,"$score",1:2))
     expect_equal(chartObj$measurements, ms)
     expect_equal(chartObj$type, "lineTrack")
     expect_false(is.null(mgr$chartList[[chartId]]))
@@ -126,7 +130,7 @@ test_that("addDevice bp works", {
     msId <- devObj$getMsId()
     chartId <- devObj$getChartId()
 
-    ms <- paste0(msId,"$score",1:2)
+    ms <- structure(paste0(devObj$getMsObject()$getName(), "$score", 1:2), names=paste0(msId,"$score",1:2))
     chartObj <- devObj$getChartObject()
     expect_equal(chartObj$measurements, ms)
     expect_equal(chartObj$type, "lineTrack")
@@ -146,10 +150,12 @@ test_that("scatterChart works", {
     msObj <- mgr$addMeasurements(sset, "ms1", sendRequest=sendRequest, columns=c("A","B"), assay="counts2")
     msId <- msObj$getId()
 
-    chartObj <- mgr$scatterChart(x=paste0(msId,"$A"), y=paste0(msId,"$B"),sendRequest=sendRequest)
+    x <- structure(paste0(msObj$getName(), "$A"), names=paste0(msId, "$A"))
+    y <- structure(paste0(msObj$getName(), "$B"), names=paste0(msId, "$B"))
+    chartObj <- mgr$scatterChart(x=x, y=y,sendRequest=sendRequest)
     chartId <- chartObj$getId()
 
-    expect_equal(chartObj$measurements, paste0(msId,"$",c("A","B")))
+    expect_equal(chartObj$measurements, c(x,y))
     expect_equal(chartObj$type, "geneScatterPlot")
     expect_false(is.null(mgr$chartList[[chartId]]))
 
@@ -170,7 +176,8 @@ test_that("plot feature works", {
     chartObj <- msObj$plot(sendRequest=sendRequest)
     chartId <- chartObj$getId()
 
-    expect_equal(chartObj$measurements, paste0(msId,"$",c("A","B")))
+    ms <- structure(paste0(msObj$getName(), "$", c("A","B")), names=paste0(msId, "$", c("A","B")))
+    expect_equal(chartObj$measurements, ms)
     expect_equal(chartObj$type, "geneScatterPlot")
     expect_false(is.null(mgr$chartList[[chartId]]))
 
@@ -192,7 +199,8 @@ test_that("addDevice feature works", {
     chartId <- devObj$getChartId()
 
     chartObj <- devObj$getChartObject()
-    expect_equal(chartObj$measurements, paste0(msId,"$",c("A","B")))
+    ms <- structure(paste0(devObj$getMsObject()$getName(), "$", c("A","B")), names=paste0(msId, "$", c("A","B")))
+    expect_equal(chartObj$measurements, ms)
     expect_equal(chartObj$type, "geneScatterPlot")
     expect_false(is.null(mgr$chartList[[chartId]]))
 

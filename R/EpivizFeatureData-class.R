@@ -7,6 +7,13 @@ EpivizFeatureData <- setRefClass("EpivizFeatureData",
       assay <<- assay
       callSuper(object=object, ...)
     },
+    update=function(newObject, ...) {
+      if (!is(newObject, "SummarizedExperiment"))
+        stop("'newObject' must be of class 'SummarizedExperiment'")
+      if(!is(rowData(newObject), "GIntervalTree"))
+        rowData(newObject) <- as(rowData(newObject), "GIntervalTree")
+      callSuper(newObject, ...)
+    },
     .checkColumns=function(columns) {
       all(columns %in% rownames(colData(object)))
     },
@@ -19,7 +26,7 @@ EpivizFeatureData <- setRefClass("EpivizFeatureData",
       sapply(seq(along=columns), function(i) range(pretty(range(mat[,i], na.rm=TRUE))))
     },
     plot=function(...) {
-      ms <- names(getMeasurements())
+      ms <- getMeasurements()
       mgr$scatterChart(x=ms[1], y=ms[2], ...)
     }
   )

@@ -61,18 +61,25 @@ EpivizData <- setRefClass("EpivizData",
     .getLimits=function() {
       NULL
     },
-    update=function(newObject) {
+    update=function(newObject, sendRequest=TRUE) {
       if(class(newObject) != class(object)) {
         stop("class of 'newObject' is not equal to class of current 'object'")
       }
 
-      if (!is.null(columns)) {
-        if (!.checkColumns(object, columns))
-          stop("columns not found in 'newObject'")
-
-        ylim <<- .getLimits(object, columns)
-      }
+      oldObject <- object
       object <<- newObject
+
+      if (!is.null(columns)) {
+        if (!.checkColumns(columns)) {
+          object <<- oldObject
+          stop("columns not found in 'newObject'")
+        }
+
+        ylim <<- .getLimits()
+      }
+      if (sendRequest && !is.null(mgr))
+        mgr$.clearChartCaches(.self, sendRequest=sendRequest)
+
       invisible()
     },
     getId=function() {

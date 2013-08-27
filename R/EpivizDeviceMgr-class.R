@@ -141,7 +141,7 @@ EpivizDeviceMgr$methods(
    addMeasurements=function(obj, msName, sendRequest=TRUE, ...) {
     'add measurements to epiviz session'
     epivizObject <- epivizr:::register(obj, ...)
-    type <- .self$getMeasurementType(class(epivizObject))
+    type <- .self$getMeasurementType(epivizObject)
 
     msIdCounter <<- msIdCounter + 1L
     msId <- sprintf("epivizMs_%s_%d", type, msIdCounter)
@@ -175,7 +175,8 @@ EpivizDeviceMgr$methods(
    .checkMeasurements=function(msType, ms, sendRequest=TRUE, ...) {
     if (!is.character(ms)) return(FALSE)
     if (!(msType %in% names(msList))) return(FALSE)
-    m <- .findMeasurements(msType, ms)
+
+    m <- .findMeasurements(msType, names(ms))
     if (any(is.na(m)))
       return(FALSE)
 
@@ -187,26 +188,43 @@ EpivizDeviceMgr$methods(
       TRUE
     }
    },
-   # TODO: reimplement update with Data/Chart split
-   updateMeasurements=function(device, gr) {
-     devId <- device$id
-     slot <- which(sapply(devices, function(x) devId %in% names(x)))
-     if (length(slot)<1)
-       stop("device not recognized by manager")
-
-     device$update(gr)
-     
-     devType <- names(typeMap)[slot]
-     devName <- devices[[devType]][[devId]]$name
-     
-     chartId <- chartIdMap[[devId]]
-     if (!is.null(chartId)) {
-       callback=function(data) {
-         message("cache for device ", devName, " cleared")
-       }
-       requestId=callbackArray$append(callback)
-       server$clearCache(requestId, chartId) 
+   .clearChartCaches=function(msObj, sendRequest=TRUE) {
+     if(!is(msObj, "EpivizData")) {
+      stop("'msObj' must be an 'EpivizData' object")
      }
+     msType <- getMeasurementType(msObj)
+     msIndex <- match(msObj$getId(), names(msList[[msType]]))
+     if (is.na(msIndex)) 
+      stop("did not find object")
+
+     if (msList[[msType]][[msIndex]]$connected) {
+       chartIds <- c()
+       for (chart in chartList) {
+        if (is.null(chartIdMap[[chart$getId()]]))
+          next
+
+        m <- .findMeasurements(msType, chart$measurements)
+        if (!(msIndex %in% m))
+          next
+
+        chartId <- chartIdMap[[chart$getId()]]
+        if (!(chartId %in% chartIds))
+          chartIds <- c(chartIds, chartId)
+       }
+
+       if (sendRequest && length(chartIds)>0) {
+        callback=function(data) {
+          message("Chart caches cleared")
+        }
+        requestId <- callbackArray$append(callback)
+        server$clearChartCaches(requestId, chartIds)
+       }
+     }
+     invisible()
+   },
+   updateMeasurements=function(msObjId, newObject, sendRequest=TRUE) {
+     oldObject <- .getMsObject(msObjId)
+     oldObject$update(newObject, sendRequest=sendRequest)
      invisible()
    },
    .getMsObject=function(msObjId) {
@@ -228,7 +246,7 @@ EpivizDeviceMgr$methods(
     if (!is(msObj, "EpivizData"))
       stop("'msObj' must be an 'EpivizData' object")
 
-    msType <- .self$getMeasurementType(class(msObj))
+    msType <- .self$getMeasurementType(msObj)
     typeList <- msList[[msType]]
 
     slot <- match(msObj$getId(), names(typeList))
@@ -306,10 +324,16 @@ EpivizDeviceMgr$methods(
      }
      return(out)
    },
-  getMeasurementType=function(objClass) {
-    m <- match(objClass, sapply(typeMap, "[[", "class"))
+  getMeasurementType=function(x) {
+    if (!is.character(x)) {
+      if (!is(x, "EpivizData")) {
+        stop("'x' must be 'character' or an 'EpivizData' object")
+      }
+      x <- class(x)
+    }
+    m <- match(x, sapply(typeMap, "[[", "class"))
     if (is.na(m))
-      stop("Class ", objClass, " not found in 'typeMap'")
+      stop("Class ", x, " not found in 'typeMap'")
     names(typeMap)[m]
   }
 )
@@ -413,7 +437,7 @@ EpivizDeviceMgr$methods(
    listCharts=function() {
     ids <- names(chartList)
     type <- sapply(chartList, function(x) x$type)
-    ms <- sapply(chartList, function(x) paste0(x$measurements, collapse=","))
+    ms <- sapply(chartList, function(x) paste0(names(x$measurements), collapse=","))
     connected <- ifelse(sapply(names(chartList), function(x) x %in% names(chartIdMap)), "*", "")
     out <- data.frame(id=ids, 
                       type=type, 
@@ -481,7 +505,7 @@ EpivizDeviceMgr$methods(
      'list devices in browser'
     ids <- names(deviceList)
     type <- sapply(deviceList, function(x) x$getChartObject()$type)
-    ms <- sapply(deviceList, function(x) paste0(x$getChartObject()$measurements, collapse=","))
+    ms <- sapply(deviceList, function(x) paste0(names(x$getChartObject()$measurements), collapse=","))
     connected <- ifelse(sapply(deviceList, function(x) x$getChartId() %in% names(chartIdMap)), "*", "")
     out <- data.frame(id=ids, 
                       type=type, 
