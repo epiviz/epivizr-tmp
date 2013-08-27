@@ -2,14 +2,14 @@ setGeneric("register", signature=c("object"),
 	function(object, columns=NULL, ...) standardGeneric("register"))
 
 setMethod("register", "GenomicRanges",
-	function(object, columns, type=c("block","bp")) {
+	function(object, columns, type=c("block","bp"), ...) {
 		type <- match.arg(type)
 		if (!is(object, "GIntervalTree")) {
 			object <- as(object, "GIntervalTree")
 		}
 		dev <- switch(type,
-					  block=EpivizBlockData$new(object=object),
-					  bp=EpivizBpData$new(object=object, columns=columns))
+					  block=EpivizBlockData$new(object=object, ...),
+					  bp=EpivizBpData$new(object=object, columns=columns, ...))
 		return(dev)
 })
 

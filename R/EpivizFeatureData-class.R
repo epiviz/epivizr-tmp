@@ -20,13 +20,25 @@ EpivizFeatureData <- setRefClass("EpivizFeatureData",
     .getColumns=function() {
       rownames(colData(object))
     },
+    .checkLimits=function(ylim) {
+      if (!is.matrix(ylim))
+        return(FALSE)
+      if (nrow(ylim) != 2)
+        return(FALSE)
+      if (ncol(ylim) != length(columns))
+        return(FALSE)
+      TRUE
+    },
     .getLimits=function() {
       mat <- GenomicRanges::assay(object, i=.self$assay)
       colIndex <- match(columns, rownames(colData(object)))
       sapply(seq(along=columns), function(i) range(pretty(range(mat[,i], na.rm=TRUE))))
     },
-    plot=function(...) {
+    plot=function(x, y, ...) {
       ms <- getMeasurements()
+      if (length(ms)<2)
+        stop("need at least two columns to plot")
+        
       mgr$scatterChart(x=ms[1], y=ms[2], ...)
     }
   )

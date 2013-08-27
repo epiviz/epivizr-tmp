@@ -73,8 +73,8 @@ You should now see that a new track is added to your `Epiviz` session. You can t
 The point of having interactive data connections to `Epiviz` is that we may want to iteratively compute and visualize our data. For example, we may want to only display methylation blocks that at a certain statistical significance level. In this case, we will filter by block size.
 
 ```{r, eval=FALSE}
-# subset to those with length > 25Kbp
-keep <- width(colon_blocks) > 25000
+# subset to those with length > 250Kbp
+keep <- width(colon_blocks) > 250000
 mgr$updateDevice(blocks_dev, colon_blocks[keep,])
 ```
 
@@ -86,7 +86,7 @@ We have a number of available device types in `epivizr`, which are listed using 
 
 ```{r, eval=FALSE}
 # add low-filter smoothed methylation estimates
-means_dev <- mgr$addDevice(colon_curves, "450kMeth",type="bp",mdCols=c("cancerMean","normalMean"))
+means_dev <- mgr$addDevice(colon_curves, "450kMeth",type="bp",columns=c("cancerMean","normalMean"))
 mgr$service()
 ```
 
@@ -95,7 +95,7 @@ Notice that we added two lines in this plot, one for mean methylation in cancer 
 We can also add a track containing the smooth methylation difference estimate used to define methylation blocks.
 
 ```{r, eval=FALSE}
-diff_dev <- mgr$addDevice(colon_curves,"450kMethDiff",type="bp",mdCols=c("smooth"),ylim=matrix(c(-.5,.5),nc=1))
+diff_dev <- mgr$addDevice(colon_curves,"450kMethDiff",type="bp",columns=c("smooth"),ylim=matrix(c(-.5,.5),nc=1))
 mgr$service()
 ```
 
@@ -131,11 +131,11 @@ show(eset)
 Including the annotation type in this object is essential since `epivizr` will use that annotation to determine genomic locations for this data so that only probesets inside the current window are displayed. 
 
 ```{r, eval=FALSE}
-eset_dev <- mgr$addDevice(eset, "MAPlot", type="gene", x="colonA", y="colonM")
+eset_dev <- mgr$addDevice(eset, "MAPlot", columns=c("colonA","colonM"))
 mgr$service()
 ```
 
-In this case, we specify which data is displayed in axis of the scatter plot using arguments `x` and `y`.
+In this case, we specify which data is displayed in axis of the scatter plot using the `columns` argument.
 
 ### The SummarizedExperiment Object
 
@@ -170,7 +170,7 @@ We just create a new `SummarizedExperiment` object with the two column matrix, a
 
 ```{r, eval=FALSE}
 sumexp <- SummarizedExperiment(mat, rowData=rowData(colonSE))
-se_dev <- mgr$addDevice(sumexp, "Mean by Sample Type", type="gene", x="normal", y="cancer")
+se_dev <- mgr$addDevice(sumexp, "Mean by Sample Type", columns=c("normal", "cancer"))
 mgr$service()
 ```
 Again, the x and y arguments specify what data will be displayed along which axis.

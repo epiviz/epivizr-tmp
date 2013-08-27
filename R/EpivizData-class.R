@@ -35,7 +35,7 @@ EpivizData <- setRefClass("EpivizData",
     curHits="ANY"
   ),
   methods=list(
-    initialize=function(object=GIntervalTree(GRanges()), columns=NULL, ...) {
+    initialize=function(object=GIntervalTree(GRanges()), columns=NULL, ylim=NULL, ...) {
       object <<- object
       columns <<- columns
 
@@ -45,7 +45,13 @@ EpivizData <- setRefClass("EpivizData",
       if (is.null(.self$columns))
         columns <<- .self$.getColumns()
 
-      ylim <<- .self$.getLimits()
+      if (!is.null(ylim)) {
+        if (!.self$.checkLimits(ylim))
+          stop("invalid 'ylim' argument")
+        ylim <<- ylim
+      } else {
+        ylim <<- .self$.getLimits()
+      }
 
       curQuery <<- NULL
       curHits <<- NULL
@@ -57,6 +63,9 @@ EpivizData <- setRefClass("EpivizData",
     },
     .getColumns=function() {
       NULL
+    },
+    .checkLimits=function(ylim) {
+      is.null(ylim)
     },
     .getLimits=function() {
       NULL

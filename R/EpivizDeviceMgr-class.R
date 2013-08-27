@@ -107,7 +107,8 @@ EpivizDeviceMgr$methods(list(
    },
    stopServer=function() {
      'stop epiviz connection'
-     .self$rmAllDevices()
+     .self$rmAllCharts(which="all")
+     .self$rmAllMeasurements(which="all")
      server$stopServer()
    }
   )
@@ -203,7 +204,7 @@ EpivizDeviceMgr$methods(
         if (is.null(chartIdMap[[chart$getId()]]))
           next
 
-        m <- .findMeasurements(msType, chart$measurements)
+        m <- .findMeasurements(msType, names(chart$measurements))
         if (!(msIndex %in% m))
           next
 
@@ -222,8 +223,11 @@ EpivizDeviceMgr$methods(
      }
      invisible()
    },
-   updateMeasurements=function(msObjId, newObject, sendRequest=TRUE) {
-     oldObject <- .getMsObject(msObjId)
+   updateMeasurements=function(oldObject, newObject, sendRequest=TRUE) {
+     if (is.character(oldObject))
+       oldObject <- .getMsObject(oldObject)
+     if (!is(oldObject, "EpivizData"))
+      stop("oldObject must be of class 'EpivizData'")
      oldObject$update(newObject, sendRequest=sendRequest)
      invisible()
    },
@@ -267,7 +271,6 @@ EpivizDeviceMgr$methods(
     }
     invisible(NULL)
    },
-   # TODO: implement
    rmAllMeasurements=function(which=c("noDevice", "onlyDevice", "all")) {
     which <- match.arg(which)
     for (i in seq_along(msList)) {
@@ -351,22 +354,30 @@ EpivizDeviceMgr$methods(
      out <- list(chr=chr,start=start,end=end) 
      query <- GRanges(chr, ranges=IRanges(start, end))
 
-     for (i in seq_along(measurements)) {
-       dataType <- names(measurements)[i]
+     for (typeIndex in seq_along(measurements)) {
+       dataType <- names(measurements)[typeIndex]
        dataName <- gsub("Measurements","Data", dataType)
        msType <- gsub("Measurements","", dataType)
        
-       out[[dataName]]=list(start=start,end=end,chr=chr)
-       curMeasurements <- measurements[[i]]
+       out[[dataName]] <- list(start=start,end=end,chr=chr)
+       curMeasurements <- measurements[[typeIndex]]
+       if (length(curMeasurements)==0) {
+        out[[dataName]] <- list()
+        next
+       }
+
        msMap <- .self$.findMeasurements(msType, curMeasurements)
+       if (any(is.na(msMap))) {
+        stop("could not find measurement")
+       }
        objList <- msList[[msType]]
 
        dataPack <- .initPack(msType, length(msMap))
 
-       for (i in seq_along(curMeasurements)) {
-        msObj <- objList[[msMap[i]]]$obj
-        curData <- msObj$getData(query, curMeasurements[i])
-        dataPack$set(curData, curMeasurements[i], i)
+       for (msIndex in seq_along(curMeasurements)) {
+        msObj <- objList[[msMap[msIndex]]]$obj
+        curData <- msObj$getData(query, curMeasurements[msIndex])
+        dataPack$set(curData, curMeasurements[msIndex], msIndex)
        }
        out[[dataName]] <- c(out[[dataName]], dataPack$getData())
      }
@@ -500,6 +511,16 @@ EpivizDeviceMgr$methods(
     for (obj in deviceList) {
       rmDevice(obj)
     }
+   },
+  updateDevice=function(oldObject, newObject, sendRequest=TRUE) {
+     if (is.character(oldObject))
+       oldObject <- deviceList[[oldObject]]
+
+     if (!is(oldObject, "EpivizDevice"))
+      stop("oldObject must be of class 'EpivizDevice'")
+
+     oldObject$update(newObject, sendRequest=sendRequest)
+     invisible()
    },
    listDevices=function() {
      'list devices in browser'

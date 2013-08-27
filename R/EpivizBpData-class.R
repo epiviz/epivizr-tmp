@@ -1,14 +1,20 @@
 EpivizBpData <- setRefClass("EpivizBpData",
   contains="EpivizTrackData",
   methods=list(
-    # initialize=function(object=GRanges(), ...) {
-    #   callSuper(object=object, ...)
-    # },
     .checkColumns=function(columns) {
       all(columns %in% names(mcols(object)))
     },
     .getColumns=function() {
       names(mcols(object))
+    },
+    .checkLimits=function(ylim) {
+      if (!is.matrix(ylim))
+        return(FALSE)
+      if (nrow(ylim) != 2)
+        return(FALSE)
+      if (ncol(ylim) != length(columns))
+        return(FALSE)
+      TRUE
     },
     .getLimits=function() {
       sapply(mcols(object)[columns], function(x) range(pretty(range(x, na.rm=TRUE))))
