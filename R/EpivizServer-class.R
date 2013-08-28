@@ -78,12 +78,14 @@ EpivizServer <- setRefClass("EpivizServer",
     },
     bindManager=function(mgr) {
       msgCallback <<- function(binary, msg) {
-        cat("server: data received")
-        #print(rawToChar(DATA))
         if (binary) {
           msg <- rawToChar(msg)
         }
-        print(msg)
+        
+        if (mgr$verbose) {
+          cat("server: data received")
+          print(msg)
+        }
         msg = rjson::fromJSON(msg)
         if (msg$type == "request") {
           out=list(type="response",id=msg$id)

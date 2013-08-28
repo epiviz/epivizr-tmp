@@ -31,19 +31,19 @@ show(colon_curves)
 
 
 ## ----, eval=FALSE--------------------------------------------------------
-## # subset to those with length > 25Kbp
-## keep <- width(colon_blocks) > 25000
+## # subset to those with length > 250Kbp
+## keep <- width(colon_blocks) > 250000
 ## mgr$updateDevice(blocks_dev, colon_blocks[keep,])
 
 
 ## ----, eval=FALSE--------------------------------------------------------
 ## # add low-filter smoothed methylation estimates
-## means_dev <- mgr$addDevice(colon_curves, "450kMeth",type="bp",mdCols=c("cancerMean","normalMean"))
+## means_dev <- mgr$addDevice(colon_curves, "450kMeth",type="bp",columns=c("cancerMean","normalMean"))
 ## mgr$service()
 
 
 ## ----, eval=FALSE--------------------------------------------------------
-## diff_dev <- mgr$addDevice(colon_curves,"450kMethDiff",type="bp",mdCols=c("smooth"),ylim=matrix(c(-.5,.5),nc=1))
+## diff_dev <- mgr$addDevice(colon_curves,"450kMethDiff",type="bp",columns=c("smooth"),ylim=matrix(c(-.5,.5),nc=1))
 ## mgr$service()
 
 
@@ -67,7 +67,7 @@ show(eset)
 
 
 ## ----, eval=FALSE--------------------------------------------------------
-## eset_dev <- mgr$addDevice(eset, "MAPlot", type="gene", x="colonA", y="colonM")
+## eset_dev <- mgr$addDevice(eset, "MAPlot", columns=c("colonA","colonM"))
 ## mgr$service()
 
 
@@ -94,7 +94,7 @@ show(colonSE)
 
 ## ----, eval=FALSE--------------------------------------------------------
 ## sumexp <- SummarizedExperiment(mat, rowData=rowData(colonSE))
-## se_dev <- mgr$addDevice(sumexp, "Mean by Sample Type", type="gene", x="normal", y="cancer")
+## se_dev <- mgr$addDevice(sumexp, "Mean by Sample Type", columns=c("normal", "cancer"))
 ## mgr$service()
 
 

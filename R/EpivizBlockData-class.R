@@ -38,8 +38,7 @@ EpivizBlockData$methods(
     if (!length(curHits)) {
       out <- list(start=integer(), end=integer())
     } else {
-      tmp <- object[curHits,]
-      out <- list(start=start(tmp), end=end(tmp))
+      out <- list(start=start(object)[curHits], end=end(object)[curHits])
     }
   }
 )

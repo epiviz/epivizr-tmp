@@ -5,9 +5,17 @@ debug=TRUE
 proxy=TRUE
 .startMGR=function(openBrowser=FALSE,...) {
   if (openBrowser) {
-    tryCatch(startEpiviz(localURL=localURL, debug=debug, proxy=proxy, openBrowser=TRUE, ...), interrupt=function(e) invisible())
+    tryCatch(startEpiviz(localURL=localURL, 
+    					debug=debug, 
+    					proxy=proxy, 
+    					openBrowser=TRUE, 
+    					verbose=TRUE, ...), interrupt=function(e) invisible())
   } else {
-    startEpiviz(localURL=localURL,debug=debug,openBrowser=FALSE, ...)
+    startEpiviz(localURL=localURL,
+    			debug=debug,
+    			proxy=proxy,
+    			openBrowser=FALSE, 
+    			verbose=TRUE, ...)
   }
 }
 

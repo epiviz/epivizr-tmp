@@ -62,14 +62,13 @@ EpivizBpData$methods(
     out$data <- list(bp=integer(), value=numeric())
 
     if (length(curHits)) {
-      tmp <- object[curHits,]
-      vals <- mcols(tmp)[[column]]
+      vals <- mcols(object)[curHits,column]
       naIndx <- is.na(vals)
       if (!all(naIndx)) {
         if (any(naIndx)) {
-          out$data <- list(bp=start(tmp)[!naIndx], value=vals[!naIndx])  
+          out$data <- list(bp=start(object)[curHits[!naIndx]], value=vals[!naIndx])  
         } else {
-          out$data <- list(bp=start(tmp), value=vals)
+          out$data <- list(bp=start(object)[curHits], value=vals)
         }
       }
     }

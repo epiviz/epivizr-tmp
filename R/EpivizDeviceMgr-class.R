@@ -46,6 +46,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     deviceList="list",
     deviceIdCounter="integer",
     server="EpivizServer",
+    verbose="logical",
     callbackArray="IndexedArray"),
   methods=list(
     initialize=function(...) {
@@ -59,6 +60,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      msList <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
      chartList <<- list()
      deviceList <<- list()
+     verbose <<- FALSE
      callSuper(...)
    },
    show=function() {
@@ -122,7 +124,28 @@ EpivizDeviceMgr$methods(list(
    },
    navigate=function(chr, start, end) {
      'navigate to given position'
-     server$navigate(chr=chr,start=start,end=end)
+     callback <- function(data) {
+      invisible(NULL)
+     }
+     requestId <- callbackArray$append(callback)
+     server$navigate(requestId=requestId,chr=chr,start=start,end=end)
+   },
+   slideshow=function(granges, n=10) {
+    'navidate to successive positions'
+    if (!is(granges, "GenomicRanges"))
+      stop(("'granges' must be a 'GenomicRanges' object"))
+
+    ind <- seq(len=n)
+    chr <- as.character(seqnames(granges)[ind])
+    start <- start(granges)[ind]
+    end <- end(granges)[ind]
+    for (i in ind) {
+      cat("Region", i, "of", n, ". Press key to continue (ESC to stop)...\n")
+      readLines(n=1)
+      navigate(chr=chr[i], start=start[i], end=end[i])
+      tryCatch(service(), interrupt=function(int) invisible(NULL))
+    }
+    invisible(NULL)
    }
   )
 )
@@ -561,8 +584,11 @@ EpivizDeviceMgr$methods(
 #' mgr$stopServer()
 #' 
 #' @export
-startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, end=103383180, 
-                        debug=FALSE, proxy=TRUE, workspace=NULL, openBrowser=TRUE) {
+startEpiviz <- function(port=7312L, localURL=NULL, 
+                        chr="chr11", start=99800000, end=103383180, 
+                        debug=FALSE, proxy=TRUE, workspace=NULL, 
+                        openBrowser=TRUE,
+                        verbose=FALSE) {
   message("Opening websocket...")
   server <- epivizr:::createServer(port=port)
   
@@ -589,7 +615,7 @@ startEpiviz <- function(port=7312L, localURL=NULL, chr="chr11", start=99800000, 
                        as.integer(end)))
   }
   tryCatch({
-    mgr <- EpivizDeviceMgr$new(server=server, url=url)
+    mgr <- EpivizDeviceMgr$new(server=server, url=url, verbose=verbose)
     mgr$bindToServer()
   }, error=function(e) {
     server$stopServer()

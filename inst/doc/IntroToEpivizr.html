@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- saved from url=(0014)about:internet -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
@@ -199,45 +198,10 @@ hr {
 <p>In this vignette we will look at colon cancer methylation data from the TCGA project and expression data from the gene expression barcode project. We include methylation data from the Illumina 450kHumanMethylation beadarray processed with the <code>minfi</code> package in <code>epivizr</code>. We get the expression data from the <code>antiProfilesData</code> bioconductor package.</p>
 
 <pre><code class="r">require(epivizr)
+require(antiProfilesData)
 </code></pre>
 
-<pre><code>## Loading required package: epivizr Loading required package: httpuv Loading
-## required package: Rcpp Loading required package: GenomicRanges Loading
-## required package: BiocGenerics Loading required package: parallel
-## 
-## Attaching package: &#39;BiocGenerics&#39;
-## 
-## The following objects are masked from &#39;package:parallel&#39;:
-## 
-## clusterApply, clusterApplyLB, clusterCall, clusterEvalQ, clusterExport,
-## clusterMap, parApply, parCapply, parLapply, parLapplyLB, parRapply,
-## parSapply, parSapplyLB
-## 
-## The following object is masked from &#39;package:stats&#39;:
-## 
-## xtabs
-## 
-## The following objects are masked from &#39;package:base&#39;:
-## 
-## anyDuplicated, append, as.data.frame, as.vector, cbind, colnames,
-## duplicated, eval, Filter, Find, get, intersect, lapply, Map, mapply,
-## match, mget, order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-## rbind, Reduce, rep.int, rownames, sapply, setdiff, sort, table, tapply,
-## union, unique, unlist
-## 
-## Loading required package: IRanges Loading required package: XVector
-## Loading required package: rjson Loading required package: knitr
-</code></pre>
-
-<pre><code class="r">require(antiProfilesData)
-</code></pre>
-
-<pre><code>## Loading required package: antiProfilesData Loading required package:
-## Biobase Welcome to Bioconductor
-## 
-## Vignettes contain introductory material; view with &#39;browseVignettes()&#39;. To
-## cite Bioconductor, see &#39;citation(&quot;Biobase&quot;)&#39;, and for packages
-## &#39;citation(&quot;pkgname&quot;)&#39;.
+<pre><code>## Loading required package: antiProfilesData
 </code></pre>
 
 <pre><code class="r">data(tcga_colon_example)
@@ -368,8 +332,8 @@ mgr$service()
 
 <p>The point of having interactive data connections to <code>Epiviz</code> is that we may want to iteratively compute and visualize our data. For example, we may want to only display methylation blocks that at a certain statistical significance level. In this case, we will filter by block size.</p>
 
-<pre><code class="r"># subset to those with length &gt; 25Kbp
-keep &lt;- width(colon_blocks) &gt; 25000
+<pre><code class="r"># subset to those with length &gt; 250Kbp
+keep &lt;- width(colon_blocks) &gt; 250000
 mgr$updateDevice(blocks_dev, colon_blocks[keep, ])
 </code></pre>
 
@@ -380,7 +344,7 @@ mgr$updateDevice(blocks_dev, colon_blocks[keep, ])
 <p>We have a number of available device types in <code>epivizr</code>, which are listed using the <code>listTypes</code> method. In the previous section, we used the <code>block</code> type. For the methylation data at base-pair resolution in the <code>colon_curves</code> object, we will use the <code>bp</code> type.</p>
 
 <pre><code class="r"># add low-filter smoothed methylation estimates
-means_dev &lt;- mgr$addDevice(colon_curves, &quot;450kMeth&quot;, type = &quot;bp&quot;, mdCols = c(&quot;cancerMean&quot;, 
+means_dev &lt;- mgr$addDevice(colon_curves, &quot;450kMeth&quot;, type = &quot;bp&quot;, columns = c(&quot;cancerMean&quot;, 
     &quot;normalMean&quot;))
 mgr$service()
 </code></pre>
@@ -389,7 +353,7 @@ mgr$service()
 
 <p>We can also add a track containing the smooth methylation difference estimate used to define methylation blocks.</p>
 
-<pre><code class="r">diff_dev &lt;- mgr$addDevice(colon_curves, &quot;450kMethDiff&quot;, type = &quot;bp&quot;, mdCols = c(&quot;smooth&quot;), 
+<pre><code class="r">diff_dev &lt;- mgr$addDevice(colon_curves, &quot;450kMethDiff&quot;, type = &quot;bp&quot;, columns = c(&quot;smooth&quot;), 
     ylim = matrix(c(-0.5, 0.5), nc = 1))
 mgr$service()
 </code></pre>
@@ -434,11 +398,11 @@ show(eset)
 
 <p>Including the annotation type in this object is essential since <code>epivizr</code> will use that annotation to determine genomic locations for this data so that only probesets inside the current window are displayed. </p>
 
-<pre><code class="r">eset_dev &lt;- mgr$addDevice(eset, &quot;MAPlot&quot;, type = &quot;gene&quot;, x = &quot;colonA&quot;, y = &quot;colonM&quot;)
+<pre><code class="r">eset_dev &lt;- mgr$addDevice(eset, &quot;MAPlot&quot;, columns = c(&quot;colonA&quot;, &quot;colonM&quot;))
 mgr$service()
 </code></pre>
 
-<p>In this case, we specify which data is displayed in axis of the scatter plot using arguments <code>x</code> and <code>y</code>.</p>
+<p>In this case, we specify which data is displayed in axis of the scatter plot using the <code>columns</code> argument.</p>
 
 <h3>The SummarizedExperiment Object</h3>
 
@@ -482,8 +446,8 @@ mat &lt;- cbind(cancer = means[, &quot;Primary Tumor&quot;], normal = means[, &q
 <p>We just create a new <code>SummarizedExperiment</code> object with the two column matrix, and all the information about the features of interest, in this case exons, are stored in the <code>rowData</code> slot and are automatically queried by <code>Epiviz</code>.</p>
 
 <pre><code class="r">sumexp &lt;- SummarizedExperiment(mat, rowData = rowData(colonSE))
-se_dev &lt;- mgr$addDevice(sumexp, &quot;Mean by Sample Type&quot;, type = &quot;gene&quot;, x = &quot;normal&quot;, 
-    y = &quot;cancer&quot;)
+se_dev &lt;- mgr$addDevice(sumexp, &quot;Mean by Sample Type&quot;, columns = c(&quot;normal&quot;, 
+    &quot;cancer&quot;))
 mgr$service()
 </code></pre>
 
@@ -532,18 +496,21 @@ mgr$slideshow(slideshowRegions, n = 5)
 ## [8] base     
 ## 
 ## other attached packages:
-##  [1] antiProfilesData_0.99.1 Biobase_2.21.6         
-##  [3] epivizr_0.99.1          knitr_1.3              
-##  [5] rjson_0.2.12            GenomicRanges_1.13.34  
-##  [7] XVector_0.1.0           IRanges_1.19.19        
-##  [9] BiocGenerics_0.7.3      httpuv_1.0.6.3         
-## [11] Rcpp_0.10.4             RColorBrewer_1.0-5     
-## [13] devtools_1.3            BiocInstaller_1.11.3   
+##  [1] antiProfilesData_0.99.1 epivizr_0.99.1         
+##  [3] hgu133plus2.db_2.9.0    org.Hs.eg.db_2.9.0     
+##  [5] RSQLite_0.11.4          DBI_0.2-7              
+##  [7] AnnotationDbi_1.23.18   knitr_1.4.1            
+##  [9] rjson_0.2.12            GenomicRanges_1.13.38  
+## [11] XVector_0.1.0           IRanges_1.19.26        
+## [13] httpuv_1.1.0            Rcpp_0.10.4            
+## [15] Biobase_2.21.6          BiocGenerics_0.7.4     
+## [17] testthat_0.7.1          RColorBrewer_1.0-5     
+## [19] devtools_1.3            BiocInstaller_1.11.4   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] digest_0.6.3   evaluate_0.4.4 formatR_0.8    httr_0.2      
-##  [5] memoise_0.1    RCurl_1.95-4.1 stats4_3.0.1   stringr_0.6.2 
-##  [9] tools_3.0.1    whisker_0.3-2
+##  [1] codetools_0.2-8 digest_0.6.3    evaluate_0.4.7  formatR_0.9    
+##  [5] httr_0.2        memoise_0.1     RCurl_1.95-4.1  stats4_3.0.1   
+##  [9] stringr_0.6.2   tools_3.0.1     whisker_0.3-2
 </code></pre>
 
 </body>

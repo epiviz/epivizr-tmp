@@ -38,7 +38,7 @@ EpivizFeatureData <- setRefClass("EpivizFeatureData",
       ms <- getMeasurements()
       if (length(ms)<2)
         stop("need at least two columns to plot")
-        
+
       mgr$scatterChart(x=ms[1], y=ms[2], ...)
     }
   )
@@ -108,13 +108,12 @@ EpivizFeatureData$methods(
                          probe=character(),
                          value=numeric())
       } else {
-        tmp <- object[curHits,]
-        m <- match(column, rownames(colData(tmp)))
-        out$data <- list(gene=mcols(rowData(tmp))$SYMBOL,
-                         start=start(rowData(tmp)), 
-                         end=end(rowData(tmp)),
-                         probe=mcols(rowData(tmp))$PROBEID,
-                         value=assay(tmp, .self$assay)[,m])
+        m <- match(column, rownames(colData(object)))
+        out$data <- list(gene=mcols(rowData(object))$SYMBOL[curHits],
+                         start=start(rowData(object))[curHits], 
+                         end=end(rowData(object))[curHits],
+                         probe=mcols(rowData(object))$PROBEID[curHits],
+                         value=assay(object, .self$assay)[curHits,m])
       }
       out
     }
