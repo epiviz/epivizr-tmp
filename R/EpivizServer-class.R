@@ -17,6 +17,7 @@ EpivizServer <- setRefClass("EpivizServer",
       server <<- NULL
     },
     startServer=function(...) {
+      'start the websocket server'
       callbacks <- list(
         call=.self$.dummyTestPage,
         onWSOpen=function(ws) {
@@ -41,11 +42,6 @@ EpivizServer <- setRefClass("EpivizServer",
       })
       invisible()
     },
-    runServer=function(...) {
-      startServer(...)
-      on.exit(stopServer())
-      service()
-    },
     stopServer=function() {
       interrupted <<- TRUE
       
@@ -56,9 +52,6 @@ EpivizServer <- setRefClass("EpivizServer",
       socketConnected <<- FALSE
       interrupted <<- TRUE
       invisible()
-    },
-    isClosed=function() {
-      is.null(server)
     },
     service=function() {
       if (isClosed()) {
@@ -75,6 +68,14 @@ EpivizServer <- setRefClass("EpivizServer",
     stopService=function() {
       interrupted <<- TRUE
       invisible()
+    },
+    runServer=function(...) {
+      startServer(...)
+      on.exit(stopServer())
+      service()
+    },
+    isClosed=function() {
+      is.null(server)
     },
     bindManager=function(mgr) {
       msgCallback <<- function(binary, msg) {
@@ -118,6 +119,20 @@ EpivizServer <- setRefClass("EpivizServer",
       }
       invisible()
     },
+    sendRequestsInQueue=function() {
+      while (!is.null(request <- requestQueue$pop())) {
+        websocket$send(request)
+      }
+    },
+    emptyRequestQueue=function() {
+      requestQueue$empty()
+      inivisible()
+    }
+  )
+)
+ 
+# Requests to the JS web app
+EpivizServer$methods(
     addMeasurements=function(requestId, msType, measurements) {
       request=list(type="request",
                    id=requestId,
@@ -149,15 +164,6 @@ EpivizServer <- setRefClass("EpivizServer",
                    data=list(chartId=chartId))
       sendRequest(request)
     },
-    rmDevice=function(requestId, chartId, measurements, devType) {
-      request=list(type="request",
-                   id=requestId,
-                   action="rmDevice",
-                   data=list(id=chartId,
-                             measurements=measurements,
-                             type=devType))
-      sendRequest(request)
-    },
     clearChartCaches=function(requestId, chartIds) {
       request=list(type="request",
                    id=requestId,
@@ -177,16 +183,10 @@ EpivizServer <- setRefClass("EpivizServer",
                    id=requestId,
                    data=list(chr=chr,start=start,end=end))
       sendRequest(request)
-    },
-    sendRequestsInQueue=function(WS) {
-      while (!is.null(request <- requestQueue$pop())) {
-        websocket$send(request)
-      }
-    },
-    emptyRequestQueue=function() {
-      requestQueue$empty()
-      inivisible()
-    },
+    }
+)
+
+EpivizServer$methods(
     .dummyTestPage=function(req) {
       wsUrl = paste(sep='',
                     '"',
@@ -235,5 +235,4 @@ EpivizServer <- setRefClass("EpivizServer",
         )
       )
     }
-  )                           
-)
+)                           
