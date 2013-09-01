@@ -9,12 +9,12 @@ EpivizServer <- setRefClass("EpivizServer",
     requestQueue="Queue"
   ),
   methods=list(
-    initialize=function(...) {
-      port <<- 7546L
+    initialize=function(port=7312L, ...) {
+      callSuper(...)
+      port <<- port
       interrupted <<- FALSE
       socketConnected <<- FALSE
       server <<- NULL
-      callSuper(...)
     },
     startServer=function(...) {
       callbacks <- list(
@@ -237,8 +237,3 @@ EpivizServer <- setRefClass("EpivizServer",
     }
   )                           
 )
-
-createServer <- function(port=7312L, nonBlocking = .Platform$OS == "unix") {
-  server <- EpivizServer$new(port=port)
-  return(server)
-}
