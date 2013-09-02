@@ -4,7 +4,7 @@ startEpiviz <- function(port=7312L, localURL=NULL,
                         openBrowser=TRUE,
                         verbose=FALSE) {
   message("Opening websocket...")
-  server <- epivizr:::createServer(port=port)
+  server <- epivizr:::EpivizServer$new(port=port)
   
   if (missing(localURL) || is.null(localURL)) {
     url="http://epiviz.cbcb.umd.edu/index.php"

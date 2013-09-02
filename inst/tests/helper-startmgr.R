@@ -19,5 +19,5 @@ proxy=TRUE
   }
 }
 
-sendRequest = TRUE
+sendRequest = FALSE
 
