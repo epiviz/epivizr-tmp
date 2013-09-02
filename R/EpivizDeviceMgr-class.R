@@ -1,41 +1,6 @@
-#' epiviz interactive track manager
-#' 
-#' This class is used to add and delete interactive devices in the epiviz browser. 
-#' Setters and getters are defined for the pertinent slots. 
-#' 
-#' @section Fields:
-#' \describe{
-#'  \item{\code{devices}:}{A list of \linkS4class{EpivizDevice} objects defining currently loaded}
-#'  \item{\code{idCounter}:}{id generator}
-#'  \item{\code{activeId}:}{ID of currently active device}
-#'  \item{\code{server}:}{An environment implementing a websockets server}
-#' }
-#' 
-#' @section Methods:
-#' \describe{
-#'  \item{\code{isClosed}:}{True if websocket is closed for this manager}
-#'  \item{\code{stop}:}{Stop communiation and close websocket server}
-#'  \item{\code{addDevice}:}{Add a \linkS4class{EpivizDevice} object to the list of devices}
-#'  \item{\code{delDevice}:}{Remove device from list}
-#'  \item{\code{setActive}:}{Set device as active (for navigation on browser)}
-#'  \item{\code{listDevices}:}{List current devices}
-#'  \item{\code{getData}:}{Get data from devices}
-#'  \item{\code{refresh}:}{Refresh epiviz browser}
-#'  \item{\code{navigate}:}{Navigate to given genomic region in browser}
-#' }
-#' 
-#' @param ... arguments passed to constructor
-#' 
-#' @aliases EpivizDeviceMgr
-#' 
-#' @name EpivizDeviceMgr-class
-#' @rdname EpivizDeviceMgr-class
-#' 
-#' @exportClass EpivizDeviceMgr
 EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr", 
   fields=list(
     url="character",
-    devices="list",
     msList="list",
     typeMap="list",
     msIdCounter="integer",
@@ -562,75 +527,44 @@ EpivizDeviceMgr$methods(
    }
 )
 
-#' Start the epiviz interface
-#' 
-#' Create an epiviz device manager which can be used to add and delete tracks in browser
-#' 
-#' @param port (integer) the port for the websocket server
-#' @param localURL (character) use this url for the epiviz server instead of the standard remote URL
-#' @param chr (character) chromosome to browse to on startup
-#' @param start (integer) start position to browse to on startup
-#' @param end (integer) end position to browse to on startup
-#' @param debug (logical) start the epiviz browser in debug mode
-#' @param proxy (logical) start the epiviz browser in proxy mode
-#' @param openBrowser (logical) browse to the epiviz URL
-#' 
-#' @return an object of class \linkS4class{EpivizDeviceMgr}.
-#' 
-#' @examples
-#' 
-#' mgr <- startEpiviz(openBrowser=FALSE)
-#' mgr$startServer()
-#' mgr$stopServer()
-#' 
-#' @export
-startEpiviz <- function(port=7312L, localURL=NULL, 
-                        chr="chr11", start=99800000, end=103383180, 
-                        debug=FALSE, proxy=TRUE, workspace=NULL, 
-                        openBrowser=TRUE,
-                        verbose=FALSE) {
-  message("Opening websocket...")
-  server <- epivizr:::createServer(port=port)
+# chart methods
+EpivizDeviceMgr$methods(
+  blockChart=function(ms, ...) {
+    if (!.self$.checkMeasurements(msType="block", ms=ms, ...))
+      stop("invalid measurements")
+    
+    chartObj <- EpivizChart$new(
+      measurements=ms,
+      mgr=.self,
+      type="blocksTrack")
+    addChart(chartObj, ...)
+    chartObj
+  },
   
-  if (missing(localURL) || is.null(localURL)) {
-    url="http://epiviz.cbcb.umd.edu/index.php"
-  } else {
-    url=localURL
+  lineChart=function(ms, ...) {
+    if (!.self$.checkMeasurements(msType="bp", ms=ms, ...))
+      stop("invalid measurements")
+    
+    chartObj <- EpivizChart$new(
+      measurements=ms,
+      mgr=.self,
+      type="lineTrack")
+    addChart(chartObj, ...)
+    chartObj
+  },
+  
+  scatterChart=function(x, y, ...) {
+    ms <- c(x,y)
+    
+    if(!.self$.checkMeasurements(msType="gene", ms=ms, ...))
+      stop("invalid measurements")
+    
+    chartObj <- EpivizChart$new(
+      measurements=ms,
+      mgr=.self,
+      type="geneScatterPlot")
+    addChart(chartObj, ...)
+    chartObj
   }
-  
-  controllerHost=sprintf("ws://localhost:%d", port)
-  url=sprintf("%s?controllerHost=%s&debug=%s&proxy=%s&", 
-              url,
-              controllerHost,
-              ifelse(debug,"true","false"),
-              ifelse(proxy,"true","false"))
-  
-  if (!is.null(workspace)) {
-    url=paste0(url,"workspace=",workspace,"&")
-  } else {
-    url=paste0(url,
-               sprintf("chr=%s&start=%d&end=%d&",
-                       chr,
-                       as.integer(start),
-                       as.integer(end)))
-  }
-  tryCatch({
-    mgr <- EpivizDeviceMgr$new(server=server, url=url, verbose=verbose)
-    mgr$bindToServer()
-  }, error=function(e) {
-    server$stopServer()
-    stop("Error starting Epiviz: ", e)
-  })
-  
-  if (openBrowser) {
-  tryCatch({
-      message("Opening browser...")
-      mgr$openBrowser(url)
-    }, error=function(e) {
-              mgr$stopServer()
-              stop("Error starting Epiviz: ", e)
-    }, interrupt=function(e) {NULL})
-  }
-  return(mgr)
-}
+)
 
