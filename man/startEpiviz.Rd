@@ -1,16 +1,27 @@
 \name{startEpiviz}
 \alias{startEpiviz}
+
 \title{Start the epiviz interface}
+
+\description{
+  Create an epiviz session manager which can be used to add
+  and delete tracks and plots in the browser web app.
+}
+
 \usage{
   startEpiviz(port = 7312L, localURL = NULL, chr = "chr11",
     start = 99800000, end = 103383180, debug = FALSE,
-    proxy = TRUE, openBrowser = TRUE)
+    proxy = TRUE, workspace = NULL, openBrowser = TRUE,
+    verbose = FALSE)
 }
+
 \arguments{
-  \item{port}{(integer) the port for the websocket server}
+  \item{port}{(integer) port for websocket server}
 
   \item{localURL}{(character) use this url for the epiviz
-  server instead of the standard remote URL}
+  server instead of the standard URL (http://epiviz.cbcb.umd.edu).
+  For example \code{localURL="http://localhost/epiviz"} when serving
+  from the local host}
 
   \item{chr}{(character) chromosome to browse to on
   startup}
@@ -24,18 +35,27 @@
   \item{debug}{(logical) start the epiviz browser in debug
   mode}
 
-  \item{proxy}{(logical) start the epiviz browser in proxy
-  mode}
+  \item{proxy}{(logical) start the epiviz browser using the data
+  proxy. This is useful when hosting the web app locally, but
+  want to use data hosted in the epiviz server}
 
-  \item{openBrowser}{(logical) browse to the epiviz URL}
+  \item{workspace}{(character) a workspace id to load in the 
+  epiviz web app on startup}
+  
+  \item{openBrowser}{(logical) browse to the epiviz URL before exiting function}
+  
+  \item{verbose}{(logical) display log messages on websocket requests}
 }
+
 \value{
   an object of class \linkS4class{EpivizDeviceMgr}.
 }
-\description{
-  Create an epiviz device manager which can be used to add
-  and delete tracks in browser
+
+\author{Hector Corrada Bravo}
+\seealso{
+  \link{EpivizDeviceMgr-class}
 }
+
 \examples{
 mgr <- startEpiviz(openBrowser=FALSE)
 mgr$startServer()

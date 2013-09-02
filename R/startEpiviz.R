@@ -1,25 +1,3 @@
-#' Start the epiviz interface
-#' 
-#' Create an epiviz device manager which can be used to add and delete tracks in browser
-#' 
-#' @param port (integer) the port for the websocket server
-#' @param localURL (character) use this url for the epiviz server instead of the standard remote URL
-#' @param chr (character) chromosome to browse to on startup
-#' @param start (integer) start position to browse to on startup
-#' @param end (integer) end position to browse to on startup
-#' @param debug (logical) start the epiviz browser in debug mode
-#' @param proxy (logical) start the epiviz browser in proxy mode
-#' @param openBrowser (logical) browse to the epiviz URL
-#' 
-#' @return an object of class \linkS4class{EpivizDeviceMgr}.
-#' 
-#' @examples
-#' 
-#' mgr <- startEpiviz(openBrowser=FALSE)
-#' mgr$startServer()
-#' mgr$stopServer()
-#' 
-#' @export
 startEpiviz <- function(port=7312L, localURL=NULL, 
                         chr="chr11", start=99800000, end=103383180, 
                         debug=FALSE, proxy=TRUE, workspace=NULL, 
