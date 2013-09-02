@@ -1,27 +1,54 @@
 \name{EpivizDevice-class}
-\alias{EpivizDevice}
+\docType{class}
+
+\alias{class:EpivizDevice}
 \alias{EpivizDevice-class}
-\title{epiviz interactive device}
-\usage{
-  EpivizDevice(...)
-}
-\arguments{
-  \item{...}{arguments passed to constructor}
-}
-\description{
-  This class wraps a GenomicRanges object to be plotted in
-  an interactive epiviz device
-}
+
+\title{'EpivizDevice' objects}
+
+\description{Encapsulate both measurement and chart for display in epiviz web app}
+
+\details{This provides a convenience interface to the measurement/chart interface. All measurements for a given object are encapsulated in an \code{\link{EpivizData-class}} object, and its \code{plot}
+method is called to create an \code{\link{EpivizChart-class}} object.}
+
 \section{Fields}{
-  \describe{ \item{\code{gr}:}{The the \link{GRanges-class}
-  object bound to this track} \item{\code{tree}:}{A
-  \link{GIntervalTree-class} object used for querying}
-  \item{\code{id}:}{The id for this device assigned by the
-  epiviz manager object} }
+  \describe{
+    \item{\code{msObject}: (\code{\link{EpivizData-class}}) object encapsulating measuremnts.}
+    \item{\code{chartObject}: (\code{\link{EpivizChart-class}}) object encapsulating a chart.}
+    \item{\code{id}: (character) device id set by session manager. Use \code{getId} method to get id.}
+  }
 }
 
 \section{Methods}{
-  \describe{ \item{\code{getData}:}{Subset data from the
-  GRanges object within given region} }
+  \describe{
+    \item{}{
+      \code{getMsObject()}: Return \code{msObject}.
+    }
+    
+    \item{}{
+      \code{getChartObject()}: Return \code{chartObject}.
+    }
+    
+    \item{}{
+      \code{getMsId()}: Return id of \code{msObject}.
+    }
+    
+    \item{}{
+      \code{getChartId()}: Return id of \code{chartObject}.
+    }
+    
+    \item{}{
+      \code{setId(id)}: Set device id. For internal use only.
+    }
+    
+    \item{}{
+      \code{getId()}: Return device object id.
+    }
+    
+    \item{}{
+      \code{update(newObject, sendRequest=TRUE)}: Update data object in \code{msObject}. Calls the \code{update} method of \code{msObject}.
+    }
+  }
 }
 
+\author{Hector Corrada Bravo}
