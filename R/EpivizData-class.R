@@ -1,26 +1,3 @@
-#' epiviz interactive device
-#' 
-#' This class wraps a GenomicRanges object to be plotted in an interactive epiviz device
-#' 
-#' @section Fields:
-#' \describe{
-#'  \item{\code{gr}:}{The the \link{GRanges-class} object bound to this track}
-#'  \item{\code{tree}:}{A \link{GIntervalTree-class} object used for querying}
-#'  \item{\code{id}:}{The id for this device assigned by the epiviz manager object}
-#' }
-#' 
-#' @section Methods:
-#' \describe{
-#'  \item{\code{getData}:}{Subset data from the GRanges object within given region}
-#' }
-#' 
-#' @param ... arguments passed to constructor
-#' 
-#' @aliases EpivizDevice 
-#' @name EpivizDevice-class
-#' @rdname EpivizDevice-class
-#' 
-#' @exportClass EpivizDevice
 EpivizData <- setRefClass("EpivizData",
   contains="VIRTUAL",
   fields=list(
@@ -188,7 +165,7 @@ EpivizDataPack <- setRefClass("EpivizDataPack",
       length <<- length
       callSuper(...)
     },
-    set=function(obj, msId, index) {
+    set=function(curData, msId, index) {
       step("calling 'set' on virtual class")
     },
     getData=function() {
