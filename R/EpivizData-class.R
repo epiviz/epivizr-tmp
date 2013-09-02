@@ -111,11 +111,22 @@ EpivizData <- setRefClass("EpivizData",
     getMeasurements=function() {
       stop("'getMeasurements' called on virtual class object")
     },
+    parseMeasurement=function(msId=NULL) {
+      stop("'parseMeasurement' called on virtual class object")
+    },
     setMgr=function(mgr) {
+      if (!is(mgr, "EpivizDeviceMgr"))
+        stop("'mgr' must be of class 'EpivizDeviceMgr'")
+      
       mgr <<- mgr
       invisible()
     },
-    setInDevice=function(x) {inDevice <<- x},
+    setInDevice=function(x) {
+      if (!is.logical(x))
+        stop("'x' must be 'logical'")
+      inDevice <<- x
+      invisible()
+    },
     show=function() {
       cat(class(.self), "object", id, "\n")
       methods::show(object)

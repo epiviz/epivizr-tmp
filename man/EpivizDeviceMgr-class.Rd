@@ -5,7 +5,7 @@
 \alias{EpivizDeviceMgr-class}
 \alias{EpivizDeviceMgr}
 
-\title{epiviz interactive session manager}
+\title{'EpivizDeviceMgr' objects}
 
 \description{
   This class manages interactive visualization connections to the epiviz
