@@ -8,9 +8,11 @@
 \description{Package of base-pair level data for transfer to web app.}
 
 \section{Fields}{
-  \item{\code{min}: (numeric) minimum of data range.}
-  \item{\code{max}: (numeric) maximum of data range.}
-  \item{\code{data}: (list) data entry for each measurement.}
+  \describe{
+    \item{\code{min}:}{(numeric) minimum of data range.}
+    \item{\code{max}:}{(numeric) maximum of data range.}
+    \item{\code{data}:}{(list) data entry for each measurement.}
+  }
 }
 
 \author{Hector Corrada Bravo}

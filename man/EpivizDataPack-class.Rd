@@ -13,7 +13,7 @@
 
 \section{Fields}{
   \describe{
-    \item{\code{length}: Number of measurements packaged.} 
+    \item{\code{length}:}{Number of measurements packaged.} 
   }
 }
 

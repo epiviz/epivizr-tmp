@@ -14,7 +14,7 @@ to be a \code{\link[GenomicRanges]{GIntervalTree}} object, its \code{mcols} must
 
 \section{Fields}{
   \describe{
-    \item{\code{assay}}: (integer or character) indicating assay from which data is obtained}
+    \item{\code{assay}:}{(integer or character) indicating assay from which data is obtained}
   }
 }
 

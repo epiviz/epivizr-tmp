@@ -112,7 +112,7 @@
     \item{}{
       \code{addMeasurements(obj, msName, sendRequest=TRUE, ...)}: Add measurements in \code{obj}, calls the \code{\link{register-methods}} on
       \code{obj} passing extra arguments in \code{...}. Measurements are given names derived from \code{msName}. Measurements are added to the web
-      app itself if \code{sendRequest==TRUE} (the default). This method adds a measuremnt object of class \code{\link{EpivizData}}, returned
+      app itself if \code{sendRequest==TRUE} (the default). This method adds a measuremnt object of class \code{\link{EpivizData-class}}, returned
       by the \code{\link{register-methods}} to the \code{msList} field. Measurement ids are generated automatically using \code{msIdCounter}
       and are returned by this method.
     }
@@ -169,7 +169,7 @@
 \section{Chart management methods}{
   \describe{
     \item{}{
-      \code{addChart(chartObject, sendRequest=TRUE, ...)}: Adds chart specified by \code{chartObject} of class \code{\link{EpivizChart}} to the
+      \code{addChart(chartObject, sendRequest=TRUE, ...)}: Adds chart specified by \code{chartObject} of class \code{\link{EpivizChart-class}} to the
       session manager. The chart is added to the web app if \code{sendRequest==TRUE} (the default). The \code{chartObject} is inserted to the
       \code{chartList} field. Chart ids are generated automatically using \code{chartIdCounter} and are returned by this method.
     }

@@ -13,9 +13,9 @@ method is called to create an \code{\link{EpivizChart-class}} object.}
 
 \section{Fields}{
   \describe{
-    \item{\code{msObject}: (\code{\link{EpivizData-class}}) object encapsulating measuremnts.}
-    \item{\code{chartObject}: (\code{\link{EpivizChart-class}}) object encapsulating a chart.}
-    \item{\code{id}: (character) device id set by session manager. Use \code{getId} method to get id.}
+    \item{\code{msObject}:}{(\code{\link{EpivizData-class}}) object encapsulating measuremnts.}
+    \item{\code{chartObject}:}{(\code{\link{EpivizChart-class}}) object encapsulating a chart.}
+    \item{\code{id}:}{(character) device id set by session manager. Use \code{getId} method to get id.}
   }
 }
 
