@@ -1,6 +1,6 @@
-import(methods)
 import(Biobase)
 import(GenomicRanges)
+import(httpuv)
 
 exportClasses(EpivizDeviceMgr,
 			  EpivizData,

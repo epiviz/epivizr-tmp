@@ -151,7 +151,7 @@ The `assay` slot holds a matrix of raw sequencing counts, so before we can plot 
 ```{r, eval=FALSE}
 ref_sample <- 2 ^ rowMeans(log2(assay(colonSE) + 1))
 scaled <- (assay(colonSE) + 1) / ref_sample
-scaleFactor <- matrixStats::colMedians(scaled)
+scaleFactor <- Biobase::rowMedians(t(scaled))
 assay_normalized <- sweep(assay(colonSE), 2, scaleFactor, "/")
 assay(colonSE) <- assay_normalized
 ```

@@ -12,15 +12,15 @@ Description: This package provides Websocket communication to the epiviz web app
 VignetteBuilder: knitr
 Depends:
     Biobase,
-    httpuv,
     GenomicRanges (>= 1.13.34),
-    rjson,
-    knitr
+Imports:
+    httpuv,
+    rjson
 Suggests:
     testthat,
     roxygen2,
+    knitr,
     antiProfilesData,
-    matrixStats,
     hgu133plus2.db
 Collate:
     'utils.r'
