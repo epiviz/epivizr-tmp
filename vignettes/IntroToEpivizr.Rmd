@@ -14,11 +14,10 @@ The `epivizr` package implements two-way communication between the `R/Bioconduct
 
 ### Preliminaries: the data
 
-In this vignette we will look at colon cancer methylation data from the TCGA project and expression data from the gene expression barcode project. The `epivizrData` package contains methylation data from the Illumina 450kHumanMethylation beadarray processed with the `minfi` package. We useß expression data from the `antiProfilesData` bioconductor package.
+In this vignette we will look at colon cancer methylation data from the TCGA project and expression data from the gene expression barcode project. The `epivizrData` package contains human chromosome 11 methylation data from the Illumina 450kHumanMethylation beadarray processed with the `minfi` package. We use expression data from the `antiProfilesData` bioconductor package.
 
 ```{r, eval=TRUE, echo=TRUE, results='hide', warning=FALSE, error=FALSE}
 require(epivizr)
-require(epivizrData)
 require(antiProfilesData)
 ```
 
@@ -27,7 +26,7 @@ data(tcga_colon_example)
 data(apColonData)
 ```
 
-The `colon_blocks` object is a `GRanges` object containing regions of hypo or hyper methylation in colon cancer identified using the `blockFinder` function in the `minfi` package. 
+The `colon_blocks` object is a `GRanges` object containing chromosome 11 regions of hypo or hyper methylation in colon cancer identified using the `blockFinder` function in the `minfi` package. 
 
 ```{r}
 show(colon_blocks)
@@ -182,7 +181,7 @@ Again, the `columns` argument specifies what data will be displayed along which 
 We can navigate to a location on the genome using the `navigate` method of the session manager:
 
 ```{r, eval=FALSE}
-mgr$navigate("chr2", 110000000, 120000000)
+mgr$navigate("chr11", 110000000, 120000000)
 ```
 
 There is a convenience function to quickly navigate to a series of locations in succession.

@@ -30,7 +30,6 @@ Suggests:
     roxygen2,
     knitr,
     antiProfilesData,
-    epivizrData,
     hgu133plus2.db
 Collate:
     'utils.r'

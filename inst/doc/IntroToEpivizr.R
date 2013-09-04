@@ -1,7 +1,6 @@
 
 ## ----, eval=TRUE, echo=TRUE, results='hide', warning=FALSE, error=FALSE----
 require(epivizr)
-require(epivizrData)
 require(antiProfilesData)
 
 
@@ -100,7 +99,7 @@ show(colonSE)
 
 
 ## ----, eval=FALSE--------------------------------------------------------
-## mgr$navigate("chr2", 110000000, 120000000)
+## mgr$navigate("chr11", 110000000, 120000000)
 
 
 ## ----, eval=FALSE--------------------------------------------------------
