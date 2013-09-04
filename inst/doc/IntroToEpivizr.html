@@ -372,7 +372,7 @@ mgr$listDevices()
 <p>Now we want to visualize the colon expression data in <code>apColonData</code> object as an MA plot in <code>Epiviz</code>. First, we add an <code>&quot;MA&quot;</code> assay to the <code>ExpressionSet</code>:</p>
 
 <pre><code class="r">keep &lt;- pData(apColonData)$SubType != &quot;adenoma&quot;
-apColonData &lt;- apColonData[keep, ]
+apColonData &lt;- apColonData[, keep]
 status &lt;- pData(apColonData)$Status
 Indexes &lt;- split(seq(along = status), status)
 
@@ -385,11 +385,11 @@ show(apColonData)
 </code></pre>
 
 <pre><code>## ExpressionSet (storageMode: lockedEnvironment)
-## assayData: 4154 features, 68 samples 
+## assayData: 5339 features, 53 samples 
 ##   element names: exprs, MA 
 ## protocolData: none
 ## phenoData
-##   sampleNames: GSM95473 GSM95474 ... GSM215114 (68 total)
+##   sampleNames: GSM95473 GSM95474 ... GSM215114 (53 total)
 ##   varLabels: filename DB_ID ... Status (7 total)
 ##   varMetadata: labelDescription
 ## featureData: none
@@ -509,9 +509,9 @@ mgr$slideshow(slideshowRegions, n = 5)
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] codetools_0.2-8 digest_0.6.3    evaluate_0.4.7  formatR_0.9    
-##  [5] httpuv_1.1.0    httr_0.2        knitr_1.4.1     memoise_0.1    
-##  [9] Rcpp_0.10.4     RCurl_1.95-4.1  rjson_0.2.13    stats4_3.0.1   
-## [13] stringr_0.6.2   tools_3.0.1     whisker_0.3-2
+##  [5] httpuv_1.1.0    httr_0.2        knitr_1.4.1     markdown_0.6.3 
+##  [9] memoise_0.1     Rcpp_0.10.4     RCurl_1.95-4.1  rjson_0.2.13   
+## [13] stats4_3.0.1    stringr_0.6.2   tools_3.0.1     whisker_0.3-2
 </code></pre>
 
 </body>

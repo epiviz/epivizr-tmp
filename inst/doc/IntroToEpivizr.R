@@ -56,7 +56,7 @@ show(colon_curves)
 
 ## ------------------------------------------------------------------------
 keep <- pData(apColonData)$SubType!="adenoma"
-apColonData <- apColonData[keep,]
+apColonData <- apColonData[,keep]
 status <- pData(apColonData)$Status
 Indexes <- split(seq(along=status),status)
 
