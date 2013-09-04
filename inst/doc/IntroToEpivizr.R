@@ -1,6 +1,7 @@
 
 ## ----, eval=TRUE, echo=TRUE, results='hide', warning=FALSE, error=FALSE----
 require(epivizr)
+require(epivizrData)
 require(antiProfilesData)
 
 
@@ -50,6 +51,7 @@ show(colon_curves)
 ## ----, eval=FALSE--------------------------------------------------------
 ## mgr$listDevices()
 ## mgr$rmDevice(means_dev)
+## mgr$listDevices()
 
 
 ## ------------------------------------------------------------------------
@@ -61,13 +63,12 @@ Indexes <- split(seq(along=status),status)
 exprMat <- exprs(apColonData)
 mns <- sapply(Indexes, function(ind) rowMeans(exprMat[,ind]))
 mat <- cbind(colonM=mns[,"1"]-mns[,"0"], colonA=0.5*(mns[,"1"]+mns[,"0"]))
-
-eset <- ExpressionSet(assayData=mat, annotation=annotation(apColonData))
-show(eset)
+assayDataElement(apColonData, "MA") <- mat
+show(apColonData)
 
 
 ## ----, eval=FALSE--------------------------------------------------------
-## eset_dev <- mgr$addDevice(eset, "MAPlot", columns=c("colonA","colonM"))
+## eset_dev <- mgr$addDevice(apColonData, "MAPlot", columns=c("colonA","colonM"), assay="MA")
 ## mgr$service()
 
 
@@ -79,7 +80,7 @@ show(colonSE)
 ## ----, eval=FALSE--------------------------------------------------------
 ## ref_sample <- 2 ^ rowMeans(log2(assay(colonSE) + 1))
 ## scaled <- (assay(colonSE) + 1) / ref_sample
-## scaleFactor <- matrixStats::colMedians(scaled)
+## scaleFactor <- Biobase::rowMedians(t(scaled))
 ## assay_normalized <- sweep(assay(colonSE), 2, scaleFactor, "/")
 ## assay(colonSE) <- assay_normalized
 
@@ -105,8 +106,9 @@ show(colonSE)
 ## ----, eval=FALSE--------------------------------------------------------
 ## foldChange=mat[,"cancer"]-mat[,"normal"]
 ## ind=order(foldChange,decreasing=TRUE)
-## slideshowRegions <- rowData(sumexp)[ind]
-## slideshowRegions <- resize(slideshowRegions, fix="center", width=width(slideshowRegions)+2000000)
+## 
+## # bounding 1Mb around each exon
+## slideshowRegions <- rowData(sumexp)[ind] + 1000000L
 ## mgr$slideshow(slideshowRegions, n=5)
 
 

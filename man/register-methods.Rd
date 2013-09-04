@@ -19,7 +19,7 @@
   \item{object}{data object to encapsulate}
   \item{columns}{columns in object to use. All columns are used if \code{NULL}}
   \item{type}{for \code{\link[GenomicRanges]{GenomicRanges}} objects, use block representation or base-pair level quantitative representation}
-  \item{assay}{for \code{\link[GenomicRanges]{SummarizedExperiment}} objects, determine which \code{assay} to use}
+  \item{assay}{for \code{\link[GenomicRanges]{SummarizedExperiment}} and \code{\link[Biobase]{ExpressionSet}} objects, determine which \code{assay} to use}
   \item{annotation}{for \code{\link[Biobase]{ExpressionSet}} objects, determine the annotation to use to obtain feature genomic coordinates. If \code{NULL}, then \code{annotation(object)} is used}
   \item{...}{arguments passed to \code{\link{EpivizData-class}} subclasses constructors}
 }

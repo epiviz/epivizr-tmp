@@ -4,23 +4,33 @@ Author: Hector Corrada Bravo, Florin Chelaru, Llewellyn Smith, Naomi Goldstein
 Version: 0.99.1
 License: GPL-3
 Title: R Interface to epiviz web app
-Description: This package provides Websocket communication to the epiviz web app (http://epiviz.cbcb.umd.edu)
-  for interactive visualization of genomic data. Objects in R/bioc interactive sessions can be displayed in genome
-  browser tracks or plots to be explored by navigation through genomic regions. Fundamental Bioconductor data
-  structures are supported (e.g., GenomicRanges and SummarizedExperiment objects), while providing an easy
-  mechanism to support other data structures. Visualizations (using d3.js) can be easily added to the web app as well.
+Description: This package provides Websocket communication to the epiviz web
+    app (http://epiviz.cbcb.umd.edu) for interactive visualization of genomic
+    data. Objects in R/bioc interactive sessions can be displayed in genome
+    browser tracks or plots to be explored by navigation through genomic
+    regions. Fundamental Bioconductor data structures are supported (e.g.,
+    GenomicRanges and SummarizedExperiment objects), while providing an easy
+    mechanism to support other data structures. Visualizations (using d3.js)
+    can be easily added to the web app as well.
 VignetteBuilder: knitr
 Depends:
+    R (>= 3.0.1),
+    methods,
     Biobase,
     GenomicRanges (>= 1.13.34),
 Imports:
+    methods,
+    GenomicRanges,
     httpuv,
     rjson
+LinkingTo: GenomicRanges,
+    httpuv
 Suggests:
     testthat,
     roxygen2,
     knitr,
     antiProfilesData,
+    epivizrData,
     hgu133plus2.db
 Collate:
     'utils.r'

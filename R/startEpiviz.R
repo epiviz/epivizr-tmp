@@ -1,4 +1,4 @@
-startEpiviz <- function(port=7312L, localURL=NULL, 
+startEpiviz <- function(port=7312L, localURL=NULL, useDevel=FALSE, 
                         chr="chr11", start=99800000, end=103383180, 
                         debug=FALSE, proxy=TRUE, workspace=NULL, 
                         openBrowser=TRUE,
@@ -7,22 +7,25 @@ startEpiviz <- function(port=7312L, localURL=NULL,
   server <- epivizr:::EpivizServer$new(port=port)
   
   if (missing(localURL) || is.null(localURL)) {
-    url="http://epiviz.cbcb.umd.edu/index.php"
+    url <- ifelse(useDevel,"epiviz-dev", "epiviz")
+    url <- sprintf("http://%s.cbcb.umd.edu/index.php", url)
   } else {
-    url=localURL
+    url <- localURL
   }
   
-  controllerHost=sprintf("ws://localhost:%d", port)
-  url=sprintf("%s?controllerHost=%s&debug=%s&proxy=%s&", 
+  wsURL <- "ws://localhost"
+  controllerHost <- sprintf("%s:%d", wsURL, port)
+  
+  url <- sprintf("%s?controllerHost=%s&debug=%s&proxy=%s&", 
               url,
               controllerHost,
               ifelse(debug,"true","false"),
               ifelse(proxy,"true","false"))
   
   if (!is.null(workspace)) {
-    url=paste0(url,"workspace=",workspace,"&")
+    url <- paste0(url,"workspace=",workspace,"&")
   } else {
-    url=paste0(url,
+    url <- paste0(url,
                sprintf("chr=%s&start=%d&end=%d&",
                        chr,
                        as.integer(start),

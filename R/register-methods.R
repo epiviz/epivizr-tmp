@@ -31,7 +31,7 @@ setMethod("register", "SummarizedExperiment",
 })
 
 setMethod("register", "ExpressionSet",
-	function(object, columns, annotation=NULL) {
+	function(object, columns, annotation=NULL, assay="exprs") {
 		if (is.null(annotation) || missing(annotation)) 
 			annotation <- annotation(object)
 
@@ -58,18 +58,28 @@ setMethod("register", "ExpressionSet",
 				strand=ifelse(res$CHRLOC>0, "+","-"),
 				ranges=IRanges(start=abs(res$CHRLOC), end=abs(res$CHRLOCEND)))
 		
-		if (any(!(columns %in% colnames(exprs(object)))))
-			stop("'columns' not found on 'exprs(object)'")
-
 		mcols(gr)[,"SYMBOL"] = res$SYMBOL
 		mcols(gr)[,"PROBEID"] = res$PROBEID
 
-		mat <- exprs(object)[!drop,columns]
+    mat <- assayDataElement(object, assay)[!drop,]
+    if (missing(columns) || is.null(columns))
+        columns <- colnames(mat)
+    
+		if (any(!(columns %in% colnames(mat))))
+		  stop("'columns' not found is 'assayDataElement(object, assay)'")
+		
+    mat <- mat[,columns]
 		colnames(mat) <- columns
 
+    if (!all(columns %in% rownames(pData(object)))) {
+      pd <- data.frame(dummy=character(length(columns)))
+      rownames(pd) <- columns
+    } else {
+      pd <- pData(object)[columns,]
+    }
 		sumexp <- SummarizedExperiment(assays=SimpleList(mat),
 									  rowData=GIntervalTree(gr),
-									  colData=DataFrame(pData(object)[columns,]))
+									  colData=DataFrame(pd))
 
 		register(sumexp, columns=columns, assay=1)
 })

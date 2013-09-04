@@ -105,6 +105,7 @@ Epiviz uses websockets to connect R/bioc sessions to the epiviz web app. Objects
 }
 
 \examples{
+  \dontrun{
   mgr <- list(getData=function(measurements, chr, start, end) {
                         return(chr)
                       },
@@ -116,4 +117,5 @@ Epiviz uses websockets to connect R/bioc sessions to the epiviz web app. Objects
   
   browseURL("http://localhost:7123/")
   tryCatch(server$service(), interrupt=function(int) invisible())
+  }
 }

@@ -281,6 +281,8 @@
 }
 
 \examples{
+\dontrun{
+  require(epivizrData)
   data(tcga_colon_example)
   
   mgr <- startEpiviz(openBrowser=interactive())
@@ -290,10 +292,10 @@
   
   # using the measurement/chart interface
   # add measurements
-  blockMs <- mgr$addMeasurements(colon_blocks, "blocks_test", type="block")
+  blockMs <- mgr$addMeasurements(colon_blocks, "blocks_test2", type="block")
   
   # add chart
-  blockChart <- mgr$addChart(mgr$blockChart(blockDev$getId()))
+  blockChart <- mgr$blockChart(blockMs$getMeasurements()[1])
   
   # using plot methods
   blockChart2 <- blockMs$plot()
@@ -312,7 +314,6 @@
   
   # navigate to genomic region
   mgr$navigate("chr2", 10000000, 30000000)
-  
-  # stop the server
   mgr$stopServer()
+}
 }

@@ -9,8 +9,8 @@
 }
 
 \usage{
-  startEpiviz(port = 7312L, localURL = NULL, chr = "chr11",
-    start = 99800000, end = 103383180, debug = FALSE,
+  startEpiviz(port = 7312L, localURL = NULL, useDevel = FALSE,
+    chr = "chr11", start = 99800000, end = 103383180, debug = FALSE,
     proxy = TRUE, workspace = NULL, openBrowser = TRUE,
     verbose = FALSE)
 }
@@ -22,6 +22,8 @@
   server instead of the standard URL (http://epiviz.cbcb.umd.edu).
   For example \code{localURL="http://localhost/epiviz"} when serving
   from the local host}
+  
+  \item{useDevel}{(logical) use the devel branch of the epiviz server (http://epiviz-dev.cbcb.umd.edu)}
 
   \item{chr}{(character) chromosome to browse to on
   startup}
@@ -57,8 +59,10 @@
 }
 
 \examples{
+\dontrun{
 mgr <- startEpiviz(openBrowser=FALSE)
 mgr$startServer()
 mgr$stopServer()
+}
 }
 

@@ -21,7 +21,6 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      activeId <<- ""
      chartIdMap <<- list()
      typeMap <<- .typeMap
-     devices <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
      msList <<- structure(lapply(seq_along(.typeMap), function(x) list()),names=names(.typeMap))
      chartList <<- list()
      deviceList <<- list()
