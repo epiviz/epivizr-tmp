@@ -19,11 +19,10 @@ Depends:
     Biobase,
     GenomicRanges (>= 1.13.47),
 Imports:
-    methods,
-    GenomicRanges,
     httpuv,
     rjson
-LinkingTo: GenomicRanges,
+LinkingTo: 
+    GenomicRanges,
     httpuv
 Suggests:
     testthat,
