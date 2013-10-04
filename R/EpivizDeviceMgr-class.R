@@ -53,12 +53,16 @@ EpivizDeviceMgr$methods(list(
      server$isClosed()
    },
    openBrowser=function(url=NULL) {
-     if (missing(url) || is.null(url)) {
+    if (server$isClosed()) {
+       server$startServer()
+    }
+
+    if (missing(url) || is.null(url)) {
        browseURL(.self$url)
      } else {
        browseURL(url)
      }
-     server$startServer()
+     
      service()
    },
    service=function() {

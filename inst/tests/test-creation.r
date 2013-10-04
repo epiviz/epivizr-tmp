@@ -33,3 +33,17 @@ test_that("startEpiviz creates a proper object", {
   mgr$stopServer()
 })
 
+test_that("nice error message shows up and no browser window is opened", {
+  mgr <- .startMGR(openBrowser)
+
+  if (!openBrowser) {
+    mgr$startServer()
+  }
+
+  expect_error(tryCatch({
+    mgr2 <- .startMGR(openBrowser)
+    if (!openBrowser) {
+      mgr2$startServer()
+    }
+  }, error=function(e) {print(e); stop(e)}))
+})

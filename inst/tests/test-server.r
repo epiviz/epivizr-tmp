@@ -46,4 +46,18 @@ test_that("runServer works", {
   expect_true(server$isClosed())
 })
 
+test_that("new error message is displayed", {
+  server <- epivizr:::EpivizServer$new(port=7123L)
+  server$bindManager(mgr)
+  server$startServer()
+  tryCatch(server$service(), interrupt=function(int) invisible())
+  expect_false(server$isClosed())
+
+  server2 <- epivizr:::EpivizServer$new(port=7123L)
+  expect_error(tryCatch(server2$startServer(),error=function(e){print(e); stop(e)}))
+
+  server$stopServer()
+  expect_true(server$isClosed())
+})
+
 

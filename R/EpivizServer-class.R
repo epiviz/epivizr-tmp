@@ -36,9 +36,7 @@ EpivizServer <- setRefClass("EpivizServer",
       tryCatch({
         server <<- httpuv::startServer("0.0.0.0", port, callbacks)  
       }, error=function(e) {
-        cat("Error starting epivizServer:\n")
-        print(e)
-        stop(e)
+        stop(sprintf("Error starting epivizServer, likely because port %d is in use.\nTry a different port number (?startEpiviz).",port))
       })
       invisible()
     },
