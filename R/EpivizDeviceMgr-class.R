@@ -57,14 +57,14 @@ EpivizDeviceMgr$methods(list(
    openBrowser=function(url=NULL) {
     if (server$isClosed()) {
       if (verbose) {
-        message("Starting epiviz websocket connection")
+        epivizrMsg("Starting epiviz websocket connection")
       }
       tryCatch(server$startServer(),
                     error=function(e) stop(e))
     }
 
     if (verbose) {
-      message("Opening browser")
+      epivizrMsg("Opening browser")
     }
 
     if (missing(url) || is.null(url)) {
@@ -74,7 +74,7 @@ EpivizDeviceMgr$methods(list(
      }
 
      if (verbose) {
-        message("Servicing websocket until connected")
+        epivizrMsg("Servicing websocket until connected")
      }
      while(!server$socketConnected) {
        service()
@@ -82,7 +82,7 @@ EpivizDeviceMgr$methods(list(
    },
    service=function() {
       if (!nonInteractive) {
-       message("Serving Epiviz, escape to continue interactive session...")
+       epivizrMsg("Serving Epiviz, escape to continue interactive session...")
      }
 
       server$service(nonInteractive)
@@ -91,7 +91,7 @@ EpivizDeviceMgr$methods(list(
      server$stopService()
    },
    startServer=function() {
-    message("Starting websocket server...")
+    epivizrMsg("Starting websocket server...")
      server$startServer()
    },
    stopServer=function() {
@@ -169,7 +169,7 @@ EpivizDeviceMgr$methods(
     if (sendRequest) {
       callback <- function(data) {
         msList[[type]][[msId]][["connected"]] <<- TRUE
-        message("Measurement ", msName, " added to browser and connected")
+        epivizrMsg("Measurement ", msName, " added to browser and connected")
       }
       requestId <- callbackArray$append(callback)
       server$addMeasurements(requestId, type, measurements) 
@@ -226,7 +226,7 @@ EpivizDeviceMgr$methods(
 
        if (sendRequest && length(chartIds)>0) {
         callback=function(data) {
-          message("Chart caches cleared")
+          epivizrMsg("Chart caches cleared")
         }
         requestId <- callbackArray$append(callback)
         server$clearChartCaches(requestId, chartIds)
@@ -275,7 +275,7 @@ EpivizDeviceMgr$methods(
     msList[[msType]][[msObj$getId()]] <<- NULL
     if(objRecord$connected) {
       callback=function(data) {
-        message("measurement object ", msName, " removed and disconnected")  
+        epivizrMsg("measurement object ", msName, " removed and disconnected")  
       }
       requestId=callbackArray$append(callback)
       server$rmMeasurements(requestId, ms, msType)
@@ -409,7 +409,7 @@ EpivizDeviceMgr$methods(
         appChartId = data$id
         chartIdMap[[chartId]] <<- appChartId
         activeId <<- chartId
-        message("Chart ", chartId, " added to browser and connected")  
+        epivizrMsg("Chart ", chartId, " added to browser and connected")  
       }
       requestId=callbackArray$append(callback)
       server$addChart(requestId, chartObject$type, chartObject$measurements)
@@ -440,7 +440,7 @@ EpivizDeviceMgr$methods(
 
     if(!is.null(chartIdMap[[chartId]])) {
       callback=function(data) {
-        message("chart ", chartId, " removed and disconnected")  
+        epivizrMsg("chart ", chartId, " removed and disconnected")  
       }
       requestId=callbackArray$append(callback)
       server$rmChart(requestId, chartIdMap[[chartId]])

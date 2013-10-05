@@ -59,3 +59,5 @@ Queue <- setRefClass("Queue",
                          invisible()
                        })
 )
+
+epivizrMsg <- function(...) message("[epivizr]", ...)

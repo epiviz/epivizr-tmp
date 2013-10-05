@@ -90,7 +90,7 @@ EpivizServer <- setRefClass("EpivizServer",
         }
         
         if (mgr$verbose) {
-          cat("server: data received")
+          epivizrMsg("server: data received")
           print(msg)
         }
         msg = rjson::fromJSON(msg)
