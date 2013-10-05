@@ -52,8 +52,16 @@ Finally, the `apColonData` object is an `ExpressionSet` containing gene expressi
 
 The connection to `Epiviz` is managed through a session manager object of class `EpivizDeviceMgr`. We can create this object and open `Epiviz` using the `startEpiviz` function.
 
-```{r, eval=FALSE}
+```{r, eval=FALSE, echo=TRUE}
 mgr=startEpiviz(workspace="C60FA3168F34DBC763F579C1EADA8AF0")
+```
+
+```{r, eval=TRUE, echo=FALSE}
+mgr=startEpiviz(debug=TRUE,nonInteractive=TRUE, verbose=FALSE,openBrowser=FALSE)
+```
+
+```{r,eval=TRUE,echo=FALSE}
+mgr$openBrowser()
 ```
 
 This opens a websocket connection between the interactive `R` session and the browser client. This will allow us to visualize data stored in the `Epiviz` server along with data in the interactive `R` session.
@@ -63,7 +71,7 @@ This opens a websocket connection between the interactive `R` session and the br
 Once the browser is open we can visualize the `colon_blocks` object containing blocks of methylation modifications in colon cancer.
 We use the `addDevice` method to do so. We then use the `service` function to let the interactive `R` session serve data requests from the browser client. We need to escape (using `ctl-c` or `esc` depending on your platform) to continue with the interactive `R` session.
 
-```{r, eval=FALSE}
+```{r,eval=TRUE}
 blocks_dev <- mgr$addDevice(colon_blocks, "450k colon_blocks")
 mgr$service()
 ```
@@ -72,7 +80,7 @@ You should now see that a new track is added to the `Epiviz` web app. You can th
 
 The point of having interactive data connections to `Epiviz` is that we may want to iteratively compute and visualize our data. For example, we may want to only display methylation blocks inferred at a certain statistical significance level. In this case, we will filter by block size.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 # subset to those with length > 250Kbp
 keep <- width(colon_blocks) > 250000
 mgr$updateDevice(blocks_dev, colon_blocks[keep,])
@@ -84,7 +92,7 @@ Now, only this subset of blocks will be displayed in the already existing track.
 
 We have a number of available data types in `epivizr`. In the previous section, we used the `block` type. For the methylation data at base-pair resolution in the `colon_curves` object, we will use the `bp` type.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 # add low-filter smoothed methylation estimates
 means_dev <- mgr$addDevice(colon_curves, "450kMeth",type="bp",columns=c("cancerMean","normalMean"))
 mgr$service()
@@ -94,7 +102,7 @@ Notice that we added two lines in this plot, one for mean methylation in cancer 
 
 We can also add a track containing the smooth methylation difference estimate used to define methylation blocks.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 diff_dev <- mgr$addDevice(colon_curves,"450kMethDiff",type="bp",columns=c("smooth"),ylim=matrix(c(-.5,.5),nc=1))
 mgr$service()
 ```
@@ -105,7 +113,7 @@ We pass limits for the y axis in this case. To see other arguments supported, yo
 
 We can use the session manager to list devices we have added so far, or to remove devices.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 mgr$listDevices()
 mgr$rmDevice(means_dev)
 mgr$listDevices()
@@ -130,7 +138,7 @@ show(apColonData)
 
 `epivizr` will use the `annotation(apColonData)` annotation to determine genomic locations using the `AnnotationDbi` package so that only probesets inside the current browser window are displayed. 
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 eset_dev <- mgr$addDevice(apColonData, "MAPlot", columns=c("colonA","colonM"), assay="MA")
 mgr$service()
 ```
@@ -149,7 +157,7 @@ show(colonSE)
 
 The `assay` slot holds a matrix of raw sequencing counts, so before we can plot a scatterplot showing expression, we must first normalize the count data. We use the geometric mean of each row as a reference sample to divide each column (sample) by, then use the median of each column as a scaling factor to divide each row (exon) by.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 ref_sample <- 2 ^ rowMeans(log2(assay(colonSE) + 1))
 scaled <- (assay(colonSE) + 1) / ref_sample
 scaleFactor <- Biobase::rowMedians(t(scaled))
@@ -159,7 +167,7 @@ assay(colonSE) <- assay_normalized
 
 Now, using the expression data in the `assay` slot and the sample data in the `colData` slot, we can compute mean exon expression by sample type.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 status <- colData(colonSE)$sample_type
 index <- split(seq(along = status), status)
 logCounts <- log2(assay(colonSE) + 1)
@@ -169,7 +177,7 @@ mat <- cbind(cancer = means[, "Primary Tumor"], normal = means[, "Solid Tissue N
 
 Now, create a new `SummarizedExperiment` object with the two column matrix, and all the information about the features of interest, in this case exons, are stored in the `rowData` slot to be queried by `Epiviz`.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 sumexp <- SummarizedExperiment(mat, rowData=rowData(colonSE))
 se_dev <- mgr$addDevice(sumexp, "Mean by Sample Type", columns=c("normal", "cancer"))
 mgr$service()
@@ -180,7 +188,7 @@ Again, the `columns` argument specifies what data will be displayed along which 
 
 We can navigate to a location on the genome using the `navigate` method of the session manager:
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 mgr$navigate("chr11", 110000000, 120000000)
 ```
 
@@ -188,7 +196,7 @@ There is a convenience function to quickly navigate to a series of locations in 
 We can use that to browse the genome along a ranked list of regions. Let's navigate to the
 5 most up-regulated exons in the colon exon expression data.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 foldChange=mat[,"cancer"]-mat[,"normal"]
 ind=order(foldChange,decreasing=TRUE)
 
@@ -201,7 +209,7 @@ mgr$slideshow(slideshowRegions, n=5)
 
 To close the connection to `Epiviz` and remove all tracks added during the interactive session, we use the `stopServer` function.
 
-```{r, eval=FALSE}
+```{r}
 mgr$stopServer()
 ```
 

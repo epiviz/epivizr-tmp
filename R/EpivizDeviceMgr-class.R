@@ -12,6 +12,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
     deviceIdCounter="integer",
     server="EpivizServer",
     verbose="logical",
+    nonInteractive="logical",
     callbackArray="IndexedArray"),
   methods=list(
     initialize=function(...) {
@@ -25,6 +26,7 @@ EpivizDeviceMgr <- setRefClass("EpivizDeviceMgr",
      chartList <<- list()
      deviceList <<- list()
      verbose <<- FALSE
+     nonInteractive <<- FALSE
      callSuper(...)
    },
    show=function() {
@@ -54,7 +56,15 @@ EpivizDeviceMgr$methods(list(
    },
    openBrowser=function(url=NULL) {
     if (server$isClosed()) {
-       server$startServer()
+      if (verbose) {
+        message("Starting epiviz websocket connection")
+      }
+      tryCatch(server$startServer(),
+                    error=function(e) stop(e))
+    }
+
+    if (verbose) {
+      message("Opening browser")
     }
 
     if (missing(url) || is.null(url)) {
@@ -62,17 +72,26 @@ EpivizDeviceMgr$methods(list(
      } else {
        browseURL(url)
      }
-     
-     service()
+
+     if (verbose) {
+        message("Servicing websocket until connected")
+     }
+     while(!server$socketConnected) {
+       service()
+     }
    },
    service=function() {
-     message("Serving Epiviz, escape to continue interactive session...")
-     server$service()
+      if (!nonInteractive) {
+       message("Serving Epiviz, escape to continue interactive session...")
+     }
+
+      server$service(nonInteractive)
    },
    stopService=function() {
      server$stopService()
    },
    startServer=function() {
+    message("Starting websocket server...")
      server$startServer()
    },
    stopServer=function() {
@@ -109,7 +128,8 @@ EpivizDeviceMgr$methods(list(
     end <- end(granges)[ind]
     for (i in ind) {
       cat("Region", i, "of", n, ". Press key to continue (ESC to stop)...\n")
-      readLines(n=1)
+      if (!nonInteractive)
+        readLines(n=1)
       navigate(chr=chr[i], start=start[i], end=end[i])
       tryCatch(service(), interrupt=function(int) invisible(NULL))
     }

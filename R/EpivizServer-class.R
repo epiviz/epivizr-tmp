@@ -37,6 +37,7 @@ EpivizServer <- setRefClass("EpivizServer",
         server <<- httpuv::startServer("0.0.0.0", port, callbacks)  
       }, error=function(e) {
         stop(sprintf("Error starting epivizServer, likely because port %d is in use.\nTry a different port number (?startEpiviz).",port))
+
       })
       invisible()
     },
@@ -51,17 +52,24 @@ EpivizServer <- setRefClass("EpivizServer",
       interrupted <<- TRUE
       invisible()
     },
-    service=function() {
+    service=function(nonInteractive=FALSE) {
       if (isClosed()) {
         stop("Can't listen, socket is closed")
       }
       
+      if (nonInteractive) {
+        # run service loop once
+        httpuv::service()
+        return(invisible(TRUE))
+      }
+
+
       interrupted <<- FALSE
       while(!interrupted) {
-        httpuv::service(250)
+        httpuv::service()
         Sys.sleep(0.001)
       }
-      invisible()
+      invisible(TRUE)
     },
     stopService=function() {
       interrupted <<- TRUE

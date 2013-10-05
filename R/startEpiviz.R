@@ -2,8 +2,11 @@ startEpiviz <- function(port=7312L, localURL=NULL, useDevel=FALSE,
                         chr="chr11", start=99800000, end=103383180, 
                         debug=FALSE, proxy=TRUE, workspace=NULL, 
                         openBrowser=TRUE,
-                        verbose=FALSE) {
-  message("Opening websocket...")
+                        verbose=FALSE, nonInteractive=FALSE) {
+  if (verbose) {
+    message("Starting Epivizr!")
+  }
+
   server <- epivizr:::EpivizServer$new(port=port)
   
   if (missing(localURL) || is.null(localURL)) {
@@ -31,22 +34,33 @@ startEpiviz <- function(port=7312L, localURL=NULL, useDevel=FALSE,
                        as.integer(start),
                        as.integer(end)))
   }
+
+  if (verbose) {
+    message("Initializing session manager...")
+  }
   tryCatch({
-    mgr <- EpivizDeviceMgr$new(server=server, url=url, verbose=verbose)
+    mgr <- EpivizDeviceMgr$new(server=server, url=url, verbose=verbose, nonInteractive=nonInteractive)
     mgr$bindToServer()
   }, error=function(e) {
     server$stopServer()
     stop("Error starting Epiviz: ", e)
   })
   
+  if (verbose) {
+    message("Opening connections...")
+  }
+
   if (openBrowser) {
     tryCatch({
-      message("Opening browser...")
       mgr$openBrowser(url)
     }, error=function(e) {
       mgr$stopServer()
       stop("Error starting Epiviz: ", e)
     }, interrupt=function(e) {NULL})
+  }
+
+  if (verbose) {
+    message("Done starting Epivizr!")
   }
   return(mgr)
 }

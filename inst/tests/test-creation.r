@@ -46,4 +46,5 @@ test_that("nice error message shows up and no browser window is opened", {
       mgr2$startServer()
     }
   }, error=function(e) {print(e); stop(e)}))
+  mgr$stopServer()
 })
