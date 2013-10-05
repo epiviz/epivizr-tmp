@@ -55,6 +55,7 @@
     \item{\code{deviceIdCounts}:}{Used internally to manage \code{deviceList}}
     \item{\code{server}:}{Object of class \code{\link{EpivizServer-class}} encapsulating the websocket connection to app}
     \item{\code{verbose}:}{Log to console on requests received}
+    \item{\code{nonInteractive}:}{Run in non-interactive mode, for internal development use only}
     \item{\code{callbackArray}:}{Object of class \code{\link{IndexedArray-class}} containing request callback functions}
   }
 }

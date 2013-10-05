@@ -6,15 +6,31 @@ EpivizServer <- setRefClass("EpivizServer",
     interrupted="logical",
     socketConnected="logical",
     msgCallback="function",
-    requestQueue="Queue"
+    requestQueue="Queue",
+    tryPorts="logical"
   ),
   methods=list(
-    initialize=function(port=7312L, ...) {
-      callSuper(...)
+    initialize=function(port=7312L, tryPorts=FALSE, ...) {
       port <<- port
       interrupted <<- FALSE
       socketConnected <<- FALSE
       server <<- NULL
+      tryPorts <<- tryPorts
+      callSuper(...)
+    },
+    tryMorePorts=function(callbacks,minPort=7000L, maxPort=7999L) {
+      success <- FALSE
+      port <<- minPort
+      while(!success && port <= maxPort) {
+        tryCatch({
+          cat(".")
+          server <<- httpuv::startServer("0.0.0.0", port, callbacks)
+          success <- TRUE
+        }, error=function(e) {
+          port <<- port + 1L
+        })
+      }
+      invisible(NULL)
     },
     startServer=function(...) {
       'start the websocket server'
@@ -36,8 +52,9 @@ EpivizServer <- setRefClass("EpivizServer",
       tryCatch({
         server <<- httpuv::startServer("0.0.0.0", port, callbacks)  
       }, error=function(e) {
-        stop(sprintf("Error starting epivizServer, likely because port %d is in use.\nTry a different port number (?startEpiviz).",port))
-
+        if (!tryPorts)
+          stop(sprintf("Error starting epivizServer, likely because port %d is in use.\nTry a different port number or setting tryPorts=TRUE (see ?startEpiviz).",port))
+        tryMorePorts(callbacks)
       })
       invisible()
     },

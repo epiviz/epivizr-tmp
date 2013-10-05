@@ -12,7 +12,7 @@
   startEpiviz(port = 7312L, localURL = NULL, useDevel = FALSE,
     chr = "chr11", start = 99800000, end = 103383180, debug = FALSE,
     proxy = TRUE, workspace = NULL, openBrowser = TRUE,
-    verbose = FALSE)
+    verbose = FALSE, nonInveractive = FALSE, tryPorts = FALSE)
 }
 
 \arguments{
@@ -47,6 +47,10 @@
   \item{openBrowser}{(logical) browse to the epiviz URL before exiting function}
   
   \item{verbose}{(logical) display log messages on websocket requests}
+
+  \item{nonInteractive}{(logical) run in non-interactive mode, for development purposes only}
+
+  \item{tryPorts}{(logical) try more ports if port number given by argument \code{port} is in use.}
 }
 
 \value{

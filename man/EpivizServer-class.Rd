@@ -25,6 +25,7 @@ Epiviz uses websockets to connect R/bioc sessions to the epiviz web app. Objects
     \item{\code{socketConnected}:}{Internal use only: is the websocket connected}
     \item{\code{msgCallback}:}{Internal use only: callback function on websocket message receive, set by \code{bindMgr} method}
     \item{\code{requestQueue}:}{Internal use only: Queue for unsent requests}
+    \item{\code{tryPorts}:}{Interval use only: Try more ports when opening websocket server if port requested by user is in use.}
   }
 }
 

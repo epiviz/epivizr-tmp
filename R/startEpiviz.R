@@ -2,12 +2,12 @@ startEpiviz <- function(port=7312L, localURL=NULL, useDevel=FALSE,
                         chr="chr11", start=99800000, end=103383180, 
                         debug=FALSE, proxy=TRUE, workspace=NULL, 
                         openBrowser=TRUE,
-                        verbose=FALSE, nonInteractive=FALSE) {
+                        verbose=FALSE, nonInteractive=FALSE, tryPorts=FALSE) {
   if (verbose) {
     message("Starting Epivizr!")
   }
 
-  server <- epivizr:::EpivizServer$new(port=port)
+  server <- epivizr:::EpivizServer$new(port=port, tryPorts=tryPorts)
   
   if (missing(localURL) || is.null(localURL)) {
     url <- ifelse(useDevel,"epiviz-dev", "epiviz")
