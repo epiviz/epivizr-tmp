@@ -12,7 +12,7 @@
   startEpiviz(port = 7312L, localURL = NULL, useDevel = FALSE,
     chr = "chr11", start = 99800000, end = 103383180, debug = FALSE,
     proxy = TRUE, workspace = NULL, openBrowser = TRUE,
-    verbose = FALSE, nonInveractive = FALSE, tryPorts = FALSE)
+    verbose = FALSE, nonInteractive = FALSE, tryPorts = FALSE)
 }
 
 \arguments{
