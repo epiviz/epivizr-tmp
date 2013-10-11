@@ -314,6 +314,9 @@ data(apColonData)
 <pre><code class="r">mgr = startEpiviz(workspace = &quot;C60FA3168F34DBC763F579C1EADA8AF0&quot;)
 </code></pre>
 
+<pre><code>## [epivizr]Starting websocket server...
+</code></pre>
+
 <p>This opens a websocket connection between the interactive <code>R</code> session and the browser client. This will allow us to visualize data stored in the <code>Epiviz</code> server along with data in the interactive <code>R</code> session.</p>
 
 <h3>Adding block region devices</h3>
@@ -322,13 +325,7 @@ data(apColonData)
 We use the <code>addDevice</code> method to do so. We then use the <code>service</code> function to let the interactive <code>R</code> session serve data requests from the browser client. We need to escape (using <code>ctl-c</code> or <code>esc</code> depending on your platform) to continue with the interactive <code>R</code> session.</p>
 
 <pre><code class="r">blocks_dev &lt;- mgr$addDevice(colon_blocks, &quot;450k colon_blocks&quot;)
-</code></pre>
-
-<pre><code>## [epivizr]Measurement 450k colon_blocks added to browser and connected
-## [epivizr]Chart epivizChart_1 added to browser and connected
-</code></pre>
-
-<pre><code class="r">mgr$service()
+mgr$service()
 </code></pre>
 
 <p>You should now see that a new track is added to the <code>Epiviz</code> web app. You can think of this track as an interactive display device in <code>R</code>. As you navigate on the browser, data is requested from the <code>R</code> session through the websocket connection. Remember to escape to continue with your interactive <code>R</code> session. The <code>blocks_dev</code> object inherits from class <code>EpivizDevice</code>, which contains information about the data being displayed and the chart used to display it.  Note that the &ldquo;brushing&rdquo; effect we implement in <code>Epiviz</code> works for <code>epivizr</code> tracks as well.</p>
@@ -340,9 +337,6 @@ keep &lt;- width(colon_blocks) &gt; 250000
 mgr$updateDevice(blocks_dev, colon_blocks[keep, ])
 </code></pre>
 
-<pre><code>## [epivizr]Chart caches cleared
-</code></pre>
-
 <p>Now, only this subset of blocks will be displayed in the already existing track.</p>
 
 <h3>Adding line plots along the genome</h3>
@@ -352,13 +346,7 @@ mgr$updateDevice(blocks_dev, colon_blocks[keep, ])
 <pre><code class="r"># add low-filter smoothed methylation estimates
 means_dev &lt;- mgr$addDevice(colon_curves, &quot;450kMeth&quot;, type = &quot;bp&quot;, columns = c(&quot;cancerMean&quot;, 
     &quot;normalMean&quot;))
-</code></pre>
-
-<pre><code>## [epivizr]Measurement 450kMeth added to browser and connected
-## [epivizr]Chart epivizChart_2 added to browser and connected
-</code></pre>
-
-<pre><code class="r">mgr$service()
+mgr$service()
 </code></pre>
 
 <p>Notice that we added two lines in this plot, one for mean methylation in cancer and another for mean methylation in normal. The <code>columns</code> argument specifies which columns in <code>mcols(colon_curves)</code> will be displayed. </p>
@@ -367,13 +355,7 @@ means_dev &lt;- mgr$addDevice(colon_curves, &quot;450kMeth&quot;, type = &quot;b
 
 <pre><code class="r">diff_dev &lt;- mgr$addDevice(colon_curves, &quot;450kMethDiff&quot;, type = &quot;bp&quot;, columns = c(&quot;smooth&quot;), 
     ylim = matrix(c(-0.5, 0.5), nc = 1))
-</code></pre>
-
-<pre><code>## [epivizr]Measurement 450kMethDiff added to browser and connected
-## [epivizr]Chart epivizChart_3 added to browser and connected
-</code></pre>
-
-<pre><code class="r">mgr$service()
+mgr$service()
 </code></pre>
 
 <p>We pass limits for the y axis in this case. To see other arguments supported, you can use the help framework in R <code>?&quot;EpivizDeviceMgr-class&quot;</code>.</p>
@@ -390,24 +372,18 @@ means_dev &lt;- mgr$addDevice(colon_curves, &quot;450kMeth&quot;, type = &quot;b
 ## 2 epivizDevice_2   lineTrack
 ## 3 epivizDevice_3   lineTrack
 ##                                        measurements connected
-## 1                                  epivizMs_block_1         *
-## 2 epivizMs_bp_2$cancerMean,epivizMs_bp_2$normalMean         *
-## 3                              epivizMs_bp_3$smooth         *
+## 1                                  epivizMs_block_1          
+## 2 epivizMs_bp_2$cancerMean,epivizMs_bp_2$normalMean          
+## 3                              epivizMs_bp_3$smooth
 </code></pre>
 
 <pre><code class="r">mgr$rmDevice(means_dev)
-</code></pre>
-
-<pre><code>## [epivizr]chart epivizChart_2 removed and disconnected
-## [epivizr]measurement object 450kMeth removed and disconnected
-</code></pre>
-
-<pre><code class="r">mgr$listDevices()
+mgr$listDevices()
 </code></pre>
 
 <pre><code>##               id        type         measurements connected
-## 1 epivizDevice_1 blocksTrack     epivizMs_block_1         *
-## 2 epivizDevice_3   lineTrack epivizMs_bp_3$smooth         *
+## 1 epivizDevice_1 blocksTrack     epivizMs_block_1          
+## 2 epivizDevice_3   lineTrack epivizMs_bp_3$smooth
 </code></pre>
 
 <h3>Adding a scatterplot</h3>
@@ -444,19 +420,7 @@ show(apColonData)
 
 <pre><code class="r">eset_dev &lt;- mgr$addDevice(apColonData, &quot;MAPlot&quot;, columns = c(&quot;colonA&quot;, &quot;colonM&quot;), 
     assay = &quot;MA&quot;)
-</code></pre>
-
-<pre><code>## Loading required package: hgu133plus2.db
-## Loading required package: AnnotationDbi
-## Loading required package: org.Hs.eg.db
-## Loading required package: DBI
-## 
-## 
-## [epivizr]Measurement MAPlot added to browser and connected
-## [epivizr]Chart epivizChart_4 added to browser and connected
-</code></pre>
-
-<pre><code class="r">mgr$service()
+mgr$service()
 </code></pre>
 
 <p>In this case, we specify which data is displayed in each axis of the scatter plot using the <code>columns</code> argument.
@@ -506,13 +470,7 @@ mat &lt;- cbind(cancer = means[, &quot;Primary Tumor&quot;], normal = means[, &q
 <pre><code class="r">sumexp &lt;- SummarizedExperiment(mat, rowData = rowData(colonSE))
 se_dev &lt;- mgr$addDevice(sumexp, &quot;Mean by Sample Type&quot;, columns = c(&quot;normal&quot;, 
     &quot;cancer&quot;))
-</code></pre>
-
-<pre><code>## [epivizr]Measurement Mean by Sample Type added to browser and connected
-## [epivizr]Chart epivizChart_5 added to browser and connected
-</code></pre>
-
-<pre><code class="r">mgr$service()
+mgr$service()
 </code></pre>
 
 <p>Again, the <code>columns</code> argument specifies what data will be displayed along which axis.</p>
@@ -556,16 +514,6 @@ slideshowRegions &lt;- rowData(sumexp)[ind] + 1000000L
 <pre><code class="r">mgr$stopServer()
 </code></pre>
 
-<pre><code>## [epivizr]chart epivizChart_1 removed and disconnected
-## [epivizr]chart epivizChart_3 removed and disconnected
-## [epivizr]chart epivizChart_4 removed and disconnected
-## [epivizr]chart epivizChart_5 removed and disconnected
-## [epivizr]measurement object MAPlot removed and disconnected
-## [epivizr]measurement object Mean by Sample Type removed and disconnected
-## [epivizr]measurement object 450kMethDiff removed and disconnected
-## [epivizr]measurement object 450k colon_blocks removed and disconnected
-</code></pre>
-
 <h3>SessionInfo</h3>
 
 <pre><code class="r">sessionInfo()
@@ -584,8 +532,8 @@ slideshowRegions &lt;- rowData(sumexp)[ind] + 1000000L
 ## other attached packages:
 ##  [1] hgu133plus2.db_2.10.1   org.Hs.eg.db_2.10.1    
 ##  [3] RSQLite_0.11.4          DBI_0.2-7              
-##  [5] AnnotationDbi_1.23.27   epivizr_0.99.4         
-##  [7] antiProfilesData_0.99.1 GenomicRanges_1.13.51  
+##  [5] AnnotationDbi_1.23.27   antiProfilesData_0.99.1
+##  [7] epivizr_0.99.5          GenomicRanges_1.13.54  
 ##  [9] XVector_0.1.4           IRanges_1.19.38        
 ## [11] Biobase_2.21.7          BiocGenerics_0.7.5     
 ## [13] RColorBrewer_1.0-5      devtools_1.3           
@@ -593,8 +541,8 @@ slideshowRegions &lt;- rowData(sumexp)[ind] + 1000000L
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] codetools_0.2-8 digest_0.6.3    evaluate_0.5    formatR_0.9    
-##  [5] httpuv_1.1.0    httr_0.2        knitr_1.5       memoise_0.1    
-##  [9] Rcpp_0.10.4     RCurl_1.95-4.1  rjson_0.2.13    stats4_3.0.2   
+##  [5] httpuv_1.1.0    httr_0.2        knitr_1.5       markdown_0.6.3 
+##  [9] memoise_0.1     RCurl_1.95-4.1  rjson_0.2.13    stats4_3.0.2   
 ## [13] stringr_0.6.2   tools_3.0.2     whisker_0.3-2
 </code></pre>
 
