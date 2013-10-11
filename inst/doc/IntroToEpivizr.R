@@ -26,11 +26,7 @@ show(colon_curves)
 
 
 ## ----, eval=TRUE, echo=FALSE---------------------------------------------
-mgr=startEpiviz(debug=TRUE,nonInteractive=TRUE, verbose=FALSE,openBrowser=FALSE)
-
-
-## ----,eval=TRUE,echo=FALSE-----------------------------------------------
-mgr$openBrowser()
+mgr=startEpiviz(localURL="http://epiviz.cbcb.umd.edu/test_socket.php",debug=TRUE, nonInteractive=TRUE, tryPorts=TRUE)
 
 
 ## ----,eval=TRUE----------------------------------------------------------
